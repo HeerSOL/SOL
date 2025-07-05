@@ -243,7 +243,9 @@
             <form id="weeklyPlanForm" class="space-y-4">
                 <div>
                     <label for="weeklyPlanSubject" class="block text-sm font-medium text-gray-700">Fach</label>
-                    <input type="text" id="weeklyPlanSubject" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed" readonly> <!-- Increased padding -->
+                    <select id="weeklyPlanSubject" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <!-- Options will be dynamically added here -->
+                    </select>
                 </div>
                 <div>
                     <label for="weeklyPlanTimeSlot" class="block text-sm font-medium text-gray-700">Zeitfenster</label>
@@ -970,19 +972,30 @@
                     const weeklyEntry = weeklyPlanEntries[weeklyPlanKey];
                     const annualSubject = timetable[day] && timetable[day][slot.id] ? timetable[day][slot.id] : '';
                     const isSolSubject = solSubjects.includes(annualSubject);
-                    const subjectColor = subjects.find(s => s.name === annualSubject)?.color || 'bg-gray-200';
-
+                    
                     // Logik für die Zellgestaltung und den Inhalt
                     if (weeklyEntry) {
                         // Fall 1: Spezifisch definierte Lektion (z.B. Lernkontrolle, Test, Lehrerinput)
                         // Diese Lektionen haben eine eigene Farbgebung, die über alles andere geht
-                        cell.classList.add('bg-blue-100', 'text-blue-800', 'font-semibold');
+                        const entrySubjectColor = subjects.find(s => s.name === weeklyEntry.subjectName)?.color || 'bg-gray-200';
+                        cell.classList.add(entrySubjectColor);
+                        // Textfarbe basierend auf Hintergrund für besseren Kontrast bestimmen
+                        if (['bg-red-500', 'bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-orange-500',
+                             'bg-pink-500', 'bg-red-600', 'bg-indigo-500', 'bg-violet-500', 'bg-cyan-500',
+                             'bg-amber-500', 'bg-gray-500'].includes(entrySubjectColor)) {
+                            cell.classList.add('text-white');
+                        } else if (['bg-yellow-500', 'bg-yellow-400', 'bg-teal-500', 'bg-gray-200'].includes(entrySubjectColor)) {
+                            cell.classList.add('text-gray-900'); // Dunklerer Text für hellere Hintergründe
+                        } else {
+                            cell.classList.add('text-gray-700'); // Standard-Fallback
+                        }
+
                         cell.innerHTML += `<div class="font-semibold">${weeklyEntry.title || 'Definierte Lektion'}</div>`;
                         if (weeklyEntry.description) {
-                            cell.innerHTML += `<div class="text-xs text-blue-600">${weeklyEntry.description}</div>`;
+                            cell.innerHTML += `<div class="text-xs">${weeklyEntry.description}</div>`;
                         }
                         if (weeklyEntry.externalUrl) {
-                            cell.innerHTML += `<a href="${weeklyEntry.externalUrl}" target="_blank" class="text-xs text-blue-500 hover:underline block">Link</a>`;
+                            cell.innerHTML += `<a href="${weeklyEntry.externalUrl}" target="_blank" class="text-xs hover:underline block">Link</a>`;
                         }
                     } else if (annualSubject && isSolSubject) {
                         // Fall 2: SOL-Fach (immer grün, unabhängig von der spezifischen Farbe des Jahresfachs)
@@ -992,19 +1005,20 @@
                         cell.innerHTML = `<span class="font-medium">SOL</span>`;
                     } else if (annualSubject && !isSolSubject) {
                         // Fall 3: Reguläres (Nicht-SOL) Fach aus dem Jahresstundenplan
-                        cell.classList.add(subjectColor); // Die spezifische Farbe des Fachs anwenden
+                        const annualSubjectColor = subjects.find(s => s.name === annualSubject)?.color || 'bg-gray-200';
+                        cell.classList.add(annualSubjectColor); // Die spezifische Farbe des Fachs anwenden
 
                         // Textfarbe basierend auf Hintergrund für besseren Kontrast bestimmen
                         if (['bg-red-500', 'bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-orange-500',
                              'bg-pink-500', 'bg-red-600', 'bg-indigo-500', 'bg-violet-500', 'bg-cyan-500',
-                             'bg-amber-500', 'bg-gray-500'].includes(subjectColor)) {
+                             'bg-amber-500', 'bg-gray-500'].includes(annualSubjectColor)) {
                             cell.classList.add('text-white');
-                        } else if (['bg-yellow-500', 'bg-yellow-400', 'bg-teal-500', 'bg-gray-200'].includes(subjectColor)) {
+                        } else if (['bg-yellow-500', 'bg-yellow-400', 'bg-teal-500', 'bg-gray-200'].includes(annualSubjectColor)) {
                             cell.classList.add('text-gray-900'); // Dunklerer Text für hellere Hintergründe
                         } else {
                             cell.classList.add('text-gray-700'); // Standard-Fallback
                         }
-                        cell.innerHTML = `<span class="font-medium">${annualSubject}</span><br><span class="text-xs">(Blockiert)</span>`;
+                        cell.innerHTML = `<span class="font-medium">${annualSubject}</span>`; // "(Blockiert)" entfernt
                     } else {
                         // Fall 4: Freie Lektion (kein Fach im Jahresstundenplan zugewiesen)
                         // Stellt sicher, dass keine vorherige Textfarbe übrig bleibt
@@ -1034,7 +1048,7 @@
 
             const modal = document.getElementById('weeklyPlanEditModal');
             const form = document.getElementById('weeklyPlanForm');
-            const subjectInput = document.getElementById('weeklyPlanSubject');
+            const subjectSelect = document.getElementById('weeklyPlanSubject'); // Changed to select
             const timeSlotInput = document.getElementById('weeklyPlanTimeSlot');
             const titleInput = document.getElementById('weeklyPlanTitle');
             const descriptionInput = document.getElementById('weeklyPlanDescription');
@@ -1047,29 +1061,46 @@
 
             const annualSubject = timetable[day] && timetable[day][slot.id] ? timetable[day][slot.id] : '';
 
-            // Set read-only fields
-            subjectInput.value = annualSubject || 'Kein Fach zugewiesen';
+            // Populate subject select
+            subjectSelect.innerHTML = ''; // Clear existing options
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = 'Kein Fach zugewiesen';
+            subjectSelect.appendChild(emptyOption);
+
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.name;
+                option.textContent = subject.name;
+                subjectSelect.appendChild(option);
+            });
+
+            // Set read-only time slot field
             timeSlotInput.value = `${day}, ${slot.time}`;
 
             // Populate form if an entry already exists
             if (currentWeeklyPlanEntry) {
                 document.getElementById('weeklyPlanModalTitle').textContent = 'Lektion bearbeiten';
+                subjectSelect.value = currentWeeklyPlanEntry.subjectName || annualSubject || ''; // Use saved subjectName, then annual, then empty
                 titleInput.value = currentWeeklyPlanEntry.title || '';
                 descriptionInput.value = currentWeeklyPlanEntry.description || '';
                 externalUrlInput.value = currentWeeklyPlanEntry.externalUrl || '';
                 
                 deleteButton.classList.remove('hidden'); // Show delete button for existing entries
+                form.dataset.entryId = currentWeeklyPlanEntry.id; // Store entry ID for deletion
             } else {
                 // Reset form for new entry
                 document.getElementById('weeklyPlanModalTitle').textContent = 'Neue Lektion definieren';
                 form.reset();
+                subjectSelect.value = annualSubject || ''; // Default to annual subject for new entry
                 deleteButton.classList.add('hidden'); // Hide delete button for new entries
+                form.dataset.entryId = ''; // Clear entry ID for new entries
             }
 
             // Store day and slotId in dataset for easy access on save
             form.dataset.day = day;
             form.dataset.slotId = slotId;
-            form.dataset.subjectName = annualSubject; // Store the subject name from the annual timetable
+            // subjectName is now read directly from subjectSelect.value in handleSaveWeeklyPlanEntry
 
             modal.classList.remove('hidden');
         }
@@ -1091,13 +1122,13 @@
             const form = document.getElementById('weeklyPlanForm');
             const day = form.dataset.day;
             const slotId = parseInt(form.dataset.slotId);
-            const subjectName = form.dataset.subjectName;
+            const selectedSubjectName = document.getElementById('weeklyPlanSubject').value; // Get value from select
             const title = document.getElementById('weeklyPlanTitle').value.trim();
             const description = document.getElementById('weeklyPlanDescription').value.trim();
             const externalUrl = document.getElementById('weeklyPlanExternalUrl').value.trim();
 
-            if (!title && !description && !externalUrl) {
-                showCustomMessage('Bitte geben Sie mindestens einen Titel, eine Beschreibung oder eine URL ein.', 'warning', 'Eingabe erforderlich');
+            if (!title && !description && !externalUrl && !selectedSubjectName) { // Added selectedSubjectName to check
+                showCustomMessage('Bitte geben Sie mindestens einen Titel, eine Beschreibung, eine URL oder wählen Sie ein Fach aus.', 'warning', 'Eingabe erforderlich');
                 return;
             }
 
@@ -1109,7 +1140,7 @@
                 const entryData = {
                     day: day,
                     slotId: slotId,
-                    subjectName: subjectName,
+                    subjectName: selectedSubjectName, // Use the selected subject name
                     title: title,
                     description: description,
                     externalUrl: externalUrl,
@@ -1134,7 +1165,10 @@
         }
 
         async function handleDeleteWeeklyPlanEntry() {
-            if (!isAuthReady || !user || !currentWeeklyPlanEntry) {
+            const form = document.getElementById('weeklyPlanForm');
+            const entryIdToDelete = form.dataset.entryId; // Get the ID from the form's dataset
+
+            if (!isAuthReady || !user || !entryIdToDelete) { // Check if entryIdToDelete exists
                 showCustomMessage("Kein Eintrag zum Löschen ausgewählt oder keine Berechtigung.", 'warning', 'Fehler');
                 return;
             }
@@ -1147,7 +1181,7 @@
 
                     try {
                         // Korrigierter Pfad für weeklyPlanEntries (Top-Level)
-                        await deleteDoc(doc(db, 'weeklyPlanEntries', currentWeeklyPlanEntry.id));
+                        await deleteDoc(doc(db, 'weeklyPlanEntries', entryIdToDelete));
                         showCustomMessage('Stundenplan-Eintrag erfolgreich gelöscht!', 'success', 'Gelöscht');
                         hideWeeklyPlanEditModal();
                     } catch (error) {
