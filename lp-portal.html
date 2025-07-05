@@ -280,8 +280,6 @@
 
 
         // Ihre persönliche Firebase-Konfiguration
-        // DIESE KONFIGURATION IST FÜR IHR PROJEKT 'sol-portal-cf905'
-        // BITTE ÄNDERN SIE DIESE WERTE NICHT, ES SEI DENN, SIE ERSTELLEN EIN NEUES FIREBASE-PROJEKT
         const firebaseConfig = {
             apiKey: "AIzaSyAsexnWyCjkYz8kfAPd7Od1g0xsfcSEKRk",
             authDomain: "sol-portal-cf905.firebaseapp.com",
@@ -372,9 +370,6 @@
                     }
                     isAuthReady = true; // Der Authentifizierungsstatus ist nun bekannt.
                 });
-
-                // Da initialAuthToken nicht mehr verwendet wird, wird hier keine signInWithCustomToken mehr aufgerufen.
-                // Stattdessen wird die onAuthStateChanged-Logik die Anmeldung (anonym oder per E-Mail/Passwort) handhaben.
 
                 initializeEventListeners();
                 generateTimetable(); // Generiere Jahresstundenplan-Struktur
@@ -534,7 +529,6 @@
             }
 
             // Stundenplan: Lausche auf Änderungen im 'annualTimetable' Dokument der 'public_data' Kollektion
-            // Pfad angepasst für Ihr eigenes Firebase-Projekt (ohne artifacts/appId)
             onSnapshot(doc(db, 'public_data', 'annualTimetable'), (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     timetable = docSnapshot.data();
@@ -551,7 +545,6 @@
             });
 
             // SOL-Fächer: Lausche auf Änderungen im 'enabledSolSubjects' Dokument der 'public_data' Kollektion
-            // Pfad angepasst für Ihr eigenes Firebase-Projekt (ohne artifacts/appId)
             onSnapshot(doc(db, 'public_data', 'enabledSolSubjects'), (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     solSubjects = docSnapshot.data().subjects || [];
