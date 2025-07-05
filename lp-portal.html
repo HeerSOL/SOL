@@ -534,7 +534,7 @@
             });
 
             // SOL-Fächer: Lausche auf Änderungen im 'enabledSolSubjects' Dokument der 'public_data' Kollektion
-            onSnapshot(doc(db, 'public_data', 'enabledSolSubjects'), (docSnapshot) => {
+            onSnapshot(collection(db, 'weeklyPlanEntries'), (querySnapshot) => {
                 if (docSnapshot.exists()) {
                     solSubjects = docSnapshot.data().subjects || [];
                     updateSolSubjectsDisplay();
@@ -1111,7 +1111,7 @@
                 };
 
                 const entryId = currentWeeklyPlanEntry ? currentWeeklyPlanEntry.id : `${day}_${slotId}`;
-                await setDoc(doc(db, 'public_data', 'weeklyPlanEntries', entryId), entryData);
+                await setDoc(doc(db, 'weeklyPlanEntries', entryId), entryData);
 
                 showCustomMessage('Stundenplan-Eintrag erfolgreich gespeichert!', 'success', 'Erfolg');
                 hideWeeklyPlanEditModal();
@@ -1138,7 +1138,7 @@
                     deleteButton.textContent = 'Löschen...';
 
                     try {
-                        await deleteDoc(doc(db, 'public_data', 'weeklyPlanEntries', currentWeeklyPlanEntry.id));
+                        await deleteDoc(doc(db, 'weeklyPlanEntries', currentWeeklyPlanEntry.id));
                         showCustomMessage('Stundenplan-Eintrag erfolgreich gelöscht!', 'success', 'Gelöscht');
                         hideWeeklyPlanEditModal();
                     } catch (error) {
