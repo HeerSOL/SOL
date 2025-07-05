@@ -124,11 +124,14 @@
                     <!-- Dies ist nun der Platzhalter für den Arbeitsplan der Woche (ehemals Stundenplan) -->
                     <div id="arbeitsplan-content" class="tab-content hidden">
                         <h2 class="text-2xl font-semibold mb-6 text-gray-800">Arbeitsplan der Woche</h2>
-                        <p class="text-gray-600 mb-6">Hier können Sie SOL-Lektionen blockieren und verwalten.</p>
-                        <div class="mt-8 text-center text-gray-500 p-8 bg-gray-50 rounded-lg shadow-inner"> <!-- Added padding, bg, rounded, shadow -->
-                            <div class="text-6xl mb-4">📋</div> <!-- Increased icon size -->
-                            <p class="text-lg font-medium">Arbeitsplan-Funktionalität wird hier implementiert.</p> <!-- Adjusted font -->
+                        <p class="text-gray-600 mb-6">Hier können Sie Aufträge für die SOL-Fächer erstellen und verwalten.</p>
+                        <button id="addTaskButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button text-base font-semibold mb-6">
+                            ➕ Neue Aufgabe erstellen
+                        </button>
+                        <div id="tasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Tasks will be rendered here -->
                         </div>
+                        <p id="noTasksMessage" class="text-gray-500 text-center mt-8 hidden">Noch keine Aufgaben erstellt.</p>
                     </div>
 
                     <div id="verwaltung-content" class="tab-content">
@@ -214,7 +217,7 @@
     </div>
 
     <!-- Custom Message Modal -->
-    <div id="customMessageModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
+    <div id="customMessageModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-[9999]">
         <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full mx-4"> <!-- Increased padding, rounded-xl, shadow-2xl -->
             <h3 id="customMessageTitle" class="text-xl font-semibold mb-4 text-gray-900"></h3> <!-- Increased font size -->
             <p id="customMessageContent" class="text-gray-700 mb-6"></p>
@@ -225,7 +228,7 @@
     </div>
 
     <!-- Custom Confirmation Modal -->
-    <div id="customConfirmModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
+    <div id="customConfirmModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-[9999]">
         <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full mx-4"> <!-- Increased padding, rounded-xl, shadow-2xl -->
             <h3 id="customConfirmTitle" class="text-xl font-semibold mb-4 text-gray-900">Bestätigung</h3> <!-- Increased font size -->
             <p id="customConfirmContent" class="text-gray-700 mb-6"></p>
@@ -273,12 +276,53 @@
         </div>
     </div>
 
+    <!-- Task Edit Modal (New for Arbeitsplan der Woche) -->
+    <div id="taskEditModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
+        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <h3 class="text-xl font-semibold mb-4 text-gray-900" id="taskModalTitle">Neue Aufgabe erstellen</h3>
+            <form id="taskForm" class="space-y-4">
+                <div>
+                    <label for="taskSubject" class="block text-sm font-medium text-gray-700">Fach</label>
+                    <select id="taskSubject" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <!-- Options will be dynamically added here -->
+                    </select>
+                </div>
+                <div>
+                    <label for="taskTitle" class="block text-sm font-medium text-gray-700">Titel der Aufgabe</label>
+                    <input type="text" id="taskTitle" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="taskMaterials" class="block text-sm font-medium text-gray-700">Materialien (Links, Bücher, etc.)</label>
+                    <textarea id="taskMaterials" rows="3" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Anforderungstyp</label>
+                    <div class="flex items-center space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="requirementType" value="basic" class="form-radio h-4 w-4 text-blue-600" checked>
+                            <span class="ml-2 text-gray-700">🔵 Grundanforderung</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="requirementType" value="advanced" class="form-radio h-4 w-4 text-yellow-500">
+                            <span class="ml-2 text-gray-700">⭐ Erweiterte Anforderung</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="taskCancelButton" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 modern-button">Abbrechen</button>
+                    <button type="submit" id="taskSaveButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button">Speichern</button>
+                    <button type="button" id="taskDeleteButton" class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hidden modern-button">Löschen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         // Importiere Firestore Module
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
         // Ihre persönliche Firebase-Konfiguration
@@ -307,9 +351,12 @@
         let lpAccounts = [];
         let susAccounts = [];
         let weeklyPlanEntries = {}; // Wochenplan-Einträge
+        let weeklyTasks = []; // Neue Variable für Wochenaufgaben
 
         // Aktuell bearbeiteter Wochenplan-Eintrag im Modal
         let currentWeeklyPlanEntry = null;
+        // Aktuell bearbeitete Aufgabe im Modal
+        let currentTaskEntry = null;
 
         const subjects = [
             { name: 'Deutsch', color: 'bg-red-500' },
@@ -424,6 +471,8 @@
             // Spezifische Aktualisierung für den Stundenplan der Woche, wenn der Tab gewechselt wird
             if (tabName === 'stundenplan') { // Geändert von 'arbeitsplan' zu 'stundenplan'
                 updateWeeklyPlanDisplay();
+            } else if (tabName === 'arbeitsplan') {
+                updateArbeitsplanDisplay();
             }
         }
 
@@ -485,6 +534,12 @@
             document.getElementById('weeklyPlanForm').addEventListener('submit', handleSaveWeeklyPlanEntry);
             document.getElementById('weeklyPlanCancelButton').addEventListener('click', hideWeeklyPlanEditModal);
             document.getElementById('weeklyPlanDeleteButton').addEventListener('click', handleDeleteWeeklyPlanEntry);
+
+            // Event Listener für Arbeitsplan-Funktionen
+            document.getElementById('addTaskButton').addEventListener('click', () => showTaskEditModal());
+            document.getElementById('taskForm').addEventListener('submit', handleSaveTask);
+            document.getElementById('taskCancelButton').addEventListener('click', hideTaskEditModal);
+            document.getElementById('taskDeleteButton').addEventListener('click', handleDeleteTask);
         }
 
         // --- Authentifizierungs-Handler ---
@@ -575,6 +630,19 @@
             }, (error) => {
                 console.error("Fehler beim Abrufen der Wochenplan-Einträge:", error);
                 showCustomMessage("Fehler beim Laden der Wochenplan-Einträge: " + error.message, 'error', 'Ladefehler');
+            });
+
+            // Wochenaufgaben: Lausche auf Änderungen in der 'weeklyTasks' Kollektion (Top-Level)
+            onSnapshot(collection(db, 'weeklyTasks'), (querySnapshot) => {
+                weeklyTasks = [];
+                querySnapshot.forEach((doc) => {
+                    weeklyTasks.push({ id: doc.id, ...doc.data() });
+                });
+                console.log("Wochenaufgaben geladen:", weeklyTasks); // Debug-Log
+                updateArbeitsplanDisplay(); // Aktualisiere die Anzeige der Aufgaben
+            }, (error) => {
+                console.error("Fehler beim Abrufen der Wochenaufgaben:", error);
+                showCustomMessage("Fehler beim Laden der Wochenaufgaben: " + error.message, 'error', 'Ladefehler');
             });
 
 
@@ -1193,6 +1261,198 @@
                     }
                 }
             }, 'Eintrag löschen');
+        }
+
+        // --- Arbeitsplan der Woche Funktionalität (Wochenaufgaben) ---
+
+        function updateArbeitsplanDisplay() {
+            const tasksContainer = document.getElementById('tasksContainer');
+            const noTasksMessage = document.getElementById('noTasksMessage');
+            tasksContainer.innerHTML = ''; // Clear existing tasks
+
+            if (weeklyTasks.length === 0) {
+                noTasksMessage.classList.remove('hidden');
+            } else {
+                noTasksMessage.classList.add('hidden');
+                weeklyTasks.forEach(task => {
+                    const taskCard = document.createElement('div');
+                    taskCard.className = 'bg-white rounded-lg shadow-md p-6 relative';
+                    taskCard.setAttribute('data-task-id', task.id);
+
+                    const subjectColor = subjects.find(s => s.name === task.subject)?.color || 'bg-gray-200';
+
+                    taskCard.innerHTML = `
+                        <div class="absolute top-4 right-4 text-2xl">
+                            ${task.requirementType === 'basic' ? '🔵' : '⭐'}
+                        </div>
+                        <div class="flex items-center mb-3">
+                            <div class="w-4 h-4 rounded-full ${subjectColor} mr-3"></div>
+                            <h4 class="text-lg font-semibold text-gray-800">${task.subject}</h4>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-gray-900">${task.title}</h3>
+                        ${task.materials ? `<p class="text-gray-700 text-sm mb-4 whitespace-pre-wrap">${task.materials}</p>` : ''}
+                        <div class="text-xs text-gray-500 mt-2">Erstellt von: ${task.createdBy} am ${new Date(task.createdAt).toLocaleDateString()}</div>
+                        <button class="edit-task-button absolute bottom-4 right-4 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm modern-button">Bearbeiten</button>
+                    `;
+
+                    // Add event listener for edit button
+                    const editButton = taskCard.querySelector('.edit-task-button');
+                    if (user && lpAccounts.some(acc => acc.id === user.uid)) {
+                        editButton.classList.remove('hidden');
+                        editButton.addEventListener('click', () => showTaskEditModal(task));
+                    } else {
+                        editButton.classList.add('hidden');
+                    }
+
+                    tasksContainer.appendChild(taskCard);
+                });
+            }
+        }
+
+        function showTaskEditModal(task = null) {
+            const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
+            if (!isUserLP) {
+                showCustomMessage('Nur Lehrpersonen können Aufgaben bearbeiten.', 'info', 'Zugriff verweigert');
+                return;
+            }
+
+            const modal = document.getElementById('taskEditModal');
+            const form = document.getElementById('taskForm');
+            const subjectSelect = document.getElementById('taskSubject');
+            const titleInput = document.getElementById('taskTitle');
+            const materialsInput = document.getElementById('taskMaterials');
+            const basicRadio = document.querySelector('input[name="requirementType"][value="basic"]');
+            const advancedRadio = document.querySelector('input[name="requirementType"][value="advanced"]');
+            const deleteButton = document.getElementById('taskDeleteButton');
+
+            currentTaskEntry = task; // Set the global currentTaskEntry
+
+            // Populate subject select
+            subjectSelect.innerHTML = '';
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.name;
+                option.textContent = subject.name;
+                subjectSelect.appendChild(option);
+            });
+
+            if (task) {
+                document.getElementById('taskModalTitle').textContent = 'Aufgabe bearbeiten';
+                subjectSelect.value = task.subject || '';
+                titleInput.value = task.title || '';
+                materialsInput.value = task.materials || '';
+                if (task.requirementType === 'advanced') {
+                    advancedRadio.checked = true;
+                } else {
+                    basicRadio.checked = true;
+                }
+                deleteButton.classList.remove('hidden');
+                form.dataset.taskId = task.id; // Store task ID for editing/deleting
+            } else {
+                document.getElementById('taskModalTitle').textContent = 'Neue Aufgabe erstellen';
+                form.reset();
+                basicRadio.checked = true; // Default for new tasks
+                deleteButton.classList.add('hidden');
+                form.dataset.taskId = ''; // Clear task ID for new tasks
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function hideTaskEditModal() {
+            document.getElementById('taskEditModal').classList.add('hidden');
+            document.getElementById('taskForm').reset();
+            currentTaskEntry = null; // Reset global currentTaskEntry
+        }
+
+        async function handleSaveTask(event) {
+            event.preventDefault();
+
+            const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
+            if (!isUserLP) {
+                showCustomMessage('Nur Lehrpersonen können Aufgaben speichern.', 'error', 'Zugriff verweigert');
+                return;
+            }
+
+            const form = document.getElementById('taskForm');
+            const taskId = form.dataset.taskId;
+            const subject = document.getElementById('taskSubject').value;
+            const title = document.getElementById('taskTitle').value.trim();
+            const materials = document.getElementById('taskMaterials').value.trim();
+            const requirementType = document.querySelector('input[name="requirementType"]:checked').value;
+
+            if (!subject || !title) {
+                showCustomMessage('Bitte Fach und Titel eingeben.', 'warning', 'Eingabe erforderlich');
+                return;
+            }
+
+            const saveButton = document.getElementById('taskSaveButton');
+            saveButton.disabled = true;
+            saveButton.textContent = 'Speichern...';
+
+            try {
+                const taskData = {
+                    subject: subject,
+                    title: title,
+                    materials: materials,
+                    requirementType: requirementType,
+                    createdBy: user.email,
+                    createdAt: taskId && currentTaskEntry ? currentTaskEntry.createdAt : new Date().toISOString() // Keep original creation date or set new
+                };
+
+                if (taskId) {
+                    // Update existing task
+                    await setDoc(doc(db, 'weeklyTasks', taskId), taskData);
+                } else {
+                    // Add new task
+                    await addDoc(collection(db, 'weeklyTasks'), taskData);
+                }
+
+                showCustomMessage('Aufgabe erfolgreich gespeichert!', 'success', 'Erfolg');
+                hideTaskEditModal();
+            } catch (error) {
+                console.error("Fehler beim Speichern der Aufgabe:", error);
+                showCustomMessage('Fehler beim Speichern der Aufgabe: ' + error.message, 'error', 'Speicherfehler');
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = 'Speichern';
+            }
+        }
+
+        async function handleDeleteTask() {
+            const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
+            if (!isUserLP) {
+                showCustomMessage('Nur Lehrpersonen können Aufgaben löschen.', 'error', 'Zugriff verweigert');
+                return;
+            }
+
+            const form = document.getElementById('taskForm');
+            const taskIdToDelete = form.dataset.taskId;
+
+            if (!taskIdToDelete) {
+                showCustomMessage("Keine Aufgabe zum Löschen ausgewählt.", 'warning', 'Fehler');
+                return;
+            }
+
+            showCustomConfirm('Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Dies kann nicht rückgängig gemacht werden.', async (confirmed) => {
+                if (confirmed) {
+                    const deleteButton = document.getElementById('taskDeleteButton');
+                    deleteButton.disabled = true;
+                    deleteButton.textContent = 'Löschen...';
+
+                    try {
+                        await deleteDoc(doc(db, 'weeklyTasks', taskIdToDelete));
+                        showCustomMessage('Aufgabe erfolgreich gelöscht!', 'success', 'Gelöscht');
+                        hideTaskEditModal();
+                    } catch (error) {
+                        console.error("Fehler beim Löschen der Aufgabe:", error);
+                        showCustomMessage('Fehler beim Löschen der Aufgabe: ' + error.message, 'error', 'Löschfehler');
+                    } finally {
+                        deleteButton.disabled = false;
+                        deleteButton.textContent = 'Löschen';
+                    }
+                }
+            }, 'Aufgabe löschen');
         }
 
     </script>
