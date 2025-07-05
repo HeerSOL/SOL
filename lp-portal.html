@@ -1,18 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { getDatabase, ref, set, push, onValue, remove } from 'firebase/database';
 import { Plus, Trash2, Users, Calendar, ClipboardList, Settings, LogOut } from 'lucide-react';
-
-// Firebase Konfiguration
-const firebaseConfig = {
-  databaseURL: "https://heer-dennigkofen-default-rtdb.europe-west1.firebasedatabase.app/"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const database = getDatabase(app);
 
 // Fächer mit Farben
 const subjects = [
@@ -52,6 +39,7 @@ function SOLPortal() {
   const [activeTab, setActiveTab] = useState('verwaltung');
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [firebaseLoaded, setFirebaseLoaded] = useState(false);
   
   // Verwaltungs-States
   const [timetable, setTimetable] = useState({});
@@ -60,48 +48,109 @@ function SOLPortal() {
   const [susAccounts, setSusAccounts] = useState([]);
   const [newAccount, setNewAccount] = useState({ email: '', password: '', type: 'LP' });
 
+  // Firebase initialisieren
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-    });
+    const loadFirebase = async () => {
+      if (window.firebase) {
+        // Firebase ist bereits geladen
+        initializeFirebase();
+        return;
+      }
 
-    return () => unsubscribe();
+      try {
+        // Firebase SDK über CDN laden
+        const script1 = document.createElement('script');
+        script1.src = 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js';
+        script1.onload = () => {
+          const script2 = document.createElement('script');
+          script2.src = 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js';
+          script2.onload = () => {
+            const script3 = document.createElement('script');
+            script3.src = 'https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js';
+            script3.onload = () => {
+              initializeFirebase();
+            };
+            document.head.appendChild(script3);
+          };
+          document.head.appendChild(script2);
+        };
+        document.head.appendChild(script1);
+      } catch (error) {
+        console.error('Fehler beim Laden von Firebase:', error);
+        alert('Firebase konnte nicht geladen werden. Bitte versuchen Sie es später erneut.');
+      }
+    };
+
+    const initializeFirebase = () => {
+      try {
+        if (!window.firebase.apps.length) {
+          window.firebase.initializeApp({
+            databaseURL: "https://heer-dennigkofen-default-rtdb.europe-west1.firebasedatabase.app/"
+          });
+        }
+
+        // Auth State Observer
+        window.firebase.auth().onAuthStateChanged((user) => {
+          setUser(user);
+          if (user) {
+            loadUserData();
+          }
+        });
+
+        setFirebaseLoaded(true);
+      } catch (error) {
+        console.error('Fehler bei Firebase-Initialisierung:', error);
+      }
+    };
+
+    loadFirebase();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      // Daten aus Firebase laden
-      const timetableRef = ref(database, 'timetable');
-      const solSubjectsRef = ref(database, 'solSubjects');
-      const lpAccountsRef = ref(database, 'lpAccounts');
-      const susAccountsRef = ref(database, 'susAccounts');
+  const loadUserData = () => {
+    if (!window.firebase || !firebaseLoaded) return;
 
-      onValue(timetableRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) setTimetable(data);
-      });
+    const database = window.firebase.database();
+    
+    // Timetable laden
+    database.ref('timetable').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) setTimetable(data);
+    });
 
-      onValue(solSubjectsRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) setSolSubjects(Object.keys(data));
-      });
+    // SOL Subjects laden
+    database.ref('solSubjects').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) setSolSubjects(Object.keys(data));
+    });
 
-      onValue(lpAccountsRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) setLpAccounts(Object.entries(data).map(([id, acc]) => ({ id, ...acc })));
-      });
+    // LP Accounts laden
+    database.ref('lpAccounts').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const accounts = Object.entries(data).map(([id, acc]) => ({ id, ...acc }));
+        setLpAccounts(accounts);
+      }
+    });
 
-      onValue(susAccountsRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) setSusAccounts(Object.entries(data).map(([id, acc]) => ({ id, ...acc })));
-      });
-    }
-  }, [user]);
+    // SuS Accounts laden
+    database.ref('susAccounts').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const accounts = Object.entries(data).map(([id, acc]) => ({ id, ...acc }));
+        setSusAccounts(accounts);
+      }
+    });
+  };
 
   const handleLogin = async () => {
+    if (!window.firebase || !firebaseLoaded) {
+      alert('Firebase wird noch geladen. Bitte warten Sie einen Moment.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, loginData.email, loginData.password);
+      await window.firebase.auth().signInWithEmailAndPassword(loginData.email, loginData.password);
     } catch (error) {
       alert('Login fehlgeschlagen: ' + error.message);
     }
@@ -109,21 +158,27 @@ function SOLPortal() {
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
+    if (!window.firebase) return;
+    
+    await window.firebase.auth().signOut();
     setActiveTab('verwaltung');
   };
 
   const handleTimetableChange = (day, slot, subject) => {
+    if (!window.firebase || !firebaseLoaded) return;
+
     const newTimetable = { ...timetable };
     if (!newTimetable[day]) newTimetable[day] = {};
     newTimetable[day][slot] = subject;
     setTimetable(newTimetable);
     
     // In Firebase speichern
-    set(ref(database, `timetable/${day}/${slot}`), subject);
+    window.firebase.database().ref(`timetable/${day}/${slot}`).set(subject);
   };
 
   const handleSolSubjectToggle = (subjectName) => {
+    if (!window.firebase || !firebaseLoaded) return;
+
     const newSolSubjects = solSubjects.includes(subjectName)
       ? solSubjects.filter(s => s !== subjectName)
       : [...solSubjects, subjectName];
@@ -135,14 +190,19 @@ function SOLPortal() {
     newSolSubjects.forEach(subject => {
       solSubjectsObj[subject] = true;
     });
-    set(ref(database, 'solSubjects'), solSubjectsObj);
+    window.firebase.database().ref('solSubjects').set(solSubjectsObj);
   };
 
   const handleCreateAccount = async () => {
+    if (!window.firebase || !firebaseLoaded) {
+      alert('Firebase wird noch geladen. Bitte warten Sie einen Moment.');
+      return;
+    }
+
     setLoading(true);
     
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, newAccount.email, newAccount.password);
+      const userCredential = await window.firebase.auth().createUserWithEmailAndPassword(newAccount.email, newAccount.password);
       const userId = userCredential.user.uid;
       
       // Account-Daten in Firebase speichern
@@ -153,9 +213,9 @@ function SOLPortal() {
       };
       
       if (newAccount.type === 'LP') {
-        await set(ref(database, `lpAccounts/${userId}`), accountData);
+        await window.firebase.database().ref(`lpAccounts/${userId}`).set(accountData);
       } else {
-        await set(ref(database, `susAccounts/${userId}`), accountData);
+        await window.firebase.database().ref(`susAccounts/${userId}`).set(accountData);
       }
       
       setNewAccount({ email: '', password: '', type: 'LP' });
@@ -167,9 +227,11 @@ function SOLPortal() {
   };
 
   const handleDeleteAccount = async (accountId, type) => {
-    if (confirm('Account wirklich löschen?')) {
+    if (!window.firebase || !firebaseLoaded) return;
+
+    if (window.confirm('Account wirklich löschen?')) {
       const refPath = type === 'LP' ? `lpAccounts/${accountId}` : `susAccounts/${accountId}`;
-      await remove(ref(database, refPath));
+      await window.firebase.database().ref(refPath).remove();
     }
   };
 
@@ -177,6 +239,19 @@ function SOLPortal() {
     const subject = subjects.find(s => s.name === subjectName);
     return subject ? subject.color : 'bg-gray-300';
   };
+
+  if (!firebaseLoaded) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Firebase wird geladen...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -212,20 +287,6 @@ function SOLPortal() {
               {loading ? 'Anmelden...' : 'Anmelden'}
             </button>
           </div>
-        </div>password}
-                onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 disabled:opacity-50"
-            >
-              {loading ? 'Anmelden...' : 'Anmelden'}
-            </button>
-          </form>
         </div>
       </div>
     );
