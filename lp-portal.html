@@ -125,13 +125,13 @@
                     <div id="arbeitsplan-content" class="tab-content hidden">
                         <h2 class="text-2xl font-semibold mb-6 text-gray-800">Arbeitsplan der Woche</h2>
                         <p class="text-gray-600 mb-6">Hier können Sie Aufträge für die SOL-Fächer erstellen und verwalten.</p>
-                        <button id="addTaskButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button text-base font-semibold mb-6">
-                            ➕ Neue Aufgabe erstellen
-                        </button>
-                        <div id="tasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <!-- Tasks will be rendered here -->
+                        <!-- Removed global addTaskButton as it will now be in each column -->
+                        <p id="noSolSubjectsMessage" class="text-gray-500 text-center mt-8 hidden">
+                            Bitte definieren Sie zuerst SOL-Fächer in der <span class="font-semibold">Verwaltung</span>, um Aufgaben hinzuzufügen.
+                        </p>
+                        <div id="tasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <!-- Task columns will be rendered here -->
                         </div>
-                        <p id="noTasksMessage" class="text-gray-500 text-center mt-8 hidden">Noch keine Aufgaben erstellt.</p>
                     </div>
 
                     <div id="verwaltung-content" class="tab-content">
@@ -359,21 +359,21 @@
         let currentTaskEntry = null;
 
         const subjects = [
-            { name: 'Deutsch', color: 'bg-red-500' },
-            { name: 'Englisch', color: 'bg-blue-500' },
-            { name: 'Franzoesisch', color: 'bg-purple-500' },
-            { name: 'Mathematik', color: 'bg-green-500' },
-            { name: 'Natur und Technik', color: 'bg-yellow-500' },
-            { name: 'NT / MI', color: 'bg-yellow-400' },
-            { name: 'Raeume Zeiten Gesellschaften', color: 'bg-orange-500' },
-            { name: 'Ethik Religion Gemeinschaft', color: 'bg-pink-500' },
-            { name: 'Bewegung und Sport', color: 'bg-red-600' },
-            { name: 'Textiles und Technisches Gestalten', color: 'bg-indigo-500' },
-            { name: 'Musik', color: 'bg-violet-500' },
-            { name: 'Bildnerisches Gestalten', color: 'bg-teal-500' },
-            { name: 'Lernatelier', color: 'bg-gray-500' },
-            { name: 'Individuelle Vertiefung', color: 'bg-cyan-500' },
-            { name: 'Wirtschaft, Arbeit, Haushalt', color: 'bg-amber-500' } // Neues Fach hinzugefügt
+            { name: 'Deutsch', color: 'bg-red-400', lightColor: 'bg-red-50', textColor: 'text-red-700' },
+            { name: 'Englisch', color: 'bg-blue-400', lightColor: 'bg-blue-50', textColor: 'text-blue-700' },
+            { name: 'Franzoesisch', color: 'bg-purple-400', lightColor: 'bg-purple-50', textColor: 'text-purple-700' },
+            { name: 'Mathematik', color: 'bg-green-400', lightColor: 'bg-green-50', textColor: 'text-green-700' },
+            { name: 'Natur und Technik', color: 'bg-yellow-400', lightColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
+            { name: 'NT / MI', color: 'bg-yellow-300', lightColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
+            { name: 'Raeume Zeiten Gesellschaften', color: 'bg-orange-400', lightColor: 'bg-orange-50', textColor: 'text-orange-700' },
+            { name: 'Ethik Religion Gemeinschaft', color: 'bg-pink-400', lightColor: 'bg-pink-50', textColor: 'text-pink-700' },
+            { name: 'Bewegung und Sport', color: 'bg-red-500', lightColor: 'bg-red-50', textColor: 'text-red-700' }, // Slightly darker red for sport
+            { name: 'Textiles und Technisches Gestalten', color: 'bg-indigo-400', lightColor: 'bg-indigo-50', textColor: 'text-indigo-700' },
+            { name: 'Musik', color: 'bg-violet-400', lightColor: 'bg-violet-50', textColor: 'text-violet-700' },
+            { name: 'Bildnerisches Gestalten', color: 'bg-teal-400', lightColor: 'bg-teal-50', textColor: 'text-teal-700' },
+            { name: 'Lernatelier', color: 'bg-gray-400', lightColor: 'bg-gray-50', textColor: 'text-gray-700' },
+            { name: 'Individuelle Vertiefung', color: 'bg-cyan-400', lightColor: 'bg-cyan-50', textColor: 'text-cyan-700' },
+            { name: 'Wirtschaft, Arbeit, Haushalt', color: 'bg-amber-400', lightColor: 'bg-amber-50', textColor: 'text-amber-700' }
         ];
 
         // Angepasste Zeitfenster
@@ -535,8 +535,8 @@
             document.getElementById('weeklyPlanCancelButton').addEventListener('click', hideWeeklyPlanEditModal);
             document.getElementById('weeklyPlanDeleteButton').addEventListener('click', handleDeleteWeeklyPlanEntry);
 
-            // Event Listener für Arbeitsplan-Funktionen
-            document.getElementById('addTaskButton').addEventListener('click', () => showTaskEditModal());
+            // Event Listener für Arbeitsplan-Funktionen (globaler Button entfernt)
+            // document.getElementById('addTaskButton').addEventListener('click', () => showTaskEditModal());
             document.getElementById('taskForm').addEventListener('submit', handleSaveTask);
             document.getElementById('taskCancelButton').addEventListener('click', hideTaskEditModal);
             document.getElementById('taskDeleteButton').addEventListener('click', handleDeleteTask);
@@ -607,10 +607,12 @@
                     solSubjects = docSnapshot.data().subjects || [];
                     updateSolSubjectsDisplay();
                     updateWeeklyPlanDisplay(); // Aktualisiere auch den Wochenplan
+                    updateArbeitsplanDisplay(); // Wichtig: Aktualisiere Arbeitsplan, wenn SOL-Fächer sich ändern
                 } else {
                     solSubjects = [];
                     updateSolSubjectsDisplay();
                     updateWeeklyPlanDisplay();
+                    updateArbeitsplanDisplay();
                 }
             }, (error) => {
                 console.error("Fehler beim Abrufen der SOL-Fächer:", error);
@@ -1048,11 +1050,11 @@
                         const entrySubjectColor = subjects.find(s => s.name === weeklyEntry.subjectName)?.color || 'bg-gray-200';
                         cell.classList.add(entrySubjectColor);
                         // Textfarbe basierend auf Hintergrund für besseren Kontrast bestimmen
-                        if (['bg-red-500', 'bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-orange-500',
-                             'bg-pink-500', 'bg-red-600', 'bg-indigo-500', 'bg-violet-500', 'bg-cyan-500',
-                             'bg-amber-500', 'bg-gray-500'].includes(entrySubjectColor)) {
+                        if (['bg-red-400', 'bg-blue-400', 'bg-purple-400', 'bg-green-400', 'bg-orange-400',
+                             'bg-pink-400', 'bg-red-500', 'bg-indigo-400', 'bg-violet-400', 'bg-cyan-400',
+                             'bg-amber-400', 'bg-gray-400'].includes(entrySubjectColor)) {
                             cell.classList.add('text-white');
-                        } else if (['bg-yellow-500', 'bg-yellow-400', 'bg-teal-500', 'bg-gray-200'].includes(entrySubjectColor)) {
+                        } else if (['bg-yellow-400', 'bg-yellow-300', 'bg-teal-400', 'bg-gray-200'].includes(entrySubjectColor)) {
                             cell.classList.add('text-gray-900'); // Dunklerer Text für hellere Hintergründe
                         } else {
                             cell.classList.add('text-gray-700'); // Standard-Fallback
@@ -1077,11 +1079,11 @@
                         cell.classList.add(annualSubjectColor); // Die spezifische Farbe des Fachs anwenden
 
                         // Textfarbe basierend auf Hintergrund für besseren Kontrast bestimmen
-                        if (['bg-red-500', 'bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-orange-500',
-                             'bg-pink-500', 'bg-red-600', 'bg-indigo-500', 'bg-violet-500', 'bg-cyan-500',
-                             'bg-amber-500', 'bg-gray-500'].includes(annualSubjectColor)) {
+                        if (['bg-red-400', 'bg-blue-400', 'bg-purple-400', 'bg-green-400', 'bg-orange-400',
+                             'bg-pink-400', 'bg-red-500', 'bg-indigo-400', 'bg-violet-400', 'bg-cyan-400',
+                             'bg-amber-400', 'bg-gray-400'].includes(annualSubjectColor)) {
                             cell.classList.add('text-white');
-                        } else if (['bg-yellow-500', 'bg-yellow-400', 'bg-teal-500', 'bg-gray-200'].includes(annualSubjectColor)) {
+                        } else if (['bg-yellow-400', 'bg-yellow-300', 'bg-teal-400', 'bg-gray-200'].includes(annualSubjectColor)) {
                             cell.classList.add('text-gray-900'); // Dunklerer Text für hellere Hintergründe
                         } else {
                             cell.classList.add('text-gray-700'); // Standard-Fallback
@@ -1267,49 +1269,102 @@
 
         function updateArbeitsplanDisplay() {
             const tasksContainer = document.getElementById('tasksContainer');
-            const noTasksMessage = document.getElementById('noTasksMessage');
+            const noSolSubjectsMessage = document.getElementById('noSolSubjectsMessage');
             tasksContainer.innerHTML = ''; // Clear existing tasks
 
-            if (weeklyTasks.length === 0) {
-                noTasksMessage.classList.remove('hidden');
+            if (solSubjects.length === 0) {
+                noSolSubjectsMessage.classList.remove('hidden');
+                tasksContainer.classList.add('hidden'); // Hide the grid if no SOL subjects
+                return;
             } else {
-                noTasksMessage.classList.add('hidden');
-                weeklyTasks.forEach(task => {
-                    const taskCard = document.createElement('div');
-                    taskCard.className = 'bg-white rounded-lg shadow-md p-6 relative';
-                    taskCard.setAttribute('data-task-id', task.id);
-
-                    const subjectColor = subjects.find(s => s.name === task.subject)?.color || 'bg-gray-200';
-
-                    taskCard.innerHTML = `
-                        <div class="absolute top-4 right-4 text-2xl">
-                            ${task.requirementType === 'basic' ? '🔵' : '⭐'}
-                        </div>
-                        <div class="flex items-center mb-3">
-                            <div class="w-4 h-4 rounded-full ${subjectColor} mr-3"></div>
-                            <h4 class="text-lg font-semibold text-gray-800">${task.subject}</h4>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 text-gray-900">${task.title}</h3>
-                        ${task.materials ? `<p class="text-gray-700 text-sm mb-4 whitespace-pre-wrap">${task.materials}</p>` : ''}
-                        <div class="text-xs text-gray-500 mt-2">Erstellt von: ${task.createdBy} am ${new Date(task.createdAt).toLocaleDateString()}</div>
-                        <button class="edit-task-button absolute bottom-4 right-4 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm modern-button">Bearbeiten</button>
-                    `;
-
-                    // Add event listener for edit button
-                    const editButton = taskCard.querySelector('.edit-task-button');
-                    if (user && lpAccounts.some(acc => acc.id === user.uid)) {
-                        editButton.classList.remove('hidden');
-                        editButton.addEventListener('click', () => showTaskEditModal(task));
-                    } else {
-                        editButton.classList.add('hidden');
-                    }
-
-                    tasksContainer.appendChild(taskCard);
-                });
+                noSolSubjectsMessage.classList.add('hidden');
+                tasksContainer.classList.remove('hidden'); // Show the grid
             }
+
+            solSubjects.forEach(solSubjectName => {
+                const subjectData = subjects.find(s => s.name === solSubjectName);
+                const cardBgColor = subjectData?.lightColor || 'bg-gray-100';
+                const cardTextColor = subjectData?.textColor || 'text-gray-900';
+                const borderColor = subjectData?.color || 'border-gray-200';
+
+                const subjectColumn = document.createElement('div');
+                subjectColumn.className = `bg-white rounded-xl shadow-lg p-4 border-t-4 ${borderColor}`;
+
+                subjectColumn.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold ${cardTextColor}">${solSubjectName}</h3>
+                        <button class="add-task-to-column-button text-2xl text-blue-500 hover:text-blue-700 modern-button" data-subject="${solSubjectName}">
+                            ➕
+                        </button>
+                    </div>
+                    <div class="tasks-list space-y-4">
+                        <!-- Tasks for this subject will go here -->
+                    </div>
+                `;
+
+                const tasksList = subjectColumn.querySelector('.tasks-list');
+                const addTaskButton = subjectColumn.querySelector('.add-task-to-column-button');
+
+                // Only allow LP to add tasks
+                const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
+                if (isUserLP) {
+                    addTaskButton.classList.remove('hidden');
+                    addTaskButton.addEventListener('click', function() {
+                        showTaskEditModal(null, this.dataset.subject); // Pass subject name
+                    });
+                } else {
+                    addTaskButton.classList.add('hidden');
+                }
+
+                const filteredTasks = weeklyTasks.filter(task => task.subject === solSubjectName);
+
+                if (filteredTasks.length === 0) {
+                    const noTasksInColumn = document.createElement('p');
+                    noTasksInColumn.className = `text-sm text-gray-500 italic text-center p-4 ${cardTextColor}`;
+                    noTasksInColumn.textContent = 'Noch keine Aufgaben für dieses Fach.';
+                    tasksList.appendChild(noTasksInColumn);
+                } else {
+                    filteredTasks.forEach(task => {
+                        const taskCard = document.createElement('div');
+                        taskCard.className = `bg-white rounded-lg shadow-sm p-4 relative border-l-2 ${borderColor}`; // Smaller border for individual tasks
+                        taskCard.setAttribute('data-task-id', task.id);
+
+                        // Ensure link is clickable and opens in new tab
+                        const materialsHtml = task.materials ? 
+                            task.materials.split('\n').map(line => {
+                                try {
+                                    const url = new URL(line.trim());
+                                    return `<a href="${url.href}" target="_blank" class="text-blue-600 hover:underline block">${line.trim()}</a>`;
+                                } catch (_) {
+                                    return `<span>${line.trim()}</span>`;
+                                }
+                            }).join('<br>') : '';
+
+                        taskCard.innerHTML = `
+                            <div class="absolute top-2 right-2 text-xl ${cardTextColor}">
+                                ${task.requirementType === 'basic' ? '🔵' : '⭐'}
+                            </div>
+                            <h4 class="text-md font-semibold mb-1 ${cardTextColor}">${task.title}</h4>
+                            ${materialsHtml ? `<p class="${cardTextColor} text-xs mb-2 whitespace-pre-wrap">${materialsHtml}</p>` : ''}
+                            <button class="edit-task-button absolute bottom-2 right-2 px-2 py-0.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-xs modern-button">Bearbeiten</button>
+                        `;
+
+                        const editButton = taskCard.querySelector('.edit-task-button');
+                        if (isUserLP) {
+                            editButton.classList.remove('hidden');
+                            editButton.addEventListener('click', () => showTaskEditModal(task));
+                        } else {
+                            editButton.classList.add('hidden');
+                        }
+                        tasksList.appendChild(taskCard);
+                    });
+                }
+                tasksContainer.appendChild(subjectColumn);
+            });
         }
 
-        function showTaskEditModal(task = null) {
+
+        function showTaskEditModal(task = null, initialSubject = null) {
             const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
             if (!isUserLP) {
                 showCustomMessage('Nur Lehrpersonen können Aufgaben bearbeiten.', 'info', 'Zugriff verweigert');
@@ -1329,6 +1384,16 @@
 
             // Populate subject select
             subjectSelect.innerHTML = '';
+            // Add a default empty option for new tasks if not pre-filled
+            if (!initialSubject && !task) {
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Fach auswählen';
+                defaultOption.disabled = true;
+                defaultOption.selected = true;
+                subjectSelect.appendChild(defaultOption);
+            }
+
             subjects.forEach(subject => {
                 const option = document.createElement('option');
                 option.value = subject.name;
@@ -1348,12 +1413,24 @@
                 }
                 deleteButton.classList.remove('hidden');
                 form.dataset.taskId = task.id; // Store task ID for editing/deleting
+                subjectSelect.disabled = true; // Disable subject selection when editing
+                subjectSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
             } else {
                 document.getElementById('taskModalTitle').textContent = 'Neue Aufgabe erstellen';
                 form.reset();
                 basicRadio.checked = true; // Default for new tasks
                 deleteButton.classList.add('hidden');
                 form.dataset.taskId = ''; // Clear task ID for new tasks
+                
+                if (initialSubject) {
+                    subjectSelect.value = initialSubject;
+                    subjectSelect.disabled = true; // Disable subject selection if pre-filled
+                    subjectSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
+                } else {
+                    subjectSelect.value = ''; // Ensure default option is selected for new tasks
+                    subjectSelect.disabled = false; // Enable subject selection
+                    subjectSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                }
             }
 
             modal.classList.remove('hidden');
@@ -1363,6 +1440,10 @@
             document.getElementById('taskEditModal').classList.add('hidden');
             document.getElementById('taskForm').reset();
             currentTaskEntry = null; // Reset global currentTaskEntry
+            // Ensure subject select is re-enabled and styling reset when modal closes
+            const subjectSelect = document.getElementById('taskSubject');
+            subjectSelect.disabled = false;
+            subjectSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
         }
 
         async function handleSaveTask(event) {
