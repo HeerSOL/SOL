@@ -32,6 +32,31 @@
             transform: translateY(0);
             box-shadow: none;
         }
+        /* Progress Bar Styling */
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 9999px; /* Full rounded corners */
+            overflow: hidden;
+            height: 24px; /* Fixed height for the bar */
+            display: flex;
+        }
+        .progress-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem; /* text-sm */
+            transition: width 0.5s ease-in-out;
+            white-space: nowrap; /* Prevent text wrapping */
+            overflow: hidden; /* Hide overflow text */
+            text-overflow: clip; /* Clip text that overflows */
+        }
+        .segment-red { background-color: #ef4444; } /* Tailwind red-500 */
+        .segment-yellow { background-color: #f59e0b; } /* Tailwind amber-500 */
+        .segment-green { background-color: #22c55e; } /* Tailwind green-500 */
     </style>
 </head>
 <body class="bg-gray-100">
@@ -94,42 +119,81 @@
                     </nav>
                 </div>
 
-                <!-- Tab Content -->
-                <div id="subjects-content" class="tab-content hidden">
-                    <h2 class="text-2xl font-semibold mb-6 text-gray-800">Fächer & Lernziele definieren</h2>
-                    <div id="subjectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        <!-- Subjects will be rendered here -->
+                <!-- Main Content Views -->
+                <div id="mainContentViews">
+                    <!-- Subjects Overview Tab Content -->
+                    <div id="subjects-overview-view" class="main-view hidden">
+                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Fächer & Lernziele definieren</h2>
+                        <div id="subjectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <!-- Subjects will be rendered here -->
+                        </div>
                     </div>
-                </div>
 
-                <div id="students-content" class="tab-content hidden">
-                    <h2 class="text-2xl font-semibold mb-6 text-gray-800">Schüler-Beurteilung</h2>
-                    <p class="text-gray-600 mb-6">Wählen Sie einen Schüler, um seine Beurteilungen zu verwalten.</p>
-                    <div id="studentList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        <!-- Student cards will be rendered here -->
+                    <!-- Subject Detail View -->
+                    <div id="subject-detail-view" class="main-view hidden">
+                        <button id="backToSubjectsButton" class="modern-button px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 mb-6">
+                            ← Zurück zu Fächern
+                        </button>
+                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Lernziele für <span id="subjectDetailName" class="font-bold"></span></h2>
+                        <div class="mb-4">
+                            <button id="addLearningGoalButton" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button">
+                                + Lernziel hinzufügen
+                            </button>
+                        </div>
+                        <div id="learningGoalsList" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                            <!-- Learning goals will be dynamically added here -->
+                        </div>
                     </div>
-                    <p id="noStudentsMessage" class="text-gray-500 text-center mt-8 hidden">
-                        Es sind noch keine Schüler-Accounts vorhanden.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Learning Goal Modal -->
-    <div id="learningGoalModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
-        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-2xl w-full mx-4">
-            <h3 class="text-xl font-semibold mb-4 text-gray-900" id="learningGoalModalTitle">Lernziele für <span id="modalSubjectName" class="font-bold"></span></h3>
-            <div class="mb-4">
-                <button id="addLearningGoalButton" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button">
-                    + Lernziel hinzufügen
-                </button>
-            </div>
-            <div id="learningGoalsList" class="space-y-4 max-h-96 overflow-y-auto pr-2">
-                <!-- Learning goals will be dynamically added here -->
-            </div>
-            <div class="flex justify-end space-x-4 mt-6">
-                <button id="closeLearningGoalModal" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 modern-button">Schliessen</button>
+                    <!-- Students Overview Tab Content -->
+                    <div id="students-overview-view" class="main-view hidden">
+                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Schüler-Beurteilung</h2>
+                        <p class="text-gray-600 mb-6">Wählen Sie einen Schüler, um seine Beurteilungen zu verwalten.</p>
+                        <div id="studentList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <!-- Student cards will be rendered here -->
+                        </div>
+                        <p id="noStudentsMessage" class="text-gray-500 text-center mt-8 hidden">
+                            Es sind noch keine Schüler-Accounts vorhanden.
+                        </p>
+                    </div>
+
+                    <!-- Student Detail View (List of Subjects for a Student) -->
+                    <div id="student-detail-view" class="main-view hidden">
+                        <button id="backToStudentsButton" class="modern-button px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 mb-6">
+                            ← Zurück zu Schülern
+                        </button>
+                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Beurteilungsübersicht für <span id="studentDetailName" class="font-bold"></span></h2>
+                        <div id="studentSubjectOverview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Subject overview cards for the student will be rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- Student Subject Assessment View (Assess Learning Goals for a Student in a Specific Subject) -->
+                    <div id="student-subject-assessment-view" class="main-view hidden">
+                        <button id="backToStudentOverviewButton" class="modern-button px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 mb-6">
+                            ← Zurück zur Schülerübersicht
+                        </button>
+                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Beurteilung für <span id="assessmentStudentName" class="font-bold"></span> in <span id="assessmentSubjectName" class="font-bold"></span></h2>
+
+                        <div id="assessmentLearningGoalsList" class="space-y-6 mb-8">
+                            <!-- Learning goals with assessment options will be dynamically added here -->
+                        </div>
+
+                        <button id="saveStudentAssessmentButton" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button text-lg font-semibold">
+                            Beurteilung speichern
+                        </button>
+
+                        <div class="mt-12 p-6 bg-gray-50 rounded-xl shadow-md">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-800">Grafische Auswertungen (Platzhalter)</h3>
+                            <p class="text-gray-600">Hier werden zukünftig Diagramme und detaillierte Auswertungen zur Lernzielerreichung angezeigt.</p>
+                            <div class="mt-4 text-center text-gray-400">
+                                <div class="text-5xl mb-2">📊</div>
+                                <p>Diagramme werden hier generiert.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>
@@ -217,10 +281,14 @@
         };
 
         let activeTab = 'subjects'; // Default tab for LP portal
+        let activeView = 'subjects-overview-view'; // Default sub-view within tabs
         let lpAccounts = [];
         let susAccounts = [];
-        let currentSubjectForGoals = null; // Stores the subject currently being edited for learning goals
-        let learningGoals = []; // Stores learning goals for the current subject
+        let currentSubjectForGoals = null; // Stores the subject currently being edited for learning goals (general)
+        let learningGoals = []; // Stores learning goals for the current subject (general)
+        let currentStudentForAssessment = null; // Stores the student object (id, name) currently being assessed
+        let currentSubjectForStudentAssessment = null; // Stores the subject name for the current student assessment
+        let studentAssessments = {}; // Stores the assessment status for each learning goal for the current student/subject
 
         const subjects = [
             { name: 'Deutsch', color: 'bg-red-500' },
@@ -237,9 +305,21 @@
             { name: 'Bewegung und Sport', color: 'bg-red-600' }
         ];
 
+        // Helper function to determine contrasting text color
+        function getContrastTextColor(bgColorClass) {
+            // A more robust approach would calculate luminance, but for Tailwind classes,
+            // we can map known light colors to dark text and assume others are dark enough for white.
+            const lightColors = ['bg-yellow-500', 'bg-yellow-400', 'bg-teal-500', 'bg-blue-100', 'bg-gray-100'];
+            if (lightColors.includes(bgColorClass)) {
+                return 'text-gray-900'; // Use dark text for light backgrounds
+            }
+            return 'text-white'; // Use white text for other (assumed darker) backgrounds
+        }
+
         // Helper to get a Firestore document (now using getDoc for a single fetch)
         async function getFirestoreDoc(dbInstance, collectionName, docId) {
-            const docRef = doc(dbInstance, collectionName, docId); // Adjusted for root-level collections
+            // Use the simplified path construction, assuming collectionName is top-level
+            const docRef = doc(dbInstance, collectionName, docId);
             try {
                 const docSnapshot = await getDoc(docRef);
                 return docSnapshot;
@@ -286,11 +366,8 @@
                     hideLoadingScreen();
                 });
 
-                // Removed initial signInWithCustomToken and signInAnonymously calls
-                // These are no longer needed here as the login flow is explicit via email/password.
-
                 initializeEventListeners();
-                renderSubjectsGrid(); // Initial render of subjects
+                renderSubjectsGrid(); // Initial render of subjects overview
             } catch (error) {
                 console.error('Fehler bei Firebase-Initialisierung:', error);
                 showCustomMessage('Firebase-Initialisierung fehlgeschlagen: ' + error.message, 'error', 'Initialisierungsfehler');
@@ -312,7 +389,9 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('userEmail').textContent = user ? user.email : 'Gast';
+            // Initially show the subjects overview when main app loads
             switchTab(activeTab);
+            navigateToView(activeView);
         }
 
         function switchTab(tabName) {
@@ -329,18 +408,32 @@
                 }
             });
 
-            const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => {
-                content.classList.add('hidden');
-            });
-            document.getElementById(tabName + '-content').classList.remove('hidden');
-
+            // Determine which sub-view to show based on the tab
             if (tabName === 'subjects') {
-                renderSubjectsGrid();
+                activeView = 'subjects-overview-view';
             } else if (tabName === 'students') {
+                activeView = 'students-overview-view';
+            }
+            navigateToView(activeView);
+        }
+
+        function navigateToView(viewId) {
+            activeView = viewId;
+            const allViews = document.querySelectorAll('.main-view');
+            allViews.forEach(view => {
+                view.classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+
+            // Specific actions for each view
+            if (viewId === 'subjects-overview-view') {
+                renderSubjectsGrid();
+            } else if (viewId === 'students-overview-view') {
                 updateStudentListDisplay();
             }
+            // For detail views, content is rendered when navigating to them
         }
+
 
         // --- Custom Modals ---
         function showCustomMessage(message, type = 'info', title = 'Nachricht') {
@@ -394,9 +487,23 @@
                 });
             });
 
-            // Learning Goal Modal Listeners
+            // Learning Goal Detail View Listeners (for general subject learning goals)
+            document.getElementById('backToSubjectsButton').addEventListener('click', () => navigateToView('subjects-overview-view'));
             document.getElementById('addLearningGoalButton').addEventListener('click', () => showAddEditLearningGoalModal());
-            document.getElementById('closeLearningGoalModal').addEventListener('click', hideLearningGoalModal);
+
+            // Student Detail View Listeners (overview of subjects for a student)
+            document.getElementById('backToStudentsButton').addEventListener('click', () => navigateToView('students-overview-view'));
+
+            // Student Subject Assessment View Listeners
+            document.getElementById('backToStudentOverviewButton').addEventListener('click', () => {
+                // Return to the student's main overview page
+                if (currentStudentForAssessment) {
+                    showStudentDetailView(currentStudentForAssessment.id, currentStudentForAssessment.name);
+                } else {
+                    navigateToView('students-overview-view');
+                }
+            });
+            document.getElementById('saveStudentAssessmentButton').addEventListener('click', handleSaveStudentAssessment);
 
             // Add/Edit Learning Goal Form Modal Listeners
             document.getElementById('learningGoalForm').addEventListener('submit', handleSaveLearningGoal);
@@ -427,8 +534,8 @@
                 const lpDoc = await getFirestoreDoc(db, 'lpAccounts', loggedInUserId);
                 // IMPORTANT: Check for existence AND the role field
                 if (lpDoc.exists() && lpDoc.data().role === 'LP') {
-                    // If it's an LP account, onAuthStateChanged will be triggered
-                    // and will handle showing the main app and loading data.
+                            showMainApp(); // Show main app if LP
+                            await loadUserData(); // Load data after successful LP login
                 } else {
                     // If not an LP account, sign out immediately and show error.
                     await signOut(auth);
@@ -447,7 +554,8 @@
             try {
                 await signOut(auth);
                 activeTab = 'subjects'; // Reset tab on logout
-                switchTab('subjects');
+                activeView = 'subjects-overview-view'; // Reset view on logout
+                navigateToView(activeView); // Show the default view
             } catch (error) {
                 console.error("Error logging out:", error);
                 showCustomMessage("Fehler beim Abmelden: " + error.message, 'error', 'Abmeldefehler');
@@ -467,7 +575,6 @@
                 querySnapshot.forEach((doc) => {
                     lpAccounts.push({ id: doc.id, ...doc.data() });
                 });
-                // updateLpAccountsDisplay(); // Not needed in this portal
             }, (error) => {
                 console.error("Error fetching LP accounts:", error);
                 showCustomMessage("Fehler beim Laden der LP-Accounts: " + error.message, 'error', 'Ladefehler');
@@ -485,8 +592,8 @@
                 showCustomMessage("Fehler beim Laden der SuS-Accounts: " + error.message, 'error', 'Ladefehler');
             });
 
-            // Listen to learning goals for the currently selected subject
-            // This listener will be set up when showLearningGoalModal is called
+            // Listeners for learning goals will be set up when subject detail view is opened
+            // Listeners for student assessments will be up when student subject assessment view is opened
         }
 
         // --- Subjects & Learning Goals Tab ---
@@ -496,41 +603,59 @@
 
             subjects.forEach(subject => {
                 const subjectCard = document.createElement('div');
-                subjectCard.className = `bg-white rounded-xl shadow-lg p-6 cursor-pointer transform transition-transform hover:scale-105 ${subject.color} text-white flex flex-col items-center justify-center text-center`;
+                // Use the helper function to get the correct text color
+                const textColorClass = getContrastTextColor(subject.color);
+
+                subjectCard.className = `bg-white rounded-xl shadow-lg p-6 cursor-pointer transform transition-transform hover:scale-105 ${subject.color} ${textColorClass} flex flex-col items-center justify-center text-center`;
                 subjectCard.style.minHeight = '150px'; // Ensure cards have a consistent height
                 subjectCard.setAttribute('data-subject-name', subject.name);
-                subjectCard.addEventListener('click', () => openLearningGoalModal(subject.name));
+                subjectCard.innerHTML = `
+                    <h3 class="text-xl font-bold mb-2">${subject.name}</h3>
+                    <p class="text-sm opacity-90">Lernziele definieren</p>
+                `;
+                subjectCard.addEventListener('click', () => showSubjectDetailView(subject.name));
                 subjectsGrid.appendChild(subjectCard);
             });
         }
 
-        async function openLearningGoalModal(subjectName) {
+        async function showSubjectDetailView(subjectName) {
             if (!isAuthReady || !user) {
                 showCustomMessage("Bitte melden Sie sich an, um Lernziele zu verwalten.", 'warning', 'Anmeldung erforderlich');
                 return;
             }
 
             currentSubjectForGoals = subjectName;
-            document.getElementById('modalSubjectName').textContent = subjectName;
-            document.getElementById('learningGoalModal').classList.remove('hidden');
+            document.getElementById('subjectDetailName').textContent = subjectName;
+            navigateToView('subject-detail-view');
 
-            // Listen to learning goals for this specific subject
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'assessment', 'subjects', subjectName, 'learningGoals'), (querySnapshot) => {
+            // Explicitly build the collection reference for learning goals
+            const learningGoalsCollectionRef = collection(
+                doc(
+                    collection(
+                        doc(db, 'artifacts', appId), // Path: artifacts/{appId} (Document)
+                        'assessment_data' // Path: artifacts/{appId}/assessment_data (Collection)
+                    ),
+                    subjectName // Path: artifacts/{appId}/assessment_data/{subjectName} (Document)
+                ),
+                'learningGoals' // Path: artifacts/{appId}/assessment_data/{subjectName}/learningGoals (Collection)
+            );
+            console.log(`[showSubjectDetailView] Constructed learningGoalsCollectionRef path: artifacts/${appId}/assessment_data/${subjectName}/learningGoals`);
+
+
+            onSnapshot(learningGoalsCollectionRef, (querySnapshot) => {
+                console.log('onSnapshot triggered for general learning goals. Query Snapshot size:', querySnapshot.size);
+                console.log('Documents in snapshot:', querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+
                 learningGoals = [];
                 querySnapshot.forEach((doc) => {
                     learningGoals.push({ id: doc.id, ...doc.data() });
                 });
+                console.log('General learning goals array AFTER onSnapshot update:', learningGoals);
                 renderLearningGoalsList();
             }, (error) => {
                 console.error("Error fetching learning goals:", error);
                 showCustomMessage("Fehler beim Laden der Lernziele: " + error.message, 'error', 'Ladefehler');
             });
-        }
-
-        function hideLearningGoalModal() {
-            document.getElementById('learningGoalModal').classList.add('hidden');
-            currentSubjectForGoals = null;
-            learningGoals = []; // Clear goals when modal is closed
         }
 
         function renderLearningGoalsList() {
@@ -600,8 +725,13 @@
         async function handleSaveLearningGoal(event) {
             event.preventDefault();
 
-            if (!isAuthReady || !user || !currentSubjectForGoals) {
-                showCustomMessage("Fehler: Nicht angemeldet oder kein Fach ausgewählt.", 'error', 'Fehler');
+            if (!isAuthReady || !user) {
+                showCustomMessage("Fehler: Nicht angemeldet oder keine Berechtigung.", 'error', 'Fehler');
+                return;
+            }
+
+            if (!currentSubjectForGoals) {
+                showCustomMessage("Fehler: Kein Fach ausgewählt, für das Lernziele gespeichert werden sollen.", 'error', 'Fehler');
                 return;
             }
 
@@ -629,14 +759,32 @@
                     createdBy: user.email
                 };
 
+                // Explicitly build the document reference for saving/updating learning goals
+                const learningGoalsCollectionRef = collection(
+                    doc(
+                        collection(
+                            doc(db, 'artifacts', appId),
+                            'assessment_data'
+                        ),
+                        currentSubjectForGoals
+                    ),
+                    'learningGoals'
+                );
+
+                const learningGoalDocRef = goalId ?
+                    doc(learningGoalsCollectionRef, goalId) :
+                    doc(learningGoalsCollectionRef);
+
+                console.log(`[handleSaveLearningGoal] Constructed learningGoalDocRef path: artifacts/${appId}/assessment_data/${currentSubjectForGoals}/learningGoals/${goalId || '(new ID)'}`);
+
+
                 if (goalId) {
-                    // Update existing goal
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assessment', 'subjects', currentSubjectForGoals, 'learningGoals', goalId), goalData);
+                    console.log('Updating existing general learning goal with ID:', goalId, 'for subject:', currentSubjectForGoals, 'with data:', goalData);
+                    await setDoc(learningGoalDocRef, goalData);
                     showCustomMessage('Lernziel erfolgreich aktualisiert!', 'success', 'Erfolg');
                 } else {
-                    // Add new goal (Firestore will auto-generate ID)
-                    const newDocRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'assessment', 'subjects', currentSubjectForGoals, 'learningGoals'));
-                    await setDoc(newDocRef, goalData);
+                    console.log('Adding new general learning goal for subject:', currentSubjectForGoals, 'with data:', goalData);
+                    await setDoc(learningGoalDocRef, goalData); // setDoc on a new docRef creates it
                     showCustomMessage('Lernziel erfolgreich hinzugefügt!', 'success', 'Erfolg');
                 }
                 hideAddEditLearningGoalModal();
@@ -665,7 +813,22 @@
                     deleteButton.textContent = 'Löschen...';
 
                     try {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assessment', 'subjects', currentSubjectForGoals, 'learningGoals', goalIdToDelete));
+                        // Explicitly build the document reference for deletion
+                        const learningGoalDocRef = doc(
+                            collection(
+                                doc(
+                                    collection(
+                                        doc(db, 'artifacts', appId),
+                                        'assessment_data'
+                                    ),
+                                    currentSubjectForGoals
+                                ),
+                                'learningGoals'
+                            ),
+                            goalIdToDelete
+                        );
+                        console.log('Deleting general learning goal with ID:', goalIdToDelete, 'from subject:', currentSubjectForGoals);
+                        await deleteDoc(learningGoalDocRef);
                         showCustomMessage('Lernziel erfolgreich gelöscht!', 'success', 'Gelöscht');
                         hideAddEditLearningGoalModal();
                     } catch (error) {
@@ -698,16 +861,328 @@
                     studentCard.innerHTML = `
                         <h3 class="text-xl font-bold text-blue-800">${firstName}</h3>
                     `;
-                    // studentCard.addEventListener('click', () => openStudentAssessmentPage(student.id, student.email)); // To be implemented later
+                    studentCard.addEventListener('click', () => showStudentDetailView(student.id, firstName));
                     studentListContainer.appendChild(studentCard);
                 });
             }
         }
 
-        // Placeholder for future student assessment page
-        function openStudentAssessmentPage(studentId, studentEmail) {
-            showCustomMessage(`Funktion zum Anzeigen der Beurteilungsseite für ${studentEmail} (ID: ${studentId}) wird noch implementiert.`, 'info', 'In Bearbeitung');
-            console.log(`Navigating to assessment page for student: ${studentEmail} (ID: ${studentId})`);
+        // Student Detail View (Overview of Subjects for a Student)
+        async function showStudentDetailView(studentId, studentName) {
+            if (!isAuthReady || !user) {
+                showCustomMessage("Bitte melden Sie sich an, um Schülerbeurteilungen zu verwalten.", 'warning', 'Anmeldung erforderlich');
+                return;
+            }
+
+            currentStudentForAssessment = { id: studentId, name: studentName };
+            document.getElementById('studentDetailName').textContent = studentName;
+            navigateToView('student-detail-view');
+
+            const studentSubjectOverviewContainer = document.getElementById('studentSubjectOverview');
+            studentSubjectOverviewContainer.innerHTML = ''; // Clear existing content
+
+            for (const subject of subjects) {
+                const subjectCard = document.createElement('div');
+                const textColorClass = getContrastTextColor(subject.color);
+
+                subjectCard.className = `bg-white rounded-xl shadow-lg p-6 cursor-pointer transform transition-transform hover:scale-105 ${subject.color} ${textColorClass} flex flex-col justify-between`;
+                subjectCard.style.minHeight = '180px'; // Ensure consistent height
+
+                // --- Calculate actual GA/EA progress ---
+                let gaTotalWeight = 0;
+                let gaFulfilledWeight = 0;
+                let gaPartiallyFulfilledWeight = 0;
+                let gaNotFulfilledWeight = 0;
+
+                let eaTotalWeight = 0;
+                let eaFulfilledWeight = 0;
+                let eaPartiallyFulfilledWeight = 0;
+                let eaNotFulfilledWeight = 0;
+
+                // 1. Fetch general learning goals for this subject
+                const learningGoalsCollectionRef = collection(
+                    doc(
+                        collection(
+                            doc(db, 'artifacts', appId),
+                            'assessment_data'
+                        ),
+                        subject.name
+                    ),
+                    'learningGoals'
+                );
+                console.log(`[showStudentDetailView] Fetching general learning goals for ${subject.name} from path: artifacts/${appId}/assessment_data/${subject.name}/learningGoals`);
+                const learningGoalsSnapshot = await getDocs(learningGoalsCollectionRef);
+                
+                const generalLearningGoals = [];
+                learningGoalsSnapshot.forEach(doc => {
+                    generalLearningGoals.push({ id: doc.id, ...doc.data() });
+                });
+                console.log(`[showStudentDetailView] Found ${generalLearningGoals.length} general learning goals for ${subject.name}.`);
+                console.log(`[showStudentDetailView] General learning goals for ${subject.name}:`, generalLearningGoals);
+
+
+                // 2. Fetch existing assessments for this student and subject
+                // Explicitly build the collection reference for student assessments
+                const studentAssessmentsCollectionRef = collection(
+                    doc(
+                        collection(
+                            doc(
+                                collection(
+                                    doc(db, 'artifacts', appId), // artifacts/{appId} (Document)
+                                    'assessment_data' // assessment_data (Collection)
+                                ),
+                                'students', // students (Collection) - THIS IS THE KEY FIX
+                                studentId // studentId (Document)
+                            ),
+                            'subjectAssessments' // subjectAssessments (Collection)
+                        ),
+                        subject.name // subject.name (Document)
+                    ),
+                    'assessments' // assessments (Collection)
+                );
+                console.log(`[showStudentDetailView] Constructed studentAssessmentsCollectionRef for ${studentName} in ${subject.name}. Full path: artifacts/${appId}/assessment_data/students/${studentId}/subjectAssessments/${subject.name}/assessments`);
+
+                const studentAssessmentsSnapshot = await getDocs(studentAssessmentsCollectionRef);
+                
+                const currentStudentAssessments = {};
+                studentAssessmentsSnapshot.forEach(doc => {
+                    currentStudentAssessments[doc.id] = doc.data().status;
+                });
+                console.log(`[showStudentDetailView] Found ${Object.keys(currentStudentAssessments).length} existing assessments for ${studentName} in ${subject.name}.`);
+                console.log(`[showStudentDetailView] Existing student assessments for ${studentName} in ${subject.name}:`, currentStudentAssessments);
+
+
+                // 3. Iterate through learning goals and calculate progress
+                generalLearningGoals.forEach(goal => {
+                    const status = currentStudentAssessments[goal.id] || 'not_assessed'; // Default if not assessed
+
+                    if (goal.type === 'GA') {
+                        gaTotalWeight += goal.weight;
+                        if (status === 'fulfilled') {
+                            gaFulfilledWeight += goal.weight;
+                        } else if (status === 'partially_fulfilled') {
+                            gaPartiallyFulfilledWeight += goal.weight;
+                        } else if (status === 'not_fulfilled') {
+                            gaNotFulfilledWeight += goal.weight;
+                        }
+                    } else if (goal.type === 'EA') {
+                        eaTotalWeight += goal.weight;
+                        if (status === 'fulfilled') {
+                            eaFulfilledWeight += goal.weight;
+                        } else if (status === 'partially_fulfilled') {
+                            eaPartiallyFulfilledWeight += goal.weight;
+                        } else if (status === 'not_fulfilled') {
+                            eaNotFulfilledWeight += goal.weight;
+                        }
+                    }
+                });
+
+                // Calculate percentages
+                const gaFulfilledPercent = gaTotalWeight > 0 ? (gaFulfilledWeight / gaTotalWeight) * 100 : 0;
+                const gaPartiallyFulfilledPercent = gaTotalWeight > 0 ? (gaPartiallyFulfilledWeight / gaTotalWeight) * 100 : 0;
+                const gaNotFulfilledPercent = gaTotalWeight > 0 ? (gaNotFulfilledWeight / gaTotalWeight) * 100 : 0;
+
+                const eaFulfilledPercent = eaTotalWeight > 0 ? (eaFulfilledWeight / eaTotalWeight) * 100 : 0;
+                const eaPartiallyFulfilledPercent = eaTotalWeight > 0 ? (eaPartiallyFulfilledWeight / eaTotalWeight) * 100 : 0;
+                const eaNotFulfilledPercent = eaTotalWeight > 0 ? (eaNotFulfilledWeight / eaTotalWeight) * 100 : 0;
+
+                console.log(`[showStudentDetailView] Calculated GA Percentages for ${subject.name}: F:${gaFulfilledPercent.toFixed(0)}%, P:${gaPartiallyFulfilledPercent.toFixed(0)}%, N:${gaNotFulfilledPercent.toFixed(0)}%`);
+                console.log(`[showStudentDetailView] Calculated EA Percentages for ${subject.name}: F:${eaFulfilledPercent.toFixed(0)}%, P:${eaPartiallyFulfilledPercent.toFixed(0)}%, N:${eaNotFulfilledPercent.toFixed(0)}%`);
+
+
+                subjectCard.innerHTML = `
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">${subject.name}</h3>
+                        <p class="text-sm opacity-90 mb-4">Beurteilung & Fortschritt</p>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <h4 class="font-medium text-sm mb-1">GA Fortschritt</h4>
+                            <div class="progress-bar-container">
+                                <div class="progress-segment segment-green" style="width: ${gaFulfilledPercent}%;">${gaFulfilledPercent.toFixed(0)}%</div>
+                                <div class="progress-segment segment-yellow" style="width: ${gaPartiallyFulfilledPercent}%;">${gaPartiallyFulfilledPercent.toFixed(0)}%</div>
+                                <div class="progress-segment segment-red" style="width: ${gaNotFulfilledPercent}%;">${gaNotFulfilledPercent.toFixed(0)}%</div>
+                            </div>
+                            <p class="text-xs opacity-80 mt-1">Erfüllt: ${gaFulfilledPercent.toFixed(0)}%, Teilw.: ${gaPartiallyFulfilledPercent.toFixed(0)}%, Nicht: ${gaNotFulfilledPercent.toFixed(0)}%</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-sm mb-1">EA Fortschritt</h4>
+                            <div class="progress-bar-container">
+                                <div class="progress-segment segment-green" style="width: ${eaFulfilledPercent}%;">${eaFulfilledPercent.toFixed(0)}%</div>
+                                <div class="progress-segment segment-yellow" style="width: ${eaPartiallyFulfilledPercent}%;">${eaPartiallyFulfilledPercent.toFixed(0)}%</div>
+                                <div class="progress-segment segment-red" style="width: ${eaNotFulfilledPercent}%;">${eaNotFulfilledPercent.toFixed(0)}%</div>
+                            </div>
+                            <p class="text-xs opacity-80 mt-1">Erfüllt: ${eaFulfilledPercent.toFixed(0)}%, Teilw.: ${eaPartiallyFulfilledPercent.toFixed(0)}%, Nicht: ${eaNotFulfilledPercent.toFixed(0)}%</p>
+                        </div>
+                    </div>
+                `;
+                subjectCard.addEventListener('click', () => showStudentSubjectAssessmentView(studentId, studentName, subject.name));
+                studentSubjectOverviewContainer.appendChild(subjectCard);
+            }
+        }
+
+        // Student Subject Assessment View (Assess Learning Goals for a Student in a Specific Subject)
+        async function showStudentSubjectAssessmentView(studentId, studentName, subjectName) {
+            if (!isAuthReady || !user) {
+                showCustomMessage("Bitte melden Sie sich an, um Schülerbeurteilungen zu verwalten.", 'warning', 'Anmeldung erforderlich');
+                return;
+            }
+
+            currentStudentForAssessment = { id: studentId, name: studentName }; // Ensure this is set
+            currentSubjectForStudentAssessment = subjectName; // Set the subject for assessment
+
+            document.getElementById('assessmentStudentName').textContent = studentName;
+            document.getElementById('assessmentSubjectName').textContent = subjectName;
+            navigateToView('student-subject-assessment-view');
+
+            const assessmentLearningGoalsList = document.getElementById('assessmentLearningGoalsList');
+            assessmentLearningGoalsList.innerHTML = ''; // Clear existing content
+
+            // Fetch general learning goals for the subject (explicitly built path)
+            const learningGoalsCollectionRef = collection(
+                doc(
+                    collection(
+                        doc(db, 'artifacts', appId),
+                        'assessment_data'
+                    ),
+                    subjectName
+                ),
+                'learningGoals'
+            );
+            console.log(`[showStudentSubjectAssessmentView] Fetching general learning goals for assessment from path: artifacts/${appId}/assessment_data/${subjectName}/learningGoals`);
+            const learningGoalsSnapshot = await getDocs(learningGoalsCollectionRef);
+            
+            console.log('[showStudentSubjectAssessmentView] Learning goals collection snapshot size:', learningGoalsSnapshot.size);
+            const generalLearningGoals = [];
+            learningGoalsSnapshot.forEach(doc => {
+                generalLearningGoals.push({ id: doc.id, ...doc.data() });
+            });
+            console.log('[showStudentSubjectAssessmentView] Fetched general learning goals for assessment:', generalLearningGoals);
+
+            // Fetch existing assessments for this student and subject (explicitly built path)
+            const studentAssessmentsCollectionRef = collection(
+                doc(
+                    collection(
+                        doc(
+                            collection(
+                                doc(db, 'artifacts', appId),
+                                'assessment_data'
+                            ),
+                            'students',
+                            studentId
+                        ),
+                        'subjectAssessments'
+                    ),
+                    subjectName
+                ),
+                'assessments'
+            );
+            console.log(`[showStudentSubjectAssessmentView] Constructed studentAssessmentsCollectionRef for ${studentName} in ${subjectName}. Full path: artifacts/${appId}/assessment_data/students/${studentId}/subjectAssessments/${subjectName}/assessments`);
+
+            const studentAssessmentsSnapshot = await getDocs(studentAssessmentsCollectionRef);
+            
+            console.log('[showStudentSubjectAssessmentView] Student assessments collection snapshot size:', studentAssessmentsSnapshot.size);
+            studentAssessments = {}; // Reset global studentAssessments object
+            studentAssessmentsSnapshot.forEach(doc => {
+                studentAssessments[doc.id] = doc.data().status; // Store status by goalId
+            });
+            console.log('[showStudentSubjectAssessmentView] Fetched existing student assessments:', studentAssessments);
+
+
+            if (generalLearningGoals.length === 0) {
+                assessmentLearningGoalsList.innerHTML = '<p class="text-gray-500 text-center py-4">Für dieses Fach sind noch keine Lernziele definiert.</p>';
+                return;
+            }
+
+            // Render each learning goal with assessment options
+            generalLearningGoals.forEach(goal => {
+                const currentStatus = studentAssessments[goal.id] || 'not_assessed'; // Default to 'not_assessed'
+                const goalItem = document.createElement('div');
+                goalItem.className = `bg-gray-50 p-5 rounded-lg shadow-sm border-l-4 ${goal.type === 'GA' ? 'border-blue-400' : 'border-purple-400'}`;
+                goalItem.innerHTML = `
+                    <p class="font-semibold text-gray-800 mb-2">${goal.description}</p>
+                    <p class="text-sm text-gray-600 mb-4">Typ: ${goal.type === 'GA' ? 'Grundanforderung (🔵)' : 'Erweiterte Anforderung (⭐)'} | Gewichtung: ${goal.weight}</p>
+                    <div class="flex items-center space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="assessment-${goal.id}" value="fulfilled" class="form-radio text-green-600 h-4 w-4" ${currentStatus === 'fulfilled' ? 'checked' : ''}>
+                            <span class="ml-2 text-gray-700">Erfüllt</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="assessment-${goal.id}" value="partially_fulfilled" class="form-radio text-yellow-600 h-4 w-4" ${currentStatus === 'partially_fulfilled' ? 'checked' : ''}>
+                            <span class="ml-2 text-gray-700">Teilweise Erfüllt</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="assessment-${goal.id}" value="not_fulfilled" class="form-radio text-red-600 h-4 w-4" ${currentStatus === 'not_fulfilled' ? 'checked' : ''}>
+                            <span class="ml-2 text-gray-700">Nicht Erfüllt</span>
+                        </label>
+                    </div>
+                `;
+                assessmentLearningGoalsList.appendChild(goalItem);
+            });
+        }
+
+        async function handleSaveStudentAssessment() {
+            if (!isAuthReady || !user) {
+                showCustomMessage("Fehler: Nicht angemeldet oder Schüler/Fach nicht ausgewählt.", 'error', 'Fehler');
+                return;
+            }
+
+            const saveButton = document.getElementById('saveStudentAssessmentButton');
+            saveButton.disabled = true;
+            saveButton.textContent = 'Speichern...';
+
+            try {
+                const assessmentLearningGoalsList = document.getElementById('assessmentLearningGoalsList');
+                const goalItems = assessmentLearningGoalsList.querySelectorAll('.bg-gray-50'); // Select each goal item
+
+                for (const goalItem of goalItems) {
+                    const goalId = goalItem.querySelector('input[type="radio"]').name.replace('assessment-', '');
+                    const selectedRadio = goalItem.querySelector(`input[name="assessment-${goalId}"]:checked`);
+                    const status = selectedRadio ? selectedRadio.value : 'not_assessed'; // Default if none selected
+
+                    const assessmentData = {
+                        status: status,
+                        assessedBy: user.email,
+                        assessedAt: new Date().toISOString()
+                    };
+
+                    // Save assessment for this specific goal, student, and subject (explicitly built path)
+                    const assessmentDocRef = doc(
+                        collection(
+                            doc(
+                                collection(
+                                    doc(
+                                        collection(
+                                            doc(db, 'artifacts', appId),
+                                            'assessment_data'
+                                        ),
+                                        'students',
+                                        currentStudentForAssessment.id
+                                    ),
+                                    'subjectAssessments'
+                                ),
+                                currentSubjectForStudentAssessment
+                            ),
+                            'assessments'
+                        ),
+                        goalId
+                    );
+
+                    await setDoc(assessmentDocRef, assessmentData);
+                    console.log(`Assessment saved for Goal ID: ${goalId}, Status: ${status}`);
+                }
+
+                showCustomMessage('Schülerbeurteilung erfolgreich gespeichert!', 'success', 'Erfolg');
+                // Re-render the student subject assessment view to reflect changes
+                showStudentSubjectAssessmentView(currentStudentForAssessment.id, currentStudentForAssessment.name, currentSubjectForStudentAssessment);
+
+            } catch (error) {
+                console.error("Fehler beim Speichern der Schülerbeurteilung:", error);
+                showCustomMessage('Fehler beim Speichern der Schülerbeurteilung: ' + error.message, 'error', 'Speicherfehler');
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = 'Beurteilung speichern';
+            }
         }
 
     </script>
