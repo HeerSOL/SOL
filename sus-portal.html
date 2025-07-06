@@ -85,9 +85,7 @@
             <div class="bg-white rounded-xl shadow-lg">
                 <div class="border-b border-gray-200">
                     <nav class="flex space-x-8 px-6">
-                        <button data-tab="tasks" class="tab-button py-4 px-2 border-b-2 font-medium text-base border-transparent text-gray-500 hover:text-gray-700 transition-colors">
-                            ✅ Aufträge der Woche
-                        </button>
+                        <!-- Removed "Aufträge der Woche" tab -->
                         <button data-tab="timetable" class="tab-button py-4 px-2 border-b-2 font-medium text-base border-transparent text-gray-500 hover:text-gray-700 transition-colors">
                             📅 Mein Stundenplan
                         </button>
@@ -95,17 +93,7 @@
                 </div>
 
                 <div class="p-8">
-                    <!-- Aufgaben-Tab -->
-                    <div id="tasks-content" class="tab-content hidden">
-                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Aufträge der Woche</h2>
-                        <p class="text-gray-600 mb-6">Hier findest du alle Aufgaben für die SOL-Fächer. Markiere sie als erledigt, wenn du fertig bist!</p>
-                        <p id="noTasksMessage" class="text-gray-500 text-center mt-8 hidden">
-                            Es gibt noch keine Aufgaben für diese Woche.
-                        </p>
-                        <div id="weeklyTasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            <!-- Weekly tasks will be rendered here -->
-                        </div>
-                    </div>
+                    <!-- Removed "Aufträge der Woche" content div -->
 
                     <!-- Stundenplan-Tab -->
                     <div id="timetable-content" class="tab-content hidden">
@@ -169,6 +157,13 @@
                     </select>
                 </div>
                 <div>
+                    <label for="studentPlanTask" class="block text-sm font-medium text-gray-700">Auftrag auswählen</label>
+                    <select id="studentPlanTask" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Sonstiges</option>
+                        <!-- Tasks for the selected subject will be dynamically added here -->
+                    </select>
+                </div>
+                <div>
                     <label for="studentPlanTimeSlot" class="block text-sm font-medium text-gray-700">Zeitfenster</label>
                     <input type="text" id="studentPlanTimeSlot" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed" readonly>
                 </div>
@@ -215,10 +210,10 @@
         let userId = null; // User ID (UID)
         let isAuthReady = false; // Flag to ensure DB operations wait for auth
 
-        let activeTab = 'tasks'; // Default tab for SuS portal
+        let activeTab = 'timetable'; // Default tab for SuS portal is now 'timetable'
         let timetable = {}; // Annual timetable from LP portal
         let solSubjects = []; // List of subjects defined as SOL
-        let weeklyTasks = []; // Weekly tasks from LP portal
+        let weeklyTasks = []; // Weekly tasks from LP portal (still needed for dropdown)
         let studentWeeklyPlans = {}; // Student's personal weekly plan entries
         let susAccounts = []; // To check if logged-in user is a SuS
 
@@ -348,9 +343,8 @@
             });
             document.getElementById(tabName + '-content').classList.remove('hidden');
 
-            if (tabName === 'tasks') {
-                updateTasksDisplay();
-            } else if (tabName === 'timetable') {
+            // Removed updateTasksDisplay() call
+            if (tabName === 'timetable') {
                 updateStudentTimetableDisplay();
             }
         }
@@ -411,6 +405,8 @@
             document.getElementById('studentPlanForm').addEventListener('submit', handleSaveStudentPlanEntry);
             document.getElementById('studentPlanCancelButton').addEventListener('click', hideStudentPlanEditModal);
             document.getElementById('studentPlanDeleteButton').addEventListener('click', handleDeleteStudentPlanEntry);
+            document.getElementById('studentPlanSubject').addEventListener('change', updateStudentPlanTaskDropdown); // New: Listen for subject change
+            document.getElementById('studentPlanTask').addEventListener('change', updateStudentPlanTitleFromTask); // New: Listen for task change
         }
 
         // --- Authentication Handlers ---
@@ -433,8 +429,12 @@
 
                 // Verify if the user is a SuS account
                 const susDoc = await getFirestoreDoc(db, 'susAccounts', loggedInUserId);
-                if (!susDoc.exists()) {
-                    await signOut(auth); // Log out if not a SuS account
+                if (susDoc.exists()) {
+                    await loadUserData(); // Load data after successful SuS login
+                    showMainApp(); // Show main app after data is loaded
+                } else {
+                    // If not a SuS account, log out and show login screen
+                    await signOut(auth);
                     showCustomMessage('Dieser Account ist kein Schüler/innen-Account. Bitte melden Sie sich mit einem gültigen SuS-Account an.', 'error', 'Zugriff verweigert');
                 }
                 // onAuthStateChanged will handle showing main app if successful and is SuS
@@ -483,25 +483,25 @@
                 if (docSnapshot.exists()) {
                     solSubjects = docSnapshot.data().subjects || [];
                     updateStudentTimetableDisplay(); // Update timetable if SOL subjects change
-                    updateTasksDisplay(); // Update tasks display as it depends on SOL subjects
+                    // updateTasksDisplay(); // Removed call as tasks tab is removed
                 } else {
                     solSubjects = [];
                     updateStudentTimetableDisplay();
-                    updateTasksDisplay();
+                    // updateTasksDisplay(); // Removed call as tasks tab is removed
                 }
             }, (error) => {
                 console.error("Error fetching SOL subjects:", error);
                 showCustomMessage("Error loading SOL subjects: " + error.message, 'error', 'Loading Error');
             });
 
-            // Listen to weeklyTasks (public data)
+            // Listen to weeklyTasks (public data) - STILL NEEDED FOR DROPDOWN
             onSnapshot(collection(db, 'weeklyTasks'), (querySnapshot) => {
                 weeklyTasks = [];
                 querySnapshot.forEach((doc) => {
                     weeklyTasks.push({ id: doc.id, ...doc.data() });
                 });
                 console.log("Weekly tasks loaded:", weeklyTasks);
-                updateTasksDisplay();
+                // updateTasksDisplay(); // Removed call as tasks tab is removed
             }, (error) => {
                 console.error("Error fetching weekly tasks:", error);
                 showCustomMessage("Error loading weekly tasks: " + error.message, 'error', 'Loading Error');
@@ -524,96 +524,8 @@
         }
 
         // --- Tasks Tab (Aufträge der Woche) ---
-        function updateTasksDisplay() {
-            const tasksContainer = document.getElementById('weeklyTasksContainer');
-            const noTasksMessage = document.getElementById('noTasksMessage');
-            tasksContainer.innerHTML = ''; // Clear existing tasks
-
-            if (solSubjects.length === 0) {
-                noTasksMessage.classList.remove('hidden');
-                tasksContainer.classList.add('hidden'); // Hide the grid if no SOL subjects
-                return;
-            } else {
-                noTasksMessage.classList.add('hidden');
-                tasksContainer.classList.remove('hidden'); // Show the grid
-            }
-
-            // Group tasks by subject
-            const tasksBySubject = {};
-            solSubjects.forEach(solSubjectName => {
-                tasksBySubject[solSubjectName] = weeklyTasks.filter(task => task.subject === solSubjectName);
-            });
-
-            // Render columns for each SOL subject
-            solSubjects.forEach(solSubjectName => {
-                const subjectData = subjects.find(s => s.name === solSubjectName);
-                const cardBgColor = subjectData?.lightColor || 'bg-gray-100';
-                const cardTextColor = subjectData?.textColor || 'text-gray-900';
-                const borderColor = subjectData?.color || 'border-gray-200';
-
-                const subjectColumn = document.createElement('div');
-                subjectColumn.className = `bg-white rounded-xl shadow-lg p-4 border-t-4 ${borderColor}`;
-
-                subjectColumn.innerHTML = `
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold ${cardTextColor}">${solSubjectName}</h3>
-                    </div>
-                    <div class="tasks-list space-y-4">
-                        <!-- Tasks for this subject will go here -->
-                    </div>
-                `;
-
-                const tasksList = subjectColumn.querySelector('.tasks-list');
-                const filteredTasks = tasksBySubject[solSubjectName];
-
-                if (filteredTasks.length === 0) {
-                    const noTasksInColumn = document.createElement('p');
-                    noTasksInColumn.className = `text-sm text-gray-500 italic text-center p-4 ${cardTextColor}`;
-                    noTasksInColumn.textContent = 'Noch keine Aufgaben für dieses Fach.';
-                    tasksList.appendChild(noTasksInColumn);
-                } else {
-                    filteredTasks.forEach(task => {
-                        const isCompleted = task.completedBy && task.completedBy[userId];
-                        const completedClass = isCompleted ? 'opacity-60 border-green-500' : '';
-                        const checkboxChecked = isCompleted ? 'checked' : '';
-
-                        const taskCard = document.createElement('div');
-                        taskCard.className = `bg-white rounded-lg shadow-sm p-4 relative border-l-2 ${borderColor} ${completedClass}`;
-                        taskCard.setAttribute('data-task-id', task.id);
-
-                        const materialsHtml = task.materials ?
-                            task.materials.split('\n').map(line => {
-                                try {
-                                    const url = new URL(line.trim());
-                                    return `<a href="${url.href}" target="_blank" class="text-blue-600 hover:underline block">${line.trim()}</a>`;
-                                } catch (_) {
-                                    return `<span>${line.trim()}</span>`;
-                                }
-                            }).join('<br>') : '';
-
-                        taskCard.innerHTML = `
-                            <div class="absolute top-2 right-2 text-2xl ${cardTextColor}">
-                                ${task.requirementType === 'basic' ? '🔵' : '⭐'}
-                            </div>
-                            <h4 class="text-md font-semibold mb-1 ${cardTextColor}">${task.title}</h4>
-                            ${materialsHtml ? `<p class="${cardTextColor} text-sm mb-4 whitespace-pre-wrap">${materialsHtml}</p>` : ''}
-                            <div class="flex items-center mt-4">
-                                <input type="checkbox" id="task-complete-${task.id}" data-task-id="${task.id}" class="h-5 w-5 text-green-600 rounded focus:ring-green-500 border-gray-300" ${checkboxChecked}>
-                                <label for="task-complete-${task.id}" class="ml-2 text-base font-medium text-gray-700">Erledigt</label>
-                            </div>
-                        `;
-
-                        const checkbox = taskCard.querySelector(`#task-complete-${task.id}`);
-                        checkbox.addEventListener('change', (event) => {
-                            toggleTaskCompletion(task.id, event.target.checked);
-                        });
-
-                        tasksList.appendChild(taskCard);
-                    });
-                }
-                tasksContainer.appendChild(subjectColumn);
-            });
-        }
+        // Removed updateTasksDisplay() function entirely as it's no longer needed for rendering.
+        // The weeklyTasks data is still loaded and available for the dropdown.
 
         async function toggleTaskCompletion(taskId, isCompleted) {
             if (!isAuthReady || !user) {
@@ -733,6 +645,7 @@
             const modal = document.getElementById('studentPlanEditModal');
             const form = document.getElementById('studentPlanForm');
             const subjectSelect = document.getElementById('studentPlanSubject');
+            const taskSelect = document.getElementById('studentPlanTask'); // New task select
             const timeSlotInput = document.getElementById('studentPlanTimeSlot');
             const titleInput = document.getElementById('studentPlanTitle');
             const descriptionInput = document.getElementById('studentPlanDescription');
@@ -744,14 +657,13 @@
 
             // Populate subject select with ONLY SOL subjects
             subjectSelect.innerHTML = '';
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.textContent = 'Fach auswählen';
-            defaultOption.disabled = true;
-            defaultOption.selected = true;
-            subjectSelect.appendChild(defaultOption);
+            const defaultSubjectOption = document.createElement('option');
+            defaultSubjectOption.value = '';
+            defaultSubjectOption.textContent = 'Fach auswählen';
+            defaultSubjectOption.disabled = true;
+            defaultSubjectOption.selected = true;
+            subjectSelect.appendChild(defaultSubjectOption);
 
-            // Populate with only SOL subjects
             solSubjects.forEach(solSubjName => {
                 const option = document.createElement('option');
                 option.value = solSubjName;
@@ -784,6 +696,17 @@
             form.dataset.day = day;
             form.dataset.slotId = slotId;
 
+            // Update task dropdown based on initial subject selection or existing entry
+            updateStudentPlanTaskDropdown();
+
+            // If editing an existing entry, pre-select the task
+            if (entry && entry.taskId) {
+                taskSelect.value = entry.taskId;
+            } else {
+                taskSelect.value = ''; // Ensure "Sonstiges" is selected by default for new entries
+            }
+            updateStudentPlanTitleFromTask(); // Apply task title if a task is pre-selected
+
             modal.classList.remove('hidden');
         }
 
@@ -795,7 +718,60 @@
             const subjectSelect = document.getElementById('studentPlanSubject');
             subjectSelect.disabled = false;
             subjectSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+            // Reset task dropdown
+            const taskSelect = document.getElementById('studentPlanTask');
+            taskSelect.innerHTML = '<option value="">Sonstiges</option>';
         }
+
+        // New function to update the task dropdown based on selected subject
+        function updateStudentPlanTaskDropdown() {
+            const subjectSelect = document.getElementById('studentPlanSubject');
+            const taskSelect = document.getElementById('studentPlanTask');
+            const selectedSubject = subjectSelect.value;
+
+            taskSelect.innerHTML = ''; // Clear existing options
+            const defaultTaskOption = document.createElement('option');
+            defaultTaskOption.value = '';
+            defaultTaskOption.textContent = 'Sonstiges';
+            taskSelect.appendChild(defaultTaskOption);
+
+            if (selectedSubject) {
+                const filteredTasks = weeklyTasks.filter(task => task.subject === selectedSubject);
+                filteredTasks.forEach(task => {
+                    const option = document.createElement('option');
+                    option.value = task.id;
+                    option.textContent = task.title;
+                    taskSelect.appendChild(option);
+                });
+            }
+            // Ensure the correct task is selected if editing an existing entry
+            if (currentStudentPlanEntry && currentStudentPlanEntry.taskId) {
+                taskSelect.value = currentStudentPlanEntry.taskId;
+            } else {
+                taskSelect.value = ''; // Select "Sonstiges" if no task is linked
+            }
+            updateStudentPlanTitleFromTask(); // Update title based on new task selection
+        }
+
+        // New function to update the title input based on selected task
+        function updateStudentPlanTitleFromTask() {
+            const taskSelect = document.getElementById('studentPlanTask');
+            const titleInput = document.getElementById('studentPlanTitle');
+            const selectedTaskId = taskSelect.value;
+
+            if (selectedTaskId) {
+                const selectedTask = weeklyTasks.find(task => task.id === selectedTaskId);
+                if (selectedTask) {
+                    titleInput.value = selectedTask.title;
+                }
+            } else {
+                // If "Sonstiges" is selected or no task, clear the title unless it's an existing entry
+                if (!currentStudentPlanEntry || !currentStudentPlanEntry.taskId) {
+                    titleInput.value = '';
+                }
+            }
+        }
+
 
         async function handleSaveStudentPlanEntry(event) {
             event.preventDefault();
@@ -809,6 +785,7 @@
             const day = form.dataset.day;
             const slotId = parseInt(form.dataset.slotId);
             const subjectName = document.getElementById('studentPlanSubject').value;
+            const taskId = document.getElementById('studentPlanTask').value || null; // New: Get selected task ID
             const title = document.getElementById('studentPlanTitle').value.trim();
             const description = document.getElementById('studentPlanDescription').value.trim();
 
@@ -826,6 +803,7 @@
                     day: day,
                     slotId: slotId,
                     subjectName: subjectName,
+                    taskId: taskId, // Save the task ID
                     title: title,
                     description: description,
                     createdBy: user.email, // Store student's email
@@ -881,4 +859,3 @@
     </script>
 </body>
 </html>
-
