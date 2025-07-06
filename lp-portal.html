@@ -21,18 +21,6 @@
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Custom button styling for a modern look */
-        .modern-button {
-            transition: all 0.2s ease-in-out;
-        }
-        .modern-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .modern-button:active {
-            transform: translateY(0);
-            box-shadow: none;
-        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -47,18 +35,18 @@
 
     <!-- Login Screen -->
     <div id="loginScreen" class="min-h-screen flex items-center justify-center hidden">
-        <div class="bg-white p-8 rounded-xl shadow-lg w-96"> <!-- Added rounded-xl and shadow-lg -->
-            <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">SOL Portal Login</h1> <!-- Increased font size -->
+        <div class="bg-white p-8 rounded-lg shadow-md w-96">
+            <h1 class="text-2xl font-bold text-center mb-6">SOL Portal Login</h1>
             <div>
                 <div class="mb-4">
                     <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-2">E-Mail</label>
-                    <input type="email" id="loginEmail" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required /> <!-- Increased padding -->
+                    <input type="email" id="loginEmail" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
                 </div>
                 <div class="mb-6">
                     <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-2">Passwort</label>
-                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required /> <!-- Increased padding -->
+                    <input type="password" id="loginPassword" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
                 </div>
-                <button id="loginButton" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 modern-button text-lg font-semibold"> <!-- More prominent button -->
+                <button id="loginButton" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 disabled:opacity-50">
                     Anmelden
                 </button>
             </div>
@@ -67,13 +55,13 @@
 
     <!-- Main Application -->
     <div id="mainApp" class="min-h-screen hidden">
-        <div class="bg-white shadow-md"> <!-- Subtle shadow for header -->
+        <div class="bg-white shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center py-4">
-                    <h1 class="text-3xl font-bold text-gray-900">SOL Lehrpersonen Portal</h1> <!-- Increased font size -->
+                    <h1 class="text-2xl font-bold text-gray-900">SOL Lehrpersonen Portal</h1>
                     <div class="flex items-center space-x-4">
-                        <span id="userEmail" class="text-base text-gray-600 font-medium"></span> <!-- Adjusted font size -->
-                        <button id="logoutButton" class="flex items-center space-x-2 text-gray-600 hover:text-gray-900 p-2 rounded-md hover:bg-gray-100 transition-colors modern-button"> <!-- Added padding and hover effect -->
+                        <span id="userEmail" class="text-sm text-gray-600"></span>
+                        <button id="logoutButton" class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
                             <span>Abmelden</span>
                         </button>
                     </div>
@@ -81,77 +69,59 @@
             </div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"> <!-- Increased vertical padding -->
-            <div class="bg-white rounded-xl shadow-lg"> <!-- Added rounded-xl and shadow-lg -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="bg-white rounded-lg shadow">
                 <div class="border-b border-gray-200">
                     <nav class="flex space-x-8 px-6">
-                        <button data-tab="stundenplan" class="tab-button py-4 px-2 border-b-2 font-medium text-base border-transparent text-gray-500 hover:text-gray-700 transition-colors"> <!-- Adjusted font size -->
+                        <button data-tab="stundenplan" class="tab-button py-4 px-2 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
                             📅 Stundenplan der Woche
                         </button>
-                        <button data-tab="arbeitsplan" class="tab-button py-4 px-2 border-b-2 font-medium text-base border-transparent text-gray-500 hover:text-gray-700 transition-colors"> <!-- Adjusted font size -->
+                        <button data-tab="arbeitsplan" class="tab-button py-4 px-2 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
                             📋 Arbeitsplan der Woche
                         </button>
-                        <button data-tab="verwaltung" class="tab-button py-4 px-2 border-b-2 font-medium text-base border-blue-500 text-blue-600 transition-colors"> <!-- Adjusted font size -->
+                        <button data-tab="verwaltung" class="tab-button py-4 px-2 border-b-2 font-medium text-sm border-blue-500 text-blue-600">
                             ⚙️ Verwaltung
                         </button>
                     </nav>
                 </div>
 
-                <div class="p-8"> <!-- Increased padding -->
-                    <!-- Dies ist nun der eigentliche Stundenplan der Woche (ehemals Arbeitsplan) -->
+                <div class="p-6">
                     <div id="stundenplan-content" class="tab-content hidden">
-                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Stundenplan der Woche</h2> <!-- Increased font size -->
-                        <p class="text-gray-600 mb-6">Definieren und verwalten Sie spezifische Lektionen für die aktuelle Woche.</p> <!-- Increased margin -->
-                        <div class="overflow-x-auto rounded-lg shadow-sm"> <!-- Added rounded-lg and shadow-sm to table container -->
-                            <table class="min-w-full bg-white border border-gray-200 rounded-lg"> <!-- Changed to rounded-lg -->
-                                <thead>
-                                    <tr class="bg-gray-100">
-                                        <th class="px-4 py-3 border-b text-left font-semibold text-gray-700 rounded-tl-lg">Zeit</th> <!-- Increased padding and font-semibold -->
-                                        <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Montag</th>
-                                        <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Dienstag</th>
-                                        <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Mittwoch</th>
-                                        <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Donnerstag</th>
-                                        <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Freitag</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="weeklyPlanBody">
-                                    <!-- Weekly plan content will be rendered here -->
-                                </tbody>
-                            </table>
+                        <h2 class="text-xl font-semibold mb-4">Stundenplan der Woche</h2>
+                        <p class="text-gray-600">Hier können Sie SOL-Lektionen blockieren und verwalten.</p>
+                        <div class="mt-4 text-center text-gray-500">
+                            <div class="text-5xl mb-2">📅</div>
+                            <p>Stundenplan-Funktionalität wird nach Vervollständigung der Verwaltung implementiert.</p>
                         </div>
                     </div>
 
-                    <!-- Dies ist nun der Platzhalter für den Arbeitsplan der Woche (ehemals Stundenplan) -->
                     <div id="arbeitsplan-content" class="tab-content hidden">
-                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Arbeitsplan der Woche</h2>
-                        <p class="text-gray-600 mb-6">Hier können Sie Aufträge für die SOL-Fächer erstellen und verwalten.</p>
-                        <!-- Removed global addTaskButton as it will now be in each column -->
-                        <p id="noSolSubjectsMessage" class="text-gray-500 text-center mt-8 hidden">
-                            Bitte definieren Sie zuerst SOL-Fächer in der <span class="font-semibold">Verwaltung</span>, um Aufgaben hinzuzufügen.
-                        </p>
-                        <div id="tasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            <!-- Task columns will be rendered here -->
+                        <h2 class="text-xl font-semibold mb-4">Arbeitsplan der Woche</h2>
+                        <p class="text-gray-600">Digitale Pinwand für Aufträge und Fortschrittsübersicht.</p>
+                        <div class="mt-4 text-center text-gray-500">
+                            <div class="text-5xl mb-2">📋</div>
+                            <p>Arbeitsplan-Funktionalität wird nach Vervollständigung der Verwaltung implementiert.</p>
                         </div>
                     </div>
 
                     <div id="verwaltung-content" class="tab-content">
                         <div class="space-y-8">
                             <div>
-                                <h2 class="text-2xl font-semibold mb-6 text-gray-800">Verwaltung</h2>
+                                <h2 class="text-xl font-semibold mb-4">Verwaltung</h2>
                             </div>
 
-                            <div class="bg-gray-50 p-6 rounded-lg shadow-md"> <!-- Added shadow-md -->
-                                <h3 class="text-xl font-semibold mb-4 text-gray-800">Jahresstundenplan</h3> <!-- Increased font size -->
-                                <div class="overflow-x-auto rounded-lg shadow-sm"> <!-- Added rounded-lg and shadow-sm to table container -->
-                                    <table class="min-w-full bg-white border border-gray-200 rounded-lg"> <!-- Changed to rounded-lg -->
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-medium mb-4">Jahresstundenplan</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full bg-white border border-gray-200 rounded-md">
                                         <thead>
                                             <tr class="bg-gray-100">
-                                                <th class="px-4 py-3 border-b text-left font-semibold text-gray-700 rounded-tl-lg">Zeit</th>
-                                                <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Montag</th>
-                                                <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Dienstag</th>
-                                                <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Mittwoch</th>
-                                                <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Donnerstag</th>
-                                                <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Freitag</th>
+                                                <th class="px-4 py-2 border-b text-left font-medium text-gray-700 rounded-tl-md">Zeit</th>
+                                                <th class="px-4 py-2 border-b text-center font-medium text-gray-700">Montag</th>
+                                                <th class="px-4 py-2 border-b text-center font-medium text-gray-700">Dienstag</th>
+                                                <th class="px-4 py-2 border-b text-center font-medium text-gray-700">Mittwoch</th>
+                                                <th class="px-4 py-2 border-b text-center font-medium text-gray-700">Donnerstag</th>
+                                                <th class="px-4 py-2 border-b text-center font-medium text-gray-700">Freitag</th>
                                             </tr>
                                         </thead>
                                         <tbody id="timetableBody">
@@ -160,51 +130,51 @@
                                 </div>
                             </div>
 
-                            <div class="bg-gray-50 p-6 rounded-lg shadow-md"> <!-- Added shadow-md -->
-                                <h3 class="text-xl font-semibold mb-4 text-gray-800">SOL-Fächer definieren</h3>
-                                <p class="text-base text-gray-600 mb-4">Wählen Sie aus, welche Fächer als SOL-Lektionen angeboten werden sollen.</p> <!-- Adjusted font size -->
-                                <div id="solSubjectsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"> <!-- Increased gap -->
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-medium mb-4">SOL-Fächer definieren</h3>
+                                <p class="text-sm text-gray-600 mb-4">Wählen Sie aus, welche Fächer als SOL-Lektionen angeboten werden sollen.</p>
+                                <div id="solSubjectsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                 </div>
                             </div>
 
-                            <div class="bg-gray-50 p-6 rounded-lg shadow-md"> <!-- Added shadow-md -->
-                                <h3 class="text-xl font-semibold mb-4 text-gray-800">Account-Verwaltung</h3>
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-medium mb-4">Account-Verwaltung</h3>
 
-                                <div class="mb-6 pb-4 border-b border-gray-200"> <!-- Added bottom padding and border -->
-                                    <h4 class="font-semibold text-lg mb-3 text-gray-700">Neuen Account erstellen</h4> <!-- Adjusted font size -->
-                                    <div class="flex flex-wrap gap-4 items-end"> <!-- Increased gap -->
-                                        <div class="flex-1 min-w-[200px]"> <!-- Adjusted min-width -->
+                                <div class="mb-6">
+                                    <h4 class="font-medium mb-3">Neuen Account erstellen</h4>
+                                    <div class="flex flex-wrap gap-3 items-end">
+                                        <div class="flex-1 min-w-[180px]">
                                             <label for="newAccountEmail" class="sr-only">E-Mail-Adresse</label>
-                                            <input type="email" id="newAccountEmail" placeholder="E-Mail-Adresse" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                            <input type="email" id="newAccountEmail" placeholder="E-Mail-Adresse" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                         </div>
-                                        <div class="flex-1 min-w-[200px]"> <!-- Adjusted min-width -->
+                                        <div class="flex-1 min-w-[180px]">
                                             <label for="newAccountPassword" class="sr-only">Passwort</label>
-                                            <input type="password" id="newAccountPassword" placeholder="Passwort" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                            <input type="password" id="newAccountPassword" placeholder="Passwort" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                         </div>
-                                        <select id="newAccountType" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <select id="newAccountType" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                             <option value="LP">Lehrperson</option>
                                             <option value="SuS">Schüler/in</option>
                                         </select>
-                                        <button id="createAccountButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 modern-button text-base font-semibold"> <!-- More prominent button -->
+                                        <button id="createAccountButton" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center">
                                             ➕ Erstellen
                                         </button>
                                     </div>
                                 </div>
 
                                 <div class="mb-6">
-                                    <h4 class="font-semibold text-lg mb-3 flex items-center text-gray-700"> <!-- Adjusted font size -->
+                                    <h4 class="font-medium mb-3 flex items-center">
                                         👥 Lehrpersonen-Accounts (<span id="lpAccountCount">0</span>)
                                     </h4>
-                                    <div id="lpAccountsList" class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm"> <!-- Added rounded-lg, border, shadow-sm -->
+                                    <div id="lpAccountsList" class="bg-white rounded border">
                                         <p class="p-4 text-gray-500 text-center">Noch keine LP-Accounts erstellt.</p>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h4 class="font-semibold text-lg mb-3 flex items-center text-gray-700"> <!-- Adjusted font size -->
+                                    <h4 class="font-medium mb-3 flex items-center">
                                         👥 Schüler/innen-Accounts (<span id="susAccountCount">0</span>)
                                     </h4>
-                                    <div id="susAccountsList" class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm"> <!-- Added rounded-lg, border, shadow-sm -->
+                                    <div id="susAccountsList" class="bg-white rounded border">
                                         <p class="p-4 text-gray-500 text-center">Noch keine SuS-Accounts erstellt.</p>
                                     </div>
                                 </div>
@@ -217,221 +187,170 @@
     </div>
 
     <!-- Custom Message Modal -->
-    <div id="customMessageModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-[9999]">
-        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full mx-4"> <!-- Increased padding, rounded-xl, shadow-2xl -->
-            <h3 id="customMessageTitle" class="text-xl font-semibold mb-4 text-gray-900"></h3> <!-- Increased font size -->
+    <div id="customMessageModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <h3 id="customMessageTitle" class="text-lg font-semibold mb-4 text-gray-900"></h3>
             <p id="customMessageContent" class="text-gray-700 mb-6"></p>
             <div class="flex justify-end">
-                <button id="customMessageCloseButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 modern-button">OK</button> <!-- More prominent button -->
+                <button id="customMessageCloseButton" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">OK</button>
             </div>
         </div>
     </div>
 
     <!-- Custom Confirmation Modal -->
-    <div id="customConfirmModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-[9999]">
-        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full mx-4"> <!-- Increased padding, rounded-xl, shadow-2xl -->
-            <h3 id="customConfirmTitle" class="text-xl font-semibold mb-4 text-gray-900">Bestätigung</h3> <!-- Increased font size -->
+    <div id="customConfirmModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <h3 id="customConfirmTitle" class="text-lg font-semibold mb-4 text-gray-900">Bestätigung</h3>
             <p id="customConfirmContent" class="text-gray-700 mb-6"></p>
             <div class="flex justify-end space-x-4">
-                <button id="customConfirmCancelButton" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 modern-button">Abbrechen</button> <!-- More prominent button -->
-                <button id="customConfirmOkButton" class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 modern-button">Löschen</button> <!-- More prominent button -->
+                <button id="customConfirmCancelButton" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">Abbrechen</button>
+                <button id="customConfirmOkButton" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Löschen</button>
             </div>
         </div>
     </div>
 
-    <!-- Weekly Plan Edit Modal -->
-    <div id="weeklyPlanEditModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
-        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full mx-4"> <!-- Increased padding, rounded-xl, shadow-2xl -->
-            <h3 class="text-xl font-semibold mb-4 text-gray-900" id="weeklyPlanModalTitle">Lektion bearbeiten</h3> <!-- Increased font size -->
-            <form id="weeklyPlanForm" class="space-y-4">
-                <div>
-                    <label for="weeklyPlanSubject" class="block text-sm font-medium text-gray-700">Fach</label>
-                    <select id="weeklyPlanSubject" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <!-- Options will be dynamically added here -->
-                    </select>
-                </div>
-                <div>
-                    <label for="weeklyPlanTimeSlot" class="block text-sm font-medium text-gray-700">Zeitfenster</label>
-                    <input type="text" id="weeklyPlanTimeSlot" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed" readonly> <!-- Increased padding -->
-                </div>
-                <div>
-                    <label for="weeklyPlanTitle" class="block text-sm font-medium text-gray-700">Titel (z.B. Lernkontrolle, Test, Lehrerinput)</label>
-                    <input type="text" id="weeklyPlanTitle" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"> <!-- Increased padding -->
-                </div>
-                <div>
-                    <label for="weeklyPlanDescription" class="block text-sm font-medium text-gray-700">Beschreibung</label>
-                    <textarea id="weeklyPlanDescription" rows="3" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea> <!-- Increased padding -->
-                </div>
-                <!-- Removed Document Upload fields -->
-                <div>
-                    <label for="weeklyPlanExternalUrl" class="block text-sm font-medium text-gray-700">Externe URL</label>
-                    <input type="url" id="weeklyPlanExternalUrl" placeholder="https://example.com" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"> <!-- Increased padding -->
-                </div>
-                <div class="flex justify-end space-x-4">
-                    <button type="button" id="weeklyPlanCancelButton" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 modern-button">Abbrechen</button> <!-- More prominent button -->
-                    <button type="submit" id="weeklyPlanSaveButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button">Speichern</button> <!-- More prominent button -->
-                    <button type="button" id="weeklyPlanDeleteButton" class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hidden modern-button">Löschen</button> <!-- More prominent button -->
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Task Edit Modal (New for Arbeitsplan der Woche) -->
-    <div id="taskEditModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
-        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full mx-4">
-            <h3 class="text-xl font-semibold mb-4 text-gray-900" id="taskModalTitle">Neue Aufgabe erstellen</h3>
-            <form id="taskForm" class="space-y-4">
-                <div>
-                    <label for="taskSubject" class="block text-sm font-medium text-gray-700">Fach</label>
-                    <select id="taskSubject" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        <!-- Options will be dynamically added here -->
-                    </select>
-                </div>
-                <div>
-                    <label for="taskTitle" class="block text-sm font-medium text-gray-700">Titel der Aufgabe</label>
-                    <input type="text" id="taskTitle" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                    <label for="taskMaterials" class="block text-sm font-medium text-gray-700">Materialien (Links, Bücher, etc.)</label>
-                    <textarea id="taskMaterials" rows="3" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Anforderungstyp</label>
-                    <div class="flex items-center space-x-4">
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="requirementType" value="basic" class="form-radio h-4 w-4 text-blue-600" checked>
-                            <span class="ml-2 text-gray-700">🔵 Grundanforderung</span>
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="requirementType" value="advanced" class="form-radio h-4 w-4 text-yellow-500">
-                            <span class="ml-2 text-gray-700">⭐ Erweiterte Anforderung</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-4">
-                    <button type="button" id="taskCancelButton" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 modern-button">Abbrechen</button>
-                    <button type="submit" id="taskSaveButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button">Speichern</button>
-                    <button type="button" id="taskDeleteButton" class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hidden modern-button">Löschen</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // Importiere Firestore Module
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-
-        // Ihre persönliche Firebase-Konfiguration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAsexnWyCjkYz8kfAPd7Od1g0xsfcSEKRk",
-            authDomain: "sol-portal-cf905.firebaseapp.com",
-            projectId: "sol-portal-cf905",
-            storageBucket: "sol-portal-cf905.firebasestorage.app", // Kann bleiben, wird aber nicht verwendet
-            messagingSenderId: "478097533058",
-            appId: "1:478097533058:web:b2afa0a73892b90d8a2c9b",
-            measurementId: "G-JJ3RRJNK7T" // Optional, wenn Google Analytics aktiviert ist
-        };
-
-        // Initialisiere Firebase App und Dienste direkt im globalen Modul-Scope
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app); // Initialisiere Firestore
-
+        let app;
+        let auth;
+        let db;
         let user = null; // Firebase user object
         let userId = null; // User ID (UID)
-        let isAuthReady = false; // Flag to ensure DB operations wait for auth
+        let isAuthReady = false; // Flag to ensure Firestore operations wait for auth
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let activeTab = 'verwaltung';
-        let timetable = {}; // Jahresstundenplan
-        let solSubjects = []; // Liste der als SOL definierte Fächer
+        let timetable = {};
+        let solSubjects = [];
         let lpAccounts = [];
         let susAccounts = [];
-        let weeklyPlanEntries = {}; // Wochenplan-Einträge
-        let weeklyTasks = []; // Neue Variable für Wochenaufgaben
-
-        // Aktuell bearbeiteter Wochenplan-Eintrag im Modal
-        let currentWeeklyPlanEntry = null;
-        // Aktuell bearbeitete Aufgabe im Modal
-        let currentTaskEntry = null;
 
         const subjects = [
-            { name: 'Deutsch', color: 'bg-red-400', lightColor: 'bg-red-50', textColor: 'text-red-700' },
-            { name: 'Englisch', color: 'bg-blue-400', lightColor: 'bg-blue-50', textColor: 'text-blue-700' },
-            { name: 'Franzoesisch', color: 'bg-purple-400', lightColor: 'bg-purple-50', textColor: 'text-purple-700' },
-            { name: 'Mathematik', color: 'bg-green-400', lightColor: 'bg-green-50', textColor: 'text-green-700' },
-            { name: 'Natur und Technik', color: 'bg-yellow-400', lightColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
-            { name: 'NT / MI', color: 'bg-yellow-300', lightColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
-            { name: 'Raeume Zeiten Gesellschaften', color: 'bg-orange-400', lightColor: 'bg-orange-50', textColor: 'text-orange-700' },
-            { name: 'Ethik Religion Gemeinschaft', color: 'bg-pink-400', lightColor: 'bg-pink-50', textColor: 'text-pink-700' },
-            { name: 'Bewegung und Sport', color: 'bg-red-500', lightColor: 'bg-red-50', textColor: 'text-red-700' }, // Slightly darker red for sport
-            { name: 'Textiles und Technisches Gestalten', color: 'bg-indigo-400', lightColor: 'bg-indigo-50', textColor: 'text-indigo-700' },
-            { name: 'Musik', color: 'bg-violet-400', lightColor: 'bg-violet-50', textColor: 'text-violet-700' },
-            { name: 'Bildnerisches Gestalten', color: 'bg-teal-400', lightColor: 'bg-teal-50', textColor: 'text-teal-700' },
-            { name: 'Lernatelier', color: 'bg-gray-400', lightColor: 'bg-gray-50', textColor: 'text-gray-700' },
-            { name: 'Individuelle Vertiefung', color: 'bg-cyan-400', lightColor: 'bg-cyan-50', textColor: 'text-cyan-700' },
-            { name: 'Wirtschaft, Arbeit, Haushalt', color: 'bg-amber-400', lightColor: 'bg-amber-50', textColor: 'text-amber-700' }
+            { name: 'Deutsch', color: 'bg-red-500' },
+            { name: 'Englisch', color: 'bg-blue-500' },
+            { name: 'Franzoesisch', color: 'bg-purple-500' },
+            { name: 'Mathematik', color: 'bg-green-500' },
+            { name: 'Natur und Technik', color: 'bg-yellow-500' },
+            { name: 'NT / MI', color: 'bg-yellow-400' },
+            { name: 'Raeume Zeiten Gesellschaften', color: 'bg-orange-500' },
+            { name: 'Ethik Religion Gemeinschaft', color: 'bg-pink-500' },
+            { name: 'Bewegung und Sport', color: 'bg-red-600' },
+            { name: 'Textiles und Technisches Gestalten', color: 'bg-indigo-500' },
+            { name: 'Musik', color: 'bg-violet-500' },
+            { name: 'Bildnerisches Gestalten', color: 'bg-teal-500' },
+            { name: 'Lernatelier', color: 'bg-gray-500' },
+            { name: 'Individuelle Vertiefung', color: 'bg-cyan-500' }
         ];
 
-        // Angepasste Zeitfenster
         const timeSlots = [
             { id: 1, time: '07:30 - 08:15', name: 'Lektion 1' },
             { id: 2, time: '08:20 - 09:05', name: 'Lektion 2' },
-            { id: 3, time: '09:10 - 09:55', name: 'Lektion 3' },
-            { id: 4, time: '10:20 - 11:05', name: 'Lektion 4' },
-            { id: 5, time: '11:10 - 11:55', name: 'Lektion 5' },
-            { id: 6, time: '12:10 - 12:55', name: 'Lektion 6' },
-            { id: 7, time: '13:00 - 13:45', name: 'Lektion 7' },
-            { id: 8, time: '13:50 - 14:35', name: 'Lektion 8' },
-            { id: 9, time: '14:40 - 15:25', name: 'Lektion 9' },
-            { id: 10, time: '15:40 - 16:25', name: 'Lektion 10' },
-            { id: 11, time: '16:30 - 17:15', name: 'Lektion 11' }
+            { id: 3, time: '09:25 - 10:10', name: 'Lektion 3' },
+            { id: 4, time: '10:15 - 11:00', name: 'Lektion 4' },
+            { id: 5, time: '11:05 - 11:50', name: 'Lektion 5' },
+            { id: 6, time: '13:15 - 14:00', name: 'Lektion 6' },
+            { id: 7, time: '14:05 - 14:50', name: 'Lektion 7' },
+            { id: 8, time: '15:05 - 15:50', name: 'Lektion 8' },
+            { id: 9, time: '15:55 - 16:40', name: 'Lektion 9' }
         ];
 
         const weekDays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
 
-        // --- Firebase Initialisierung ---
+        // Helper to get a Firestore document (used for checking account type)
+        async function getFirestoreDoc(dbInstance, collectionName, docId) {
+            return await new Promise((resolve, reject) => {
+                const unsubscribe = onSnapshot(doc(dbInstance, collectionName, docId), (docSnapshot) => {
+                    unsubscribe(); // Unsubscribe immediately after first snapshot
+                    resolve(docSnapshot);
+                }, (error) => {
+                    reject(error);
+                });
+            });
+        }
+
+        // --- Firebase Initialization ---
         window.addEventListener('DOMContentLoaded', function() {
             initializeFirebase();
-            hideLoadingScreen(); // Ladebildschirm ausblenden, sobald DOM geladen ist
         });
 
         async function initializeFirebase() {
             try {
-                onAuthStateChanged(auth, async (firebaseUser) => {
-                    user = firebaseUser;
-                    console.log("Authentifizierungsstatus geändert. User:", user); // Debug-Log
-                    if (user) {
-                        userId = user.uid;
-                        console.log("Angemeldeter Benutzer-ID:", userId); // Debug-Log
-                        showMainApp();
-                        await loadUserData(); // Lade Daten, nachdem der Benutzer authentifiziert ist
-                    } else {
-                        // Wenn kein Benutzer angemeldet ist, versuchen wir eine anonyme Anmeldung.
-                        signInAnonymously(auth).catch(anonError => {
-                            console.error("Fehler bei anonymer Anmeldung:", anonError);
+                // Log Firebase config and token for debugging in Canvas
+                console.log("Firebase Config:", firebaseConfig);
+                console.log("Initial Auth Token:", initialAuthToken);
+
+                if (!firebaseConfig) {
+                    showCustomMessage("Firebase Konfiguration nicht gefunden. Die App kann nicht gestartet werden.", 'error', 'Fehler');
+                    hideLoadingScreen();
+                    return;
+                }
+
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Use a Promise to wait for the initial auth state to be ready
+                await new Promise(resolve => {
+                    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                        user = firebaseUser;
+                        if (user) {
+                            userId = user.uid; // Set userId from authenticated user
+                            console.log("Logged-in user ID:", userId);
+
+                            // Check if the user is an LP account
+                            const lpDoc = await getFirestoreDoc(db, 'artifacts', appId, 'public', 'data', 'lpAccounts', userId);
+                            if (lpDoc.exists()) {
+                                showMainApp();
+                                await loadUserData(); // Load data after user is authenticated
+                            } else {
+                                // If not an LP account, log out and show login screen
+                                await signOut(auth);
+                                showLoginScreen();
+                                showCustomMessage('Dieser Account ist kein Lehrpersonen-Account. Bitte melden Sie sich mit einem gültigen LP-Account an.', 'error', 'Zugriff verweigert');
+                            }
+                        } else {
+                            // If no user, try to sign in anonymously if no initial token
+                            if (initialAuthToken) {
+                                try {
+                                    await signInWithCustomToken(auth, initialAuthToken);
+                                } catch (error) {
+                                    console.error("Error signing in with custom token:", error);
+                                    // Fallback to anonymous sign-in if custom token fails
+                                    await signInAnonymously(auth);
+                                }
+                            } else {
+                                // If no custom token and no user, sign in anonymously
+                                await signInAnonymously(auth);
+                            }
                             showLoginScreen();
-                            showCustomMessage('Anmeldung erforderlich. Anonymer Zugriff fehlgeschlagen oder nicht konfiguriert.', 'error', 'Anmeldefehler');
-                        });
-                    }
-                    isAuthReady = true; // Der Authentifizierungsstatus ist nun bekannt.
+                        }
+                        isAuthReady = true; // Auth state is ready
+                        hideLoadingScreen(); // Hide loading screen once auth state is processed
+                        unsubscribe(); // Unsubscribe after the first state change
+                        resolve(); // Resolve the promise
+                    });
                 });
 
+                // These should only run after auth state is determined and loading screen is hidden
                 initializeEventListeners();
-                generateTimetable(); // Generiere Jahresstundenplan-Struktur
-                generateSolSubjectsGrid(); // Generiere SOL-Fächer-Grid
-                generateWeeklyPlanTable(); // Generiere Stundenplan der Woche-Struktur (ehemals Wochenplan)
+                generateTimetable();
+                generateSolSubjectsGrid();
+
             } catch (error) {
-                console.error('Kritischer Fehler bei Firebase-Initialisierung:', error);
-                showCustomMessage('Ein kritischer Fehler ist bei der Firebase-Initialisierung aufgetreten: ' + error.message, 'error', 'Initialisierungsfehler');
-                showLoginScreen();
+                console.error('Fehler bei Firebase-Initialisierung:', error);
+                showCustomMessage('Firebase-Initialisierung fehlgeschlagen: ' + error.message, 'error', 'Initialisierungsfehler');
+                hideLoadingScreen(); // Ensure loading screen is hidden on error
             }
         }
 
-        // --- UI Zustandsverwaltung ---
+        // --- UI State Management ---
         function hideLoadingScreen() {
             document.getElementById('loadingScreen').classList.add('hidden');
         }
@@ -445,7 +364,7 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('userEmail').textContent = user ? user.email : 'Gast';
-            switchTab(activeTab);
+            switchTab(activeTab); // Ensure the correct tab is shown on login
         }
 
         function switchTab(tabName) {
@@ -467,16 +386,9 @@
                 content.classList.add('hidden');
             });
             document.getElementById(tabName + '-content').classList.remove('hidden');
-
-            // Spezifische Aktualisierung für den Stundenplan der Woche, wenn der Tab gewechselt wird
-            if (tabName === 'stundenplan') { // Geändert von 'arbeitsplan' zu 'stundenplan'
-                updateWeeklyPlanDisplay();
-            } else if (tabName === 'arbeitsplan') {
-                updateArbeitsplanDisplay();
-            }
         }
 
-        // --- Benutzerdefinierte Modals ---
+        // --- Custom Modals ---
         function showCustomMessage(message, type = 'info', title = 'Nachricht') {
             const modal = document.getElementById('customMessageModal');
             document.getElementById('customMessageTitle').textContent = title;
@@ -499,6 +411,7 @@
             const okButton = document.getElementById('customConfirmOkButton');
             const cancelButton = document.getElementById('customConfirmCancelButton');
 
+            // Clear previous listeners to prevent multiple calls
             okButton.onclick = null;
             cancelButton.onclick = null;
 
@@ -512,7 +425,7 @@
             };
         }
 
-        // --- Event-Listener ---
+        // --- Event Listeners ---
         function initializeEventListeners() {
             document.getElementById('loginButton').addEventListener('click', handleLogin);
             document.getElementById('loginPassword').addEventListener('keypress', function(e) {
@@ -529,20 +442,9 @@
             });
 
             document.getElementById('createAccountButton').addEventListener('click', handleCreateAccount);
-
-            // Event Listener für das Wochenplan-Bearbeitungsmodal
-            document.getElementById('weeklyPlanForm').addEventListener('submit', handleSaveWeeklyPlanEntry);
-            document.getElementById('weeklyPlanCancelButton').addEventListener('click', hideWeeklyPlanEditModal);
-            document.getElementById('weeklyPlanDeleteButton').addEventListener('click', handleDeleteWeeklyPlanEntry);
-
-            // Event Listener für Arbeitsplan-Funktionen (globaler Button entfernt)
-            // document.getElementById('addTaskButton').addEventListener('click', () => showTaskEditModal());
-            document.getElementById('taskForm').addEventListener('submit', handleSaveTask);
-            document.getElementById('taskCancelButton').addEventListener('click', hideTaskEditModal);
-            document.getElementById('taskDeleteButton').addEventListener('click', handleDeleteTask);
         }
 
-        // --- Authentifizierungs-Handler ---
+        // --- Authentication Handlers ---
         async function handleLogin() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
@@ -559,7 +461,7 @@
             try {
                 await signInWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                console.error("Login fehlgeschlagen:", error);
+                console.error("Login failed:", error);
                 showCustomMessage('Login fehlgeschlagen: ' + error.message, 'error', 'Login Fehler');
             } finally {
                 button.disabled = false;
@@ -570,115 +472,78 @@
         async function handleLogout() {
             try {
                 await signOut(auth);
-                activeTab = 'verwaltung';
+                activeTab = 'verwaltung'; // Reset tab on logout
                 switchTab('verwaltung');
             } catch (error) {
-                console.error("Fehler beim Abmelden:", error);
+                console.error("Error logging out:", error);
                 showCustomMessage("Fehler beim Abmelden: " + error.message, 'error', 'Abmeldefehler');
             }
         }
 
-        // --- Daten aus Firestore laden ---
+        // --- Data Loading from Firestore ---
         async function loadUserData() {
-            if (!isAuthReady) {
-                console.warn("Authentifizierung nicht bereit, überspringe Datenladung.");
+            if (!isAuthReady || !userId) {
+                console.warn("Auth not ready or user not logged in, skipping data load.");
                 return;
             }
 
-            // Stundenplan: Lausche auf Änderungen im 'annualTimetable' Dokument der 'public_data' Kollektion
-            onSnapshot(doc(db, 'public_data', 'annualTimetable'), (docSnapshot) => {
+            // Timetable: Listen to changes in the 'current' document within the 'timetable' collection
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'timetable', 'current'), (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     timetable = docSnapshot.data();
                     updateTimetableDisplay();
-                    updateWeeklyPlanDisplay(); // Aktualisiere auch den Wochenplan
                 } else {
-                    timetable = {};
+                    timetable = {}; // Reset if no data
                     updateTimetableDisplay();
-                    updateWeeklyPlanDisplay();
                 }
             }, (error) => {
-                console.error("Fehler beim Abrufen des Stundenplans:", error);
+                console.error("Error fetching timetable:", error);
                 showCustomMessage("Fehler beim Laden des Stundenplans: " + error.message, 'error', 'Ladefehler');
             });
 
-            // SOL-Fächer: Lausche auf Änderungen im 'enabledSolSubjects' Dokument der 'public_data' Kollektion
-            onSnapshot(doc(db, 'public_data', 'enabledSolSubjects'), (docSnapshot) => {
+            // SOL Subjects: Listen to changes in the 'enabled' document within the 'solSubjects' collection
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'solSubjects', 'enabled'), (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     solSubjects = docSnapshot.data().subjects || [];
                     updateSolSubjectsDisplay();
-                    updateWeeklyPlanDisplay(); // Aktualisiere auch den Wochenplan
-                    updateArbeitsplanDisplay(); // Wichtig: Aktualisiere Arbeitsplan, wenn SOL-Fächer sich ändern
                 } else {
-                    solSubjects = [];
+                    solSubjects = []; // Reset if no data
                     updateSolSubjectsDisplay();
-                    updateWeeklyPlanDisplay();
-                    updateArbeitsplanDisplay();
                 }
             }, (error) => {
-                console.error("Fehler beim Abrufen der SOL-Fächer:", error);
+                console.error("Error fetching SOL subjects:", error);
                 showCustomMessage("Fehler beim Laden der SOL-Fächer: " + error.message, 'error', 'Ladefehler');
             });
 
-            // Wochenplan-Einträge: Lausche auf Änderungen in der 'weeklyPlanEntries' Kollektion (Top-Level)
-            onSnapshot(collection(db, 'weeklyPlanEntries'), (querySnapshot) => {
-                weeklyPlanEntries = {};
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const key = `${data.day}_${data.slotId}`;
-                    weeklyPlanEntries[key] = { id: doc.id, ...data };
-                });
-                console.log("Wochenplan-Einträge geladen:", weeklyPlanEntries); // Debug-Log
-                updateWeeklyPlanDisplay();
-            }, (error) => {
-                console.error("Fehler beim Abrufen der Wochenplan-Einträge:", error);
-                showCustomMessage("Fehler beim Laden der Wochenplan-Einträge: " + error.message, 'error', 'Ladefehler');
-            });
-
-            // Wochenaufgaben: Lausche auf Änderungen in der 'weeklyTasks' Kollektion (Top-Level)
-            onSnapshot(collection(db, 'weeklyTasks'), (querySnapshot) => {
-                weeklyTasks = [];
-                querySnapshot.forEach((doc) => {
-                    weeklyTasks.push({ id: doc.id, ...doc.data() });
-                });
-                console.log("Wochenaufgaben geladen:", weeklyTasks); // Debug-Log
-                updateArbeitsplanDisplay(); // Aktualisiere die Anzeige der Aufgaben
-            }, (error) => {
-                console.error("Fehler beim Abrufen der Wochenaufgaben:", error);
-                showCustomMessage("Fehler beim Laden der Wochenaufgaben: " + error.message, 'error', 'Ladefehler');
-            });
-
-
-            // LP-Accounts: Lausche auf Änderungen in der 'lpAccounts' Kollektion (Top-Level - korrigiert)
-            onSnapshot(collection(db, 'lpAccounts'), (querySnapshot) => {
+            // LP Accounts: Listen to changes in the 'lpAccounts' collection
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'lpAccounts'), (querySnapshot) => {
                 lpAccounts = [];
                 querySnapshot.forEach((doc) => {
                     lpAccounts.push({ id: doc.id, ...doc.data() });
                 });
-                console.log("LP-Accounts geladen:", lpAccounts); // Debug-Log
                 updateLpAccountsDisplay();
             }, (error) => {
-                console.error("Fehler beim Abrufen der LP-Accounts:", error);
+                console.error("Error fetching LP accounts:", error);
                 showCustomMessage("Fehler beim Laden der LP-Accounts: " + error.message, 'error', 'Ladefehler');
             });
 
-            // SuS-Accounts: Lausche auf Änderungen in der 'susAccounts' Kollektion (Top-Level - korrigiert)
-            onSnapshot(collection(db, 'susAccounts'), (querySnapshot) => {
+            // SuS Accounts: Listen to changes in the 'susAccounts' collection
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'susAccounts'), (querySnapshot) => {
                 susAccounts = [];
                 querySnapshot.forEach((doc) => {
                     susAccounts.push({ id: doc.id, ...doc.data() });
                 });
-                console.log("SuS-Accounts geladen:", susAccounts); // Debug-Log
                 updateSusAccountsDisplay();
             }, (error) => {
-                console.error("Fehler beim Abrufen der SuS-Accounts:", error);
+                console.error("Error fetching SuS accounts:", error);
                 showCustomMessage("Fehler beim Laden der SuS-Accounts: " + error.message, 'error', 'Ladefehler');
             });
         }
 
-        // --- Jahresstundenplan-Verwaltung ---
+        // --- Timetable Management ---
         function generateTimetable() {
             const tbody = document.getElementById('timetableBody');
-            tbody.innerHTML = '';
+            tbody.innerHTML = ''; // Clear existing rows
 
             timeSlots.forEach(slot => {
                 const row = document.createElement('tr');
@@ -718,7 +583,7 @@
                     cell.appendChild(select);
 
                     const colorBar = document.createElement('div');
-                    colorBar.className = 'mt-1 h-2 rounded hidden';
+                    colorBar.className = 'mt-1 h-2 rounded hidden'; // Hidden by default
                     cell.appendChild(colorBar);
 
                     row.appendChild(cell);
@@ -733,16 +598,17 @@
 
             rows.forEach((row, i) => {
                 const slot = timeSlots[i];
-                const cells = row.querySelectorAll('td');
+                const cells = row.querySelectorAll('td'); // Includes the time cell
 
                 weekDays.forEach((day, j) => {
-                    const cell = cells[j + 1];
+                    const cell = cells[j + 1]; // +1 to skip the time cell
                     const select = cell.querySelector('select');
                     const colorBar = cell.querySelector('div');
 
                     const value = timetable[day] && timetable[day][slot.id] ? timetable[day][slot.id] : '';
                     select.value = value;
 
+                    // Update color bar based on selected subject
                     if (value) {
                         const subject = subjects.find(s => s.name === value);
                         if (subject) {
@@ -757,26 +623,27 @@
 
         async function handleTimetableChange(day, slot, subject) {
             if (!isAuthReady || !user) {
-                showCustomMessage("Bitte melden Sie sich an, um den Jahresstundenplan zu bearbeiten.", 'warning', 'Anmeldung erforderlich');
+                showCustomMessage("Bitte melden Sie sich an, um den Stundenplan zu bearbeiten.", 'warning', 'Anmeldung erforderlich');
                 return;
             }
 
-            // Sicherstellen, dass das Tagesobjekt im Stundenplan existiert
+            // Ensure the day object exists in timetable
             if (!timetable[day]) {
                 timetable[day] = {};
             }
             timetable[day][slot] = subject;
 
             try {
-                // Speichern des gesamten Stundenplan-Objekts in einem einzigen Dokument
-                await setDoc(doc(db, 'public_data', 'annualTimetable'), timetable, { merge: true });
+                // Use setDoc with merge: true to update only the specific fields
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timetable', 'current'), timetable, { merge: true });
+                // onSnapshot will automatically update the display
             } catch (error) {
-                console.error("Fehler beim Speichern des Jahresstundenplans:", error);
-                showCustomMessage("Fehler beim Speichern des Jahresstundenplans: " + error.message, 'error', 'Speicherfehler');
+                console.error("Error updating timetable:", error);
+                showCustomMessage("Fehler beim Speichern des Stundenplans: " + error.message, 'error', 'Speicherfehler');
             }
         }
 
-        // --- SOL-Fächer-Verwaltung ---
+        // --- SOL Subjects Management ---
         function generateSolSubjectsGrid() {
             const grid = document.getElementById('solSubjectsGrid');
             grid.innerHTML = '';
@@ -830,24 +697,24 @@
             }
 
             const index = solSubjects.indexOf(subjectName);
-            let updatedSolSubjects = [...solSubjects]; // Kopie erstellen
 
             if (index !== -1) {
-                updatedSolSubjects.splice(index, 1); // Entfernen, wenn vorhanden
+                solSubjects.splice(index, 1); // Remove if exists
             } else {
-                updatedSolSubjects.push(subjectName); // Hinzufügen, wenn nicht vorhanden
+                solSubjects.push(subjectName); // Add if not exists
             }
 
             try {
-                // Speichern des Arrays der SOL-Fächer in einem einzigen Dokument
-                await setDoc(doc(db, 'public_data', 'enabledSolSubjects'), { subjects: updatedSolSubjects });
+                // Store the array directly in a document
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solSubjects', 'enabled'), { subjects: solSubjects });
+                // onSnapshot will automatically update the display
             } catch (error) {
-                console.error("Fehler beim Speichern der SOL-Fächer:", error);
+                console.error("Error updating SOL subjects:", error);
                 showCustomMessage("Fehler beim Speichern der SOL-Fächer: " + error.message, 'error', 'Speicherfehler');
             }
         }
 
-        // --- Account-Verwaltung ---
+        // --- Account Management ---
         async function handleCreateAccount() {
             const email = document.getElementById('newAccountEmail').value;
             const password = document.getElementById('newAccountPassword').value;
@@ -859,17 +726,11 @@
                 return;
             }
 
-            // Überprüfen, ob der aktuelle Benutzer eine LP ist, bevor ein Account erstellt wird
-            const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
-            if (!isUserLP) {
-                showCustomMessage('Nur Lehrpersonen können neue Accounts erstellen.', 'error', 'Zugriff verweigert');
-                return;
-            }
-
             button.disabled = true;
             button.textContent = 'Erstelle...';
 
             try {
+                // Create user in Firebase Authentication
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const newUserId = userCredential.user.uid;
 
@@ -879,17 +740,18 @@
                     createdAt: new Date().toISOString()
                 };
 
-                // Korrigierter collectionPath für lpAccounts und susAccounts (Kleinbuchstaben)
+                // Store user profile data in Firestore
                 const collectionPath = type === 'LP' ? 'lpAccounts' : 'susAccounts';
-                await setDoc(doc(db, collectionPath, newUserId), accountData);
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionPath, newUserId), accountData);
 
+                // Clear form fields
                 document.getElementById('newAccountEmail').value = '';
                 document.getElementById('newAccountPassword').value = '';
                 document.getElementById('newAccountType').value = 'LP';
 
                 showCustomMessage('Account erfolgreich erstellt!', 'success', 'Erfolg');
             } catch (error) {
-                console.error("Fehler beim Erstellen des Accounts:", error);
+                console.error("Error creating account:", error);
                 showCustomMessage('Fehler beim Erstellen des Accounts: ' + error.message, 'error', 'Fehler');
             } finally {
                 button.disabled = false;
@@ -920,7 +782,7 @@
                     deleteButton.innerHTML = '🗑️';
                     deleteButton.setAttribute('data-id', account.id);
                     deleteButton.addEventListener('click', function() {
-                        handleDeleteAccount(this.getAttribute('data-id'), 'LP');
+                        handleDeleteAccount(this.getAttribute('data-id'), 'LP'); // Corrected type to 'LP'
                     });
 
                     div.appendChild(infoDiv);
@@ -963,579 +825,20 @@
             }
         }
 
-        async function handleDeleteAccount(accountId, type) {
+        function handleDeleteAccount(accountId, type) {
             showCustomConfirm('Sind Sie sicher, dass Sie diesen Account löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.', async (confirmed) => {
                 if (confirmed) {
-                    // Überprüfen, ob der aktuelle Benutzer eine LP ist, bevor ein Account gelöscht wird
-                    const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
-                    if (!isUserLP) {
-                        showCustomMessage('Nur Lehrpersonen können Accounts löschen.', 'error', 'Zugriff verweigert');
-                        return;
-                    }
-
                     try {
-                        // Korrigierter collectionPath für lpAccounts und susAccounts (Kleinbuchstaben)
                         const collectionPath = type === 'LP' ? 'lpAccounts' : 'susAccounts';
-                        await deleteDoc(doc(db, collectionPath, accountId));
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionPath, accountId));
                         showCustomMessage('Account erfolgreich gelöscht.', 'success', 'Gelöscht');
                     } catch (error) {
-                        console.error("Fehler beim Löschen des Accounts:", error);
+                        console.error("Error deleting account:", error);
                         showCustomMessage('Fehler beim Löschen des Accounts: ' + error.message, 'error', 'Löschfehler');
                     }
                 }
             }, 'Account löschen');
         }
-
-        // --- Stundenplan der Woche Funktionalität (ehemals Wochenplan) ---
-
-        function generateWeeklyPlanTable() {
-            const tbody = document.getElementById('weeklyPlanBody');
-            tbody.innerHTML = '';
-
-            timeSlots.forEach(slot => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50';
-
-                const timeCell = document.createElement('td');
-                timeCell.className = 'px-4 py-2 border-b font-medium text-sm text-gray-700';
-                timeCell.textContent = slot.time;
-                row.appendChild(timeCell);
-
-                weekDays.forEach(day => {
-                    const cell = document.createElement('td');
-                    cell.className = 'px-2 py-2 border-b text-center cursor-pointer';
-                    cell.setAttribute('data-day', day);
-                    cell.setAttribute('data-slot', slot.id.toString());
-                    cell.addEventListener('click', function() {
-                        // Nur LP-Accounts können bearbeiten
-                        const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
-
-                        if (isUserLP) {
-                             showWeeklyPlanEditModal(day, slot.id);
-                        } else {
-                            showCustomMessage('Nur Lehrpersonen können den Stundenplan der Woche bearbeiten.', 'info', 'Zugriff verweigert');
-                        }
-                    });
-
-                    // Inhalt der Zelle wird durch updateWeeklyPlanDisplay() gesetzt
-                    row.appendChild(cell);
-                });
-                tbody.appendChild(row);
-            });
-        }
-
-        function updateWeeklyPlanDisplay() {
-            const tbody = document.getElementById('weeklyPlanBody');
-            const rows = tbody.querySelectorAll('tr');
-
-            rows.forEach((row, i) => {
-                const slot = timeSlots[i];
-                const cells = row.querySelectorAll('td');
-
-                weekDays.forEach((day, j) => {
-                    const cell = cells[j + 1]; // +1 to skip the time cell
-                    cell.innerHTML = ''; // Inhalt der Zelle leeren
-                    // Setzt die Basisklassen für die Zelle zurück, bevor neue Klassen hinzugefügt werden
-                    cell.className = `px-2 py-2 border-b text-center text-sm relative`;
-
-                    const weeklyPlanKey = `${day}_${slot.id}`;
-                    const weeklyEntry = weeklyPlanEntries[weeklyPlanKey];
-                    const annualSubject = timetable[day] && timetable[day][slot.id] ? timetable[day][slot.id] : '';
-                    const isSolSubject = solSubjects.includes(annualSubject);
-                    
-                    // Logik für die Zellgestaltung und den Inhalt
-                    if (weeklyEntry) {
-                        // Fall 1: Spezifisch definierte Lektion (z.B. Lernkontrolle, Test, Lehrerinput)
-                        // Diese Lektionen haben eine eigene Farbgebung, die über alles andere geht
-                        const entrySubjectColor = subjects.find(s => s.name === weeklyEntry.subjectName)?.color || 'bg-gray-200';
-                        cell.classList.add(entrySubjectColor);
-                        // Textfarbe basierend auf Hintergrund für besseren Kontrast bestimmen
-                        if (['bg-red-400', 'bg-blue-400', 'bg-purple-400', 'bg-green-400', 'bg-orange-400',
-                             'bg-pink-400', 'bg-red-500', 'bg-indigo-400', 'bg-violet-400', 'bg-cyan-400',
-                             'bg-amber-400', 'bg-gray-400'].includes(entrySubjectColor)) {
-                            cell.classList.add('text-white');
-                        } else if (['bg-yellow-400', 'bg-yellow-300', 'bg-teal-400', 'bg-gray-200'].includes(entrySubjectColor)) {
-                            cell.classList.add('text-gray-900'); // Dunklerer Text für hellere Hintergründe
-                        } else {
-                            cell.classList.add('text-gray-700'); // Standard-Fallback
-                        }
-
-                        cell.innerHTML += `<div class="font-semibold">${weeklyEntry.title || 'Definierte Lektion'}</div>`;
-                        if (weeklyEntry.description) {
-                            cell.innerHTML += `<div class="text-xs">${weeklyEntry.description}</div>`;
-                        }
-                        if (weeklyEntry.externalUrl) {
-                            cell.innerHTML += `<a href="${weeklyEntry.externalUrl}" target="_blank" class="text-xs hover:underline block">Link</a>`;
-                        }
-                    } else if (annualSubject && isSolSubject) {
-                        // Fall 2: SOL-Fach (immer grün, unabhängig von der spezifischen Farbe des Jahresfachs)
-                        // Entfernt alle potenziellen vorherigen Farb-/Textklassen, um Konsistenz zu gewährleisten
-                        cell.classList.remove(...subjects.map(s => s.color), 'text-white', 'text-gray-900', 'text-gray-700', 'italic');
-                        cell.classList.add('bg-green-100', 'text-green-800'); // Spezifisches SOL-Grün anwenden
-                        cell.innerHTML = `<span class="font-medium">SOL</span>`;
-                    } else if (annualSubject && !isSolSubject) {
-                        // Fall 3: Reguläres (Nicht-SOL) Fach aus dem Jahresstundenplan
-                        const annualSubjectColor = subjects.find(s => s.name === annualSubject)?.color || 'bg-gray-200';
-                        cell.classList.add(annualSubjectColor); // Die spezifische Farbe des Fachs anwenden
-
-                        // Textfarbe basierend auf Hintergrund für besseren Kontrast bestimmen
-                        if (['bg-red-400', 'bg-blue-400', 'bg-purple-400', 'bg-green-400', 'bg-orange-400',
-                             'bg-pink-400', 'bg-red-500', 'bg-indigo-400', 'bg-violet-400', 'bg-cyan-400',
-                             'bg-amber-400', 'bg-gray-400'].includes(annualSubjectColor)) {
-                            cell.classList.add('text-white');
-                        } else if (['bg-yellow-400', 'bg-yellow-300', 'bg-teal-400', 'bg-gray-200'].includes(annualSubjectColor)) {
-                            cell.classList.add('text-gray-900'); // Dunklerer Text für hellere Hintergründe
-                        } else {
-                            cell.classList.add('text-gray-700'); // Standard-Fallback
-                        }
-                        cell.innerHTML = `<span class="font-medium">${annualSubject}</span>`; // "(Blockiert)" entfernt
-                    } else {
-                        // Fall 4: Freie Lektion (kein Fach im Jahresstundenplan zugewiesen)
-                        // Stellt sicher, dass keine vorherige Textfarbe übrig bleibt
-                        cell.classList.remove(...subjects.map(s => s.color), 'text-white', 'text-gray-900', 'text-gray-700');
-                        cell.classList.add('bg-white', 'text-gray-400', 'italic');
-                        cell.textContent = 'Frei';
-                    }
-
-                    // Nur wenn ein LP angemeldet ist, soll der Cursor als Pointer angezeigt werden
-                    if (user && lpAccounts.some(acc => acc.id === user.uid)) {
-                        cell.classList.add('cursor-pointer');
-                    } else {
-                        cell.classList.remove('cursor-pointer');
-                    }
-                });
-            });
-        }
-
-
-        function showWeeklyPlanEditModal(day, slotId) {
-            // Zusätzliche Überprüfung direkt hier, falls die Meldung immer noch kommt
-            const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
-            if (!isUserLP) {
-                showCustomMessage('Nur Lehrpersonen können den Stundenplan der Woche bearbeiten.', 'info', 'Zugriff verweigert');
-                return; // Wichtig: Beenden Sie die Funktion hier, wenn der Benutzer keine LP ist
-            }
-
-            const modal = document.getElementById('weeklyPlanEditModal');
-            const form = document.getElementById('weeklyPlanForm');
-            const subjectSelect = document.getElementById('weeklyPlanSubject'); // Changed to select
-            const timeSlotInput = document.getElementById('weeklyPlanTimeSlot');
-            const titleInput = document.getElementById('weeklyPlanTitle');
-            const descriptionInput = document.getElementById('weeklyPlanDescription');
-            const externalUrlInput = document.getElementById('weeklyPlanExternalUrl');
-            const deleteButton = document.getElementById('weeklyPlanDeleteButton');
-
-            const slot = timeSlots.find(s => s.id === slotId);
-            const weeklyPlanKey = `${day}_${slotId}`;
-            currentWeeklyPlanEntry = weeklyPlanEntries[weeklyPlanKey]; // Set current entry
-
-            const annualSubject = timetable[day] && timetable[day][slot.id] ? timetable[day][slot.id] : '';
-
-            // Populate subject select
-            subjectSelect.innerHTML = ''; // Clear existing options
-            const emptyOption = document.createElement('option');
-            emptyOption.value = '';
-            emptyOption.textContent = 'Kein Fach zugewiesen';
-            subjectSelect.appendChild(emptyOption);
-
-            subjects.forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject.name;
-                option.textContent = subject.name;
-                subjectSelect.appendChild(option);
-            });
-
-            // Set read-only time slot field
-            timeSlotInput.value = `${day}, ${slot.time}`;
-
-            // Populate form if an entry already exists
-            if (currentWeeklyPlanEntry) {
-                document.getElementById('weeklyPlanModalTitle').textContent = 'Lektion bearbeiten';
-                subjectSelect.value = currentWeeklyPlanEntry.subjectName || annualSubject || ''; // Use saved subjectName, then annual, then empty
-                titleInput.value = currentWeeklyPlanEntry.title || '';
-                descriptionInput.value = currentWeeklyPlanEntry.description || '';
-                externalUrlInput.value = currentWeeklyPlanEntry.externalUrl || '';
-                
-                deleteButton.classList.remove('hidden'); // Show delete button for existing entries
-                form.dataset.entryId = currentWeeklyPlanEntry.id; // Store entry ID for deletion
-            } else {
-                // Reset form for new entry
-                document.getElementById('weeklyPlanModalTitle').textContent = 'Neue Lektion definieren';
-                form.reset();
-                subjectSelect.value = annualSubject || ''; // Default to annual subject for new entry
-                deleteButton.classList.add('hidden'); // Hide delete button for new entries
-                form.dataset.entryId = ''; // Clear entry ID for new entries
-            }
-
-            // Store day and slotId in dataset for easy access on save
-            form.dataset.day = day;
-            form.dataset.slotId = slotId;
-            // subjectName is now read directly from subjectSelect.value in handleSaveWeeklyPlanEntry
-
-            modal.classList.remove('hidden');
-        }
-
-        function hideWeeklyPlanEditModal() {
-            document.getElementById('weeklyPlanEditModal').classList.add('hidden');
-            document.getElementById('weeklyPlanForm').reset();
-            currentWeeklyPlanEntry = null; // Reset current entry
-        }
-
-        async function handleSaveWeeklyPlanEntry(event) {
-            event.preventDefault(); // Prevent default form submission
-
-            if (!isAuthReady || !user) {
-                showCustomMessage("Bitte melden Sie sich an, um den Stundenplan der Woche zu speichern.", 'warning', 'Anmeldung erforderlich');
-                return;
-            }
-
-            const form = document.getElementById('weeklyPlanForm');
-            const day = form.dataset.day;
-            const slotId = parseInt(form.dataset.slotId);
-            const selectedSubjectName = document.getElementById('weeklyPlanSubject').value; // Get value from select
-            const title = document.getElementById('weeklyPlanTitle').value.trim();
-            const description = document.getElementById('weeklyPlanDescription').value.trim();
-            const externalUrl = document.getElementById('weeklyPlanExternalUrl').value.trim();
-
-            if (!title && !description && !externalUrl && !selectedSubjectName) { // Added selectedSubjectName to check
-                showCustomMessage('Bitte geben Sie mindestens einen Titel, eine Beschreibung, eine URL oder wählen Sie ein Fach aus.', 'warning', 'Eingabe erforderlich');
-                return;
-            }
-
-            const saveButton = document.getElementById('weeklyPlanSaveButton');
-            saveButton.disabled = true;
-            saveButton.textContent = 'Speichern...';
-
-            try {
-                const entryData = {
-                    day: day,
-                    slotId: slotId,
-                    subjectName: selectedSubjectName, // Use the selected subject name
-                    title: title,
-                    description: description,
-                    externalUrl: externalUrl,
-                    createdBy: user.email, // Store user email as creator
-                    createdAt: currentWeeklyPlanEntry?.createdAt || new Date().toISOString() // Keep original creation date or set new
-                };
-
-                const entryId = currentWeeklyPlanEntry ? currentWeeklyPlanEntry.id : `${day}_${slotId}`;
-                // Korrigierter Pfad für weeklyPlanEntries (Top-Level)
-                await setDoc(doc(db, 'weeklyPlanEntries', entryId), entryData);
-
-                showCustomMessage('Stundenplan-Eintrag erfolgreich gespeichert!', 'success', 'Erfolg');
-                hideWeeklyPlanEditModal();
-
-            } catch (error) {
-                console.error("Fehler beim Speichern des Stundenplan-Eintrags:", error);
-                showCustomMessage('Fehler beim Speichern des Stundenplan-Eintrags: ' + error.message, 'error', 'Speicherfehler');
-            } finally {
-                saveButton.disabled = false;
-                saveButton.textContent = 'Speichern';
-            }
-        }
-
-        async function handleDeleteWeeklyPlanEntry() {
-            const form = document.getElementById('weeklyPlanForm');
-            const entryIdToDelete = form.dataset.entryId; // Get the ID from the form's dataset
-
-            if (!isAuthReady || !user || !entryIdToDelete) { // Check if entryIdToDelete exists
-                showCustomMessage("Kein Eintrag zum Löschen ausgewählt oder keine Berechtigung.", 'warning', 'Fehler');
-                return;
-            }
-
-            showCustomConfirm('Sind Sie sicher, dass Sie diesen Stundenplan-Eintrag löschen möchten? Dies kann nicht rückgängig gemacht werden.', async (confirmed) => {
-                if (confirmed) {
-                    const deleteButton = document.getElementById('weeklyPlanDeleteButton');
-                    deleteButton.disabled = true;
-                    deleteButton.textContent = 'Löschen...';
-
-                    try {
-                        // Korrigierter Pfad für weeklyPlanEntries (Top-Level)
-                        await deleteDoc(doc(db, 'weeklyPlanEntries', entryIdToDelete));
-                        showCustomMessage('Stundenplan-Eintrag erfolgreich gelöscht!', 'success', 'Gelöscht');
-                        hideWeeklyPlanEditModal();
-                    } catch (error) {
-                        console.error("Fehler beim Löschen des Stundenplan-Eintrags:", error);
-                        showCustomMessage('Fehler beim Löschen des Stundenplan-Eintrags: ' + error.message, 'error', 'Löschfehler');
-                    } finally {
-                        deleteButton.disabled = false;
-                        deleteButton.textContent = 'Löschen';
-                    }
-                }
-            }, 'Eintrag löschen');
-        }
-
-        // --- Arbeitsplan der Woche Funktionalität (Wochenaufgaben) ---
-
-        function updateArbeitsplanDisplay() {
-            const tasksContainer = document.getElementById('tasksContainer');
-            const noSolSubjectsMessage = document.getElementById('noSolSubjectsMessage');
-            tasksContainer.innerHTML = ''; // Clear existing tasks
-
-            if (solSubjects.length === 0) {
-                noSolSubjectsMessage.classList.remove('hidden');
-                tasksContainer.classList.add('hidden'); // Hide the grid if no SOL subjects
-                return;
-            } else {
-                noSolSubjectsMessage.classList.add('hidden');
-                tasksContainer.classList.remove('hidden'); // Show the grid
-            }
-
-            solSubjects.forEach(solSubjectName => {
-                const subjectData = subjects.find(s => s.name === solSubjectName);
-                const cardBgColor = subjectData?.lightColor || 'bg-gray-100';
-                const cardTextColor = subjectData?.textColor || 'text-gray-900';
-                const borderColor = subjectData?.color || 'border-gray-200';
-
-                const subjectColumn = document.createElement('div');
-                subjectColumn.className = `bg-white rounded-xl shadow-lg p-4 border-t-4 ${borderColor}`;
-
-                subjectColumn.innerHTML = `
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold ${cardTextColor}">${solSubjectName}</h3>
-                        <button class="add-task-to-column-button text-2xl text-blue-500 hover:text-blue-700 modern-button" data-subject="${solSubjectName}">
-                            ➕
-                        </button>
-                    </div>
-                    <div class="tasks-list space-y-4">
-                        <!-- Tasks for this subject will go here -->
-                    </div>
-                `;
-
-                const tasksList = subjectColumn.querySelector('.tasks-list');
-                const addTaskButton = subjectColumn.querySelector('.add-task-to-column-button');
-
-                // Only allow LP to add tasks
-                const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
-                if (isUserLP) {
-                    addTaskButton.classList.remove('hidden');
-                    addTaskButton.addEventListener('click', function() {
-                        showTaskEditModal(null, this.dataset.subject); // Pass subject name
-                    });
-                } else {
-                    addTaskButton.classList.add('hidden');
-                }
-
-                const filteredTasks = weeklyTasks.filter(task => task.subject === solSubjectName);
-
-                if (filteredTasks.length === 0) {
-                    const noTasksInColumn = document.createElement('p');
-                    noTasksInColumn.className = `text-sm text-gray-500 italic text-center p-4 ${cardTextColor}`;
-                    noTasksInColumn.textContent = 'Noch keine Aufgaben für dieses Fach.';
-                    tasksList.appendChild(noTasksInColumn);
-                } else {
-                    filteredTasks.forEach(task => {
-                        const taskCard = document.createElement('div');
-                        taskCard.className = `bg-white rounded-lg shadow-sm p-4 relative border-l-2 ${borderColor}`; // Smaller border for individual tasks
-                        taskCard.setAttribute('data-task-id', task.id);
-
-                        // Ensure link is clickable and opens in new tab
-                        const materialsHtml = task.materials ? 
-                            task.materials.split('\n').map(line => {
-                                try {
-                                    const url = new URL(line.trim());
-                                    return `<a href="${url.href}" target="_blank" class="text-blue-600 hover:underline block">${line.trim()}</a>`;
-                                } catch (_) {
-                                    return `<span>${line.trim()}</span>`;
-                                }
-                            }).join('<br>') : '';
-
-                        taskCard.innerHTML = `
-                            <div class="absolute top-2 right-2 text-xl ${cardTextColor}">
-                                ${task.requirementType === 'basic' ? '🔵' : '⭐'}
-                            </div>
-                            <h4 class="text-md font-semibold mb-1 ${cardTextColor}">${task.title}</h4>
-                            ${materialsHtml ? `<p class="${cardTextColor} text-xs mb-2 whitespace-pre-wrap">${materialsHtml}</p>` : ''}
-                            <button class="edit-task-button absolute bottom-2 right-2 px-2 py-0.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-xs modern-button">Bearbeiten</button>
-                        `;
-
-                        const editButton = taskCard.querySelector('.edit-task-button');
-                        if (isUserLP) {
-                            editButton.classList.remove('hidden');
-                            editButton.addEventListener('click', () => showTaskEditModal(task));
-                        } else {
-                            editButton.classList.add('hidden');
-                        }
-                        tasksList.appendChild(taskCard);
-                    });
-                }
-                tasksContainer.appendChild(subjectColumn);
-            });
-        }
-
-
-        function showTaskEditModal(task = null, initialSubject = null) {
-            const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
-            if (!isUserLP) {
-                showCustomMessage('Nur Lehrpersonen können Aufgaben bearbeiten.', 'info', 'Zugriff verweigert');
-                return;
-            }
-
-            const modal = document.getElementById('taskEditModal');
-            const form = document.getElementById('taskForm');
-            const subjectSelect = document.getElementById('taskSubject');
-            const titleInput = document.getElementById('taskTitle');
-            const materialsInput = document.getElementById('taskMaterials');
-            const basicRadio = document.querySelector('input[name="requirementType"][value="basic"]');
-            const advancedRadio = document.querySelector('input[name="requirementType"][value="advanced"]');
-            const deleteButton = document.getElementById('taskDeleteButton');
-
-            currentTaskEntry = task; // Set the global currentTaskEntry
-
-            // Populate subject select
-            subjectSelect.innerHTML = '';
-            // Add a default empty option for new tasks if not pre-filled
-            if (!initialSubject && !task) {
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Fach auswählen';
-                defaultOption.disabled = true;
-                defaultOption.selected = true;
-                subjectSelect.appendChild(defaultOption);
-            }
-
-            subjects.forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject.name;
-                option.textContent = subject.name;
-                subjectSelect.appendChild(option);
-            });
-
-            if (task) {
-                document.getElementById('taskModalTitle').textContent = 'Aufgabe bearbeiten';
-                subjectSelect.value = task.subject || '';
-                titleInput.value = task.title || '';
-                materialsInput.value = task.materials || '';
-                if (task.requirementType === 'advanced') {
-                    advancedRadio.checked = true;
-                } else {
-                    basicRadio.checked = true;
-                }
-                deleteButton.classList.remove('hidden');
-                form.dataset.taskId = task.id; // Store task ID for editing/deleting
-                subjectSelect.disabled = true; // Disable subject selection when editing
-                subjectSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
-            } else {
-                document.getElementById('taskModalTitle').textContent = 'Neue Aufgabe erstellen';
-                form.reset();
-                basicRadio.checked = true; // Default for new tasks
-                deleteButton.classList.add('hidden');
-                form.dataset.taskId = ''; // Clear task ID for new tasks
-                
-                if (initialSubject) {
-                    subjectSelect.value = initialSubject;
-                    subjectSelect.disabled = true; // Disable subject selection if pre-filled
-                    subjectSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
-                } else {
-                    subjectSelect.value = ''; // Ensure default option is selected for new tasks
-                    subjectSelect.disabled = false; // Enable subject selection
-                    subjectSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                }
-            }
-
-            modal.classList.remove('hidden');
-        }
-
-        function hideTaskEditModal() {
-            document.getElementById('taskEditModal').classList.add('hidden');
-            document.getElementById('taskForm').reset();
-            currentTaskEntry = null; // Reset global currentTaskEntry
-            // Ensure subject select is re-enabled and styling reset when modal closes
-            const subjectSelect = document.getElementById('taskSubject');
-            subjectSelect.disabled = false;
-            subjectSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
-        }
-
-        async function handleSaveTask(event) {
-            event.preventDefault();
-
-            const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
-            if (!isUserLP) {
-                showCustomMessage('Nur Lehrpersonen können Aufgaben speichern.', 'error', 'Zugriff verweigert');
-                return;
-            }
-
-            const form = document.getElementById('taskForm');
-            const taskId = form.dataset.taskId;
-            const subject = document.getElementById('taskSubject').value;
-            const title = document.getElementById('taskTitle').value.trim();
-            const materials = document.getElementById('taskMaterials').value.trim();
-            const requirementType = document.querySelector('input[name="requirementType"]:checked').value;
-
-            if (!subject || !title) {
-                showCustomMessage('Bitte Fach und Titel eingeben.', 'warning', 'Eingabe erforderlich');
-                return;
-            }
-
-            const saveButton = document.getElementById('taskSaveButton');
-            saveButton.disabled = true;
-            saveButton.textContent = 'Speichern...';
-
-            try {
-                const taskData = {
-                    subject: subject,
-                    title: title,
-                    materials: materials,
-                    requirementType: requirementType,
-                    createdBy: user.email,
-                    createdAt: taskId && currentTaskEntry ? currentTaskEntry.createdAt : new Date().toISOString() // Keep original creation date or set new
-                };
-
-                if (taskId) {
-                    // Update existing task
-                    await setDoc(doc(db, 'weeklyTasks', taskId), taskData);
-                } else {
-                    // Add new task
-                    await addDoc(collection(db, 'weeklyTasks'), taskData);
-                }
-
-                showCustomMessage('Aufgabe erfolgreich gespeichert!', 'success', 'Erfolg');
-                hideTaskEditModal();
-            } catch (error) {
-                console.error("Fehler beim Speichern der Aufgabe:", error);
-                showCustomMessage('Fehler beim Speichern der Aufgabe: ' + error.message, 'error', 'Speicherfehler');
-            } finally {
-                saveButton.disabled = false;
-                saveButton.textContent = 'Speichern';
-            }
-        }
-
-        async function handleDeleteTask() {
-            const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
-            if (!isUserLP) {
-                showCustomMessage('Nur Lehrpersonen können Aufgaben löschen.', 'error', 'Zugriff verweigert');
-                return;
-            }
-
-            const form = document.getElementById('taskForm');
-            const taskIdToDelete = form.dataset.taskId;
-
-            if (!taskIdToDelete) {
-                showCustomMessage("Keine Aufgabe zum Löschen ausgewählt.", 'warning', 'Fehler');
-                return;
-            }
-
-            showCustomConfirm('Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Dies kann nicht rückgängig gemacht werden.', async (confirmed) => {
-                if (confirmed) {
-                    const deleteButton = document.getElementById('taskDeleteButton');
-                    deleteButton.disabled = true;
-                    deleteButton.textContent = 'Löschen...';
-
-                    try {
-                        await deleteDoc(doc(db, 'weeklyTasks', taskIdToDelete));
-                        showCustomMessage('Aufgabe erfolgreich gelöscht!', 'success', 'Gelöscht');
-                        hideTaskEditModal();
-                    } catch (error) {
-                        console.error("Fehler beim Löschen der Aufgabe:", error);
-                        showCustomMessage('Fehler beim Löschen der Aufgabe: ' + error.message, 'error', 'Löschfehler');
-                    } finally {
-                        deleteButton.disabled = false;
-                        deleteButton.textContent = 'Löschen';
-                    }
-                }
-            }, 'Aufgabe löschen');
-        }
-
     </script>
 </body>
 </html>
