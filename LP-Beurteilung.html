@@ -190,7 +190,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, getDoc, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         let app;
         let auth;
@@ -201,6 +201,9 @@
 
         // Global variables provided by the Canvas environment (if applicable)
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Log the current appId for debugging
+        console.log('Aktuelle App ID:', appId);
+
 
         // Ihre Firebase-Konfiguration (direkt eingefügt)
         const firebaseConfig = {
@@ -234,17 +237,16 @@
             { name: 'Bewegung und Sport', color: 'bg-red-600' }
         ];
 
-        // Helper to get a Firestore document (used for checking account type)
-        async function getFirestoreDoc(dbInstance, ...pathSegments) {
-            return await new Promise((resolve, reject) => {
-                const docRef = doc(dbInstance, ...pathSegments);
-                const unsubscribe = onSnapshot(docRef, (docSnapshot) => {
-                    unsubscribe(); // Unsubscribe immediately after first snapshot
-                    resolve(docSnapshot);
-                }, (error) => {
-                    reject(error);
-                });
-            });
+        // Helper to get a Firestore document (now using getDoc for a single fetch)
+        async function getFirestoreDoc(dbInstance, collectionName, docId) {
+            const docRef = doc(dbInstance, collectionName, docId); // Adjusted for root-level collections
+            try {
+                const docSnapshot = await getDoc(docRef);
+                return docSnapshot;
+            } catch (error) {
+                console.error("Error fetching Firestore document:", error);
+                throw error; // Re-throw the error for handling in the calling function
+            }
         }
 
         // --- Firebase Initialization ---
@@ -264,8 +266,10 @@
                         userId = user.uid;
                         // If a user is already logged in (e.g., session restored),
                         // verify if they are an LP and then show the main app.
-                        const lpDoc = await getFirestoreDoc(db, 'artifacts', appId, 'public', 'data', 'lpAccounts', userId);
-                        if (lpDoc.exists()) {
+                        // Adjusted path for lpAccounts to be root-level
+                        const lpDoc = await getFirestoreDoc(db, 'lpAccounts', userId);
+                        // IMPORTANT: Check for existence AND the role field
+                        if (lpDoc.exists() && lpDoc.data().role === 'LP') {
                             showMainApp();
                             await loadUserData();
                         } else {
@@ -419,8 +423,10 @@
                 const loggedInUserId = userCredential.user.uid;
 
                 // NOW check if the user is an LP account after successful email/password login
-                const lpDoc = await getFirestoreDoc(db, 'artifacts', appId, 'public', 'data', 'lpAccounts', loggedInUserId);
-                if (lpDoc.exists()) {
+                // Adjusted path for lpAccounts to be root-level
+                const lpDoc = await getFirestoreDoc(db, 'lpAccounts', loggedInUserId);
+                // IMPORTANT: Check for existence AND the role field
+                if (lpDoc.exists() && lpDoc.data().role === 'LP') {
                     // If it's an LP account, onAuthStateChanged will be triggered
                     // and will handle showing the main app and loading data.
                 } else {
@@ -455,8 +461,8 @@
                 return;
             }
 
-            // Listen to LP Accounts (public data)
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'lpAccounts'), (querySnapshot) => {
+            // Listen to LP Accounts (public data) - Adjusted path
+            onSnapshot(collection(db, 'lpAccounts'), (querySnapshot) => {
                 lpAccounts = [];
                 querySnapshot.forEach((doc) => {
                     lpAccounts.push({ id: doc.id, ...doc.data() });
@@ -467,8 +473,8 @@
                 showCustomMessage("Fehler beim Laden der LP-Accounts: " + error.message, 'error', 'Ladefehler');
             });
 
-            // Listen to SuS Accounts (public data)
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'susAccounts'), (querySnapshot) => {
+            // Listen to SuS Accounts (public data) - Adjusted path
+            onSnapshot(collection(db, 'susAccounts'), (querySnapshot) => {
                 susAccounts = [];
                 querySnapshot.forEach((doc) => {
                     susAccounts.push({ id: doc.id, ...doc.data() });
@@ -493,10 +499,6 @@
                 subjectCard.className = `bg-white rounded-xl shadow-lg p-6 cursor-pointer transform transition-transform hover:scale-105 ${subject.color} text-white flex flex-col items-center justify-center text-center`;
                 subjectCard.style.minHeight = '150px'; // Ensure cards have a consistent height
                 subjectCard.setAttribute('data-subject-name', subject.name);
-                subjectCard.innerHTML = `
-                    <h3 class="text-xl font-bold mb-2">${subject.name}</h3>
-                    <p class="text-sm opacity-90">Lernziele definieren</p>
-                `;
                 subjectCard.addEventListener('click', () => openLearningGoalModal(subject.name));
                 subjectsGrid.appendChild(subjectCard);
             });
