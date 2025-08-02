@@ -1,1 +1,468 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOL - Schülerportal</title>
+    <!-- Tailwind CSS CDN für modernes Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .main-container {
+            background-color: #ffffff;
+            background-image: radial-gradient(at 0% 0%, #a5b4fc 0, transparent 50%),
+                              radial-gradient(at 100% 100%, #60a5fa 0, transparent 50%);
+            background-size: 100% 100%;
+            background-position: center;
+        }
+        .header-container {
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        /* Style für den aktiven Tab */
+        .tab-button.active {
+            color: #4338ca;
+            border-bottom-width: 3px;
+            border-color: #4338ca;
+            font-weight: 600;
+        }
+        /* CSS-Übergänge für reibungslose Tab-Wechsel */
+        .tab-content {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Angepasste, kompaktere Stile für die Stundenplan-Zellen */
+        .timetable-grid-cell {
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .timetable-time-cell {
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem;
+            width: 100px;
+        }
+        /* Post-it-Stil für den Arbeitsplan */
+        .post-it {
+            background-color: #fcf19d; /* Helles Gelb für den Post-it-Effekt */
+            transform: rotate(1deg);
+            transition: transform 0.2s ease-in-out;
+            min-height: 250px;
+        }
+        .post-it:hover {
+            transform: rotate(-1deg);
+        }
+        .post-it-title {
+            font-family: 'Poppins', sans-serif;
+            color: #4b5563; /* graue Farbe */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header mit Titel und Abmelde-Button -->
+    <header class="header-container py-4 px-6 md:px-10 flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-900">Schülerportal</h1>
+        <button id="logoutBtn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-xl shadow hover:bg-red-600 transition duration-300">
+            Abmelden
+        </button>
+    </header>
+
+    <!-- Hauptinhalt mit Tabs -->
+    <main class="flex-1 flex items-center justify-center p-6 md:p-10">
+        <div class="main-container max-w-6xl w-full p-8 md:p-12 rounded-3xl shadow-2xl">
+            <!-- Haupt-Tab-Navigation -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button id="stundenplan-tab" class="tab-button inline-flex items-center px-1 py-4 text-lg font-medium text-gray-500 hover:text-gray-700 transition duration-200">
+                        Stundenplan
+                    </button>
+                    <button id="arbeitsplan-tab" class="tab-button inline-flex items-center px-1 py-4 text-lg font-medium text-gray-500 hover:text-gray-700 transition duration-200">
+                        Arbeitsplan
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab-Inhalte -->
+            <div id="tab-content-container">
+                <!-- Stundenplan-Inhalt -->
+                <div id="stundenplan-content" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Wochenstundenplan</h2>
+                    <p class="text-gray-600 mb-6">
+                        Hier siehst du deinen Stundenplan für die aktuelle Woche.
+                    </p>
+                    <div id="weekly-timetable-container" class="mt-6 overflow-x-auto">
+                        <!-- Stundenplan wird hier durch JS eingefügt -->
+                        <div class="text-center text-gray-500 my-8">
+                            <span class="animate-pulse">Stundenplan wird geladen...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Arbeitsplan-Inhalt -->
+                <div id="arbeitsplan-content" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Arbeitsplan</h2>
+                    <p class="text-gray-600 mb-6">
+                        Hier findest du die Aufträge für die SOL-Fächer.
+                    </p>
+                    <div id="sol-arbeitsplan-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <!-- Die Post-its werden hier von JS eingefügt -->
+                        <div class="text-center text-gray-500 my-8 col-span-full">
+                            <span class="animate-pulse">Arbeitspläne werden geladen...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Benutzerdefinierte Meldungsbox -->
+    <div id="custom-alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full m-4 text-center">
+            <p id="alert-message" class="text-lg font-medium mb-4">Meldung</p>
+            <button id="alert-ok-btn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-indigo-700 transition duration-300">
+                OK
+            </button>
+        </div>
+    </div>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Firestore-Konfiguration (automatisch vom Canvas bereitgestellt)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBVRTrFbNL-jMpfWtDVv739vkuqrCY8PDw",
+            authDomain: "selbstorganisiertes-lernen-7a.firebaseapp.com",
+            projectId: "selbstorganisiertes-lernen-7a",
+            storageBucket: "selbstorganisiertes-lernen-7a.appspot.com",
+            messagingSenderId: "283834841911",
+            appId: "1:283834841911:web:189c328bca0c2ec167b8b2"
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialisieren Sie Firebase und Dienste
+        let app, auth, db;
+        let isAuthReady = false;
+        
+        // HTML-Element-Referenzen
+        const logoutBtn = document.getElementById('logoutBtn');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const weeklyTimetableContainer = document.getElementById('weekly-timetable-container');
+        const solArbeitsplanContainer = document.getElementById('sol-arbeitsplan-container');
+        const customAlertModal = document.getElementById('custom-alert-modal');
+        const alertMessage = document.getElementById('alert-message');
+        const alertOkBtn = document.getElementById('alert-ok-btn');
+
+        // Globale Variablen für Modals und Daten
+        let latestTimetable = {};
+        let latestSolSubjects = [];
+        let latestSolBlocks = {};
+        let latestWorkPlans = {};
+
+        // Konstanten für Fächer, Zeitfenster und Wochentage
+        const subjects = [
+            { name: 'Frei', color: 'bg-gray-200', lightColor: 'bg-gray-50', textColor: 'text-gray-700' },
+            { name: 'SOL', color: 'bg-slate-300', lightColor: 'bg-slate-100', textColor: 'text-slate-800' },
+            { name: 'Deutsch', color: 'bg-red-400', lightColor: 'bg-red-50', textColor: 'text-red-700' },
+            { name: 'Englisch', color: 'bg-blue-400', lightColor: 'bg-blue-50', textColor: 'text-blue-700' },
+            { name: 'Franzoesisch', color: 'bg-purple-400', lightColor: 'bg-purple-50', textColor: 'text-purple-700' },
+            { name: 'Mathematik', color: 'bg-green-400', lightColor: 'bg-green-50', textColor: 'text-green-700' },
+            { name: 'Natur und Technik', color: 'bg-yellow-400', lightColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
+            { name: 'NT / MI', color: 'bg-yellow-300', lightColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
+            { name: 'Raeume Zeiten Gesellschaften', color: 'bg-orange-400', lightColor: 'bg-orange-50', textColor: 'text-orange-700' },
+            { name: 'Ethik Religion Gemeinschaft', color: 'bg-pink-400', lightColor: 'bg-pink-50', textColor: 'text-pink-700' },
+            { name: 'Bewegung und Sport', color: 'bg-red-500', lightColor: 'bg-red-50', textColor: 'text-red-700' },
+            { name: 'Textiles und Technisches Gestalten', color: 'bg-indigo-400', lightColor: 'bg-indigo-50', textColor: 'text-indigo-700' },
+            { name: 'Musik', color: 'bg-violet-400', lightColor: 'bg-violet-50', textColor: 'text-violet-700' },
+            { name: 'Bildnerisches Gestalten', color: 'bg-teal-400', lightColor: 'bg-teal-50', textColor: 'text-teal-700' },
+            { name: 'Lernatelier', color: 'bg-gray-400', lightColor: 'bg-gray-50', textColor: 'text-gray-700' },
+            { name: 'Individuelle Vertiefung', color: 'bg-cyan-400', lightColor: 'bg-cyan-50', textColor: 'text-cyan-700' },
+            { name: 'Wirtschaft, Arbeit, Haushalt', color: 'bg-amber-400', lightColor: 'bg-amber-50', textColor: 'text-amber-700' }
+        ];
+        
+        const timeSlots = [
+            { id: 1, time: '07:30 - 08:15' },
+            { id: 2, time: '08:20 - 09:05' },
+            { id: 3, time: '09:10 - 09:55' },
+            { id: 4, time: '10:20 - 11:05' },
+            { id: 5, time: '11:10 - 11:55' },
+            { id: 6, time: '12:10 - 12:55' },
+            { id: 7, time: '13:00 - 13:45' },
+            { id: 8, time: '13:50 - 14:35' },
+            { id: 9, time: '14:40 - 15:25' },
+            { id: 10, time: '15:40 - 16:25' },
+            { id: 11, time: '16:30 - 17:15' }
+        ];
+
+        const daysOfWeek = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+
+        /**
+         * Zeigt ein benutzerdefiniertes Meldungsmodal an.
+         * @param {string} message Die anzuzeigende Meldung.
+         */
+        function customAlert(message) {
+            alertMessage.textContent = message;
+            customAlertModal.classList.remove('hidden');
+        }
+
+        // Tab-Wechsel-Funktionalität
+        function showTab(tabId) {
+            tabContents.forEach(content => content.classList.add('hidden'));
+            tabButtons.forEach(button => button.classList.remove('active'));
+            document.getElementById(`${tabId}-content`).classList.remove('hidden');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+
+            if (tabId === 'arbeitsplan') {
+                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects);
+            }
+        }
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                showTab(button.id.replace('-tab', ''));
+            });
+        });
+
+        /**
+         * Rendert die Stundenplan-Tabelle für den Stundenplan-Tab (Schüleransicht).
+         * @param {object} timetable Die Stundenplan-Daten.
+         * @param {object} solBlocks Die SOL-Block-Daten.
+         */
+        function renderWeeklyTimetableGrid(timetable, solBlocks) {
+            let tableHTML = `
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs rounded-tl-xl timetable-time-cell">Zeit / Tag</th>
+                            ${daysOfWeek.map(day => `<th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs">${day}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            timeSlots.forEach(slot => {
+                tableHTML += `<tr>
+                    <td class="border-t border-gray-200 py-2 px-3 text-gray-700 font-semibold timetable-time-cell">${slot.time}</td>
+                    ${daysOfWeek.map(day => {
+                        const subjectName = timetable?.[day]?.[slot.time] || 'Frei';
+                        const subject = subjects.find(s => s.name === subjectName) || subjects[0];
+                        const block = solBlocks?.[day]?.[slot.time];
+                        const isSol = latestSolSubjects.includes(subject.name);
+                        
+                        let cellContent;
+                        let cellClass = `border-t border-gray-200 py-2 px-3 timetable-grid-cell`;
+                        
+                        if (isSol) {
+                            if (block) {
+                                // Geblockte SOL-Lektion
+                                cellClass += ` bg-slate-300 text-slate-800 font-bold`;
+                                cellContent = `
+                                    <div class="font-bold">${block.title}</div>
+                                    <div class="text-xs text-slate-600">${block.description}</div>
+                                `;
+                            } else {
+                                // Nicht geblockte SOL-Lektion
+                                cellClass += ` ${subject.lightColor} text-slate-800 font-medium`;
+                                cellContent = 'SOL';
+                            }
+                        } else {
+                            // Reguläre Lektion
+                            cellClass += ` ${subject.lightColor} ${subject.textColor} font-medium`;
+                            cellContent = subject.name;
+                        }
+
+                        return `<td class="${cellClass}">${cellContent}</td>`;
+                    }).join('')}
+                </tr>`;
+            });
+
+            tableHTML += `</tbody></table>`;
+            weeklyTimetableContainer.innerHTML = tableHTML;
+        }
+
+        /**
+         * Rendert die "Post-its" für den Arbeitsplan-Tab (Schüleransicht).
+         * @param {object} workPlans Die Arbeitsplan-Daten.
+         * @param {string[]} solSubjects Die Liste der SOL-Fächer.
+         */
+        function renderArbeitsplanTab(workPlans, solSubjects) {
+            solArbeitsplanContainer.innerHTML = '';
+
+            if (solSubjects.length === 0) {
+                solArbeitsplanContainer.innerHTML = `<div class="col-span-full text-center text-gray-500 my-8">
+                    Es wurden noch keine SOL-Fächer festgelegt.
+                </div>`;
+                return;
+            }
+            
+            solSubjects.forEach(subjectName => {
+                const assignments = workPlans[subjectName] || [];
+                const postIt = document.createElement('div');
+                postIt.className = 'post-it p-6 rounded-xl shadow-lg border border-gray-100 flex flex-col justify-between';
+                postIt.dataset.subject = subjectName;
+
+                let assignmentsHTML = assignments.map((assignment, index) => {
+                    return `
+                        <div class="mb-4 p-4 bg-white rounded-lg shadow-inner">
+                            <div class="font-semibold text-lg text-gray-800">${assignment.title}</div>
+                            <div class="text-sm text-gray-600 mt-2">
+                                <p class="font-medium text-gray-700">Grundanforderungen:</p>
+                                <p class="whitespace-pre-wrap">${assignment.grundAnforderungen}</p>
+                            </div>
+                            ${assignment.erweiterteAnforderungen ? `
+                            <div class="text-sm text-gray-600 mt-2">
+                                <p class="font-medium text-gray-700">Erweiterte Anforderungen:</p>
+                                <p class="whitespace-pre-wrap">${assignment.erweiterteAnforderungen}</p>
+                            </div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                postIt.innerHTML = `
+                    <div>
+                        <h3 class="post-it-title text-2xl font-bold mb-4">${subjectName}</h3>
+                        <div class="assignments-list">
+                            ${assignmentsHTML.length > 0 ? assignmentsHTML : `<p class="text-gray-500 text-sm">Keine Aufträge für dieses Fach.</p>`}
+                        </div>
+                    </div>
+                `;
+                solArbeitsplanContainer.appendChild(postIt);
+            });
+        }
+        
+        // Event-Listener für das Meldungsmodal
+        alertOkBtn.addEventListener('click', () => {
+            customAlertModal.classList.add('hidden');
+        });
+
+        // Firestore-Echtzeit-Listener für alle Daten
+        function setupFirestoreListeners() {
+            if (!isAuthReady) {
+                console.warn('Firestore-Listener können nicht eingerichtet werden: Authentifizierung nicht bereit.');
+                return;
+            }
+
+            const timetableRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'schoolTimetable');
+            const solSubjectsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'solSubjects');
+            const solBlocksRef = doc(db, `artifacts/${appId}/public/data/solBlocks`, 'weeklyBlocks');
+            const workPlansRef = doc(db, `artifacts/${appId}/public/data/workPlans`, 'weeklyWorkPlan');
+
+            // Stundenplan-Listener
+            onSnapshot(timetableRef, (docSnap) => {
+                latestTimetable = docSnap.exists() ? docSnap.data() : {};
+                renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
+            }, (error) => {
+                console.error("Fehler beim Abrufen des Stundenplans:", error);
+                customAlert('Fehler beim Abrufen des Stundenplans.');
+            });
+
+            // SOL-Fächer-Listener
+            onSnapshot(solSubjectsRef, (docSnap) => {
+                latestSolSubjects = docSnap.exists() ? docSnap.data().subjects || [] : [];
+                renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
+                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects);
+            }, (error) => {
+                console.error("Fehler beim Abrufen der SOL-Fächer:", error);
+                customAlert('Fehler beim Abrufen der SOL-Fächer.');
+            });
+
+            // SOL-Blöcke-Listener
+            onSnapshot(solBlocksRef, (docSnap) => {
+                latestSolBlocks = docSnap.exists() ? docSnap.data() : {};
+                renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
+            }, (error) => {
+                console.error("Fehler beim Abrufen der SOL-Blöcke:", error);
+            });
+
+            // Arbeitsplan-Listener
+            onSnapshot(workPlansRef, (docSnap) => {
+                latestWorkPlans = docSnap.exists() ? docSnap.data() : {};
+                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects);
+            }, (error) => {
+                console.error("Fehler beim Abrufen des Arbeitsplans:", error);
+            });
+        }
+        
+        // Initialisierungsfunktion
+        async function initializeAppAndAuth() {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                const user = await new Promise((resolve) => {
+                    const unsubscribe = onAuthStateChanged(auth, (user) => {
+                        unsubscribe();
+                        resolve(user);
+                    });
+                });
+
+                if (user) {
+                    isAuthReady = true;
+                    setupFirestoreListeners();
+                } else {
+                    if (initialAuthToken) {
+                        try {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                            isAuthReady = true;
+                            setupFirestoreListeners();
+                        } catch (tokenError) {
+                            console.error('Error with signInWithCustomToken:', tokenError);
+                            try {
+                                await signInAnonymously(auth);
+                                isAuthReady = true;
+                                setupFirestoreListeners();
+                            } catch (anonError) {
+                                console.error('Error with signInAnonymously:', anonError);
+                                throw new Error('Anonyme Anmeldung fehlgeschlagen.');
+                            }
+                        }
+                    } else {
+                        try {
+                            await signInAnonymously(auth);
+                            isAuthReady = true;
+                            setupFirestoreListeners();
+                        } catch (anonError) {
+                            console.error('Error with signInAnonymously:', anonError);
+                            throw new Error('Anonyme Anmeldung fehlgeschlagen.');
+                        }
+                    }
+                }
+                
+                // Den Standard-Tab anzeigen
+                showTab('stundenplan');
+            } catch (error) {
+                console.error('Initialisierungsfehler:', error);
+                customAlert('Die Initialisierung ist fehlgeschlagen. Bitte versuchen Sie es später erneut.');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', initializeAppAndAuth);
+
+        // Abmelde-Funktionalität
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                customAlert('Sie wurden erfolgreich abgemeldet.');
+            } catch (error) {
+                console.error('Fehler beim Abmelden:', error);
+                customAlert('Fehler beim Abmelden.');
+            }
+        });
+    </script>
+</body>
+</html>
 
