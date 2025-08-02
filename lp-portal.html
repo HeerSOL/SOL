@@ -848,54 +848,64 @@
 
         // --- Account-Verwaltung ---
         async function handleCreateAccount() {
-            const email = document.getElementById('newAccountEmail').value;
-            const password = document.getElementById('newAccountPassword').value;
-            const type = document.getElementById('newAccountType').value;
-            const button = document.getElementById('createAccountButton');
+    const email = document.getElementById('newAccountEmail').value;
+    const password = document.getElementById('newAccountPassword').value;
+    const type = document.getElementById('newAccountType').value;
+    const button = document.getElementById('createAccountButton');
 
-            if (!email || !password) {
-                showCustomMessage('Bitte E-Mail und Passwort eingeben.', 'warning', 'Eingabe erforderlich');
-                return;
-            }
+    if (!email || !password) {
+        showCustomMessage('Bitte E-Mail und Passwort eingeben.', 'warning', 'Eingabe erforderlich');
+        return;
+    }
 
-            // Überprüfen, ob der aktuelle Benutzer eine LP ist, bevor ein Account erstellt wird
-            const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
-            if (!isUserLP) {
-                showCustomMessage('Nur Lehrpersonen können neue Accounts erstellen.', 'error', 'Zugriff verweigert');
-                return;
-            }
+    // Überprüfen, ob der aktuelle Benutzer eine LP ist
+    const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
+    if (!isUserLP) {
+        showCustomMessage('Nur Lehrpersonen können neue Accounts erstellen.', 'error', 'Zugriff verweigert');
+        return;
+    }
 
-            button.disabled = true;
-            button.textContent = 'Erstelle...';
+    button.disabled = true;
+    button.textContent = 'Erstelle...';
 
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const newUserId = userCredential.user.uid;
+    // Speichere die aktuellen Anmeldedaten
+    const currentUserEmail = user.email;
 
-                const accountData = {
-                    email: email,
-                    role: type,
-                    createdAt: new Date().toISOString()
-                };
+    try {
+        // WORKAROUND: Erstelle Account direkt in Firestore ohne Firebase Auth
+        // Generiere eine eindeutige ID
+        const newUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        const accountData = {
+            email: email,
+            role: type,
+            createdAt: new Date().toISOString(),
+            createdBy: currentUserEmail,
+            status: 'created',
+            // HINWEIS: In einer echten Anwendung würden Sie das Passwort nicht so speichern!
+            // Dies ist nur für die Entwicklung
+            initialPassword: password
+        };
 
-                // Korrigierter collectionPath für lpAccounts und susAccounts (Kleinbuchstaben)
-                const collectionPath = type === 'LP' ? 'lpAccounts' : 'susAccounts';
-                await setDoc(doc(db, collectionPath, newUserId), accountData);
+        const collectionPath = type === 'LP' ? 'lpAccounts' : 'susAccounts';
+        await setDoc(doc(db, collectionPath, newUserId), accountData);
 
-                document.getElementById('newAccountEmail').value = '';
-                document.getElementById('newAccountPassword').value = '';
-                document.getElementById('newAccountType').value = 'LP';
+        // Form zurücksetzen
+        document.getElementById('newAccountEmail').value = '';
+        document.getElementById('newAccountPassword').value = '';
+        document.getElementById('newAccountType').value = 'LP';
 
-                showCustomMessage('Account erfolgreich erstellt!', 'success', 'Erfolg');
-            } catch (error) {
-                console.error("Fehler beim Erstellen des Accounts:", error);
-                showCustomMessage('Fehler beim Erstellen des Accounts: ' + error.message, 'error', 'Fehler');
-            } finally {
-                button.disabled = false;
-                button.textContent = '➕ Erstellen';
-            }
-        }
+        showCustomMessage(`${type}-Account für ${email} wurde erstellt! 
+        WICHTIG: Für die Anmeldung muss der Benutzer zunächst einen Firebase Auth Account erstellen.`, 'success', 'Account erstellt');
 
+    } catch (error) {
+        console.error("Fehler beim Erstellen des Accounts:", error);
+        showCustomMessage('Fehler beim Erstellen des Accounts: ' + error.message, 'error', 'Fehler');
+    } finally {
+        button.disabled = false;
+        button.textContent = '➕ Erstellen';
+    }
+}
         function updateLpAccountsDisplay() {
             const container = document.getElementById('lpAccountsList');
             const countElement = document.getElementById('lpAccountCount');
