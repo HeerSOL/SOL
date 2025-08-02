@@ -18,6 +18,7 @@
 </head>
 <body class="bg-gray-100">
 
+    <!-- Ladebildschirm -->
     <div id="loadingScreen" class="min-h-screen flex items-center justify-center">
         <div class="bg-white p-8 rounded-lg shadow-md text-center">
             <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
@@ -25,6 +26,7 @@
         </div>
     </div>
 
+    <!-- Anmeldebildschirm -->
     <div id="loginScreen" class="min-h-screen flex items-center justify-center hidden">
         <div class="bg-white p-8 rounded-xl shadow-lg w-96">
             <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">SOL Portal Login</h1>
@@ -44,6 +46,7 @@
         </div>
     </div>
 
+    <!-- Hauptanwendung -->
     <div id="mainApp" class="min-h-screen hidden">
         <div class="bg-white shadow-md">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -76,6 +79,7 @@
                 </div>
 
                 <div class="p-8">
+                    <!-- Stundenplan der Woche -->
                     <div id="stundenplan-content" class="tab-content hidden">
                         <h2 class="text-2xl font-semibold mb-6 text-gray-800">Stundenplan der Woche</h2>
                         <p class="text-gray-600 mb-6">Definieren und verwalten Sie spezifische Lektionen für die aktuelle Woche.</p>
@@ -92,11 +96,13 @@
                                     </tr>
                                 </thead>
                                 <tbody id="weeklyPlanBody">
-                                    </tbody>
+                                    <!-- Inhalte werden hier gerendert -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
 
+                    <!-- Arbeitsplan der Woche -->
                     <div id="arbeitsplan-content" class="tab-content hidden">
                         <h2 class="text-2xl font-semibold mb-6 text-gray-800">Arbeitsplan der Woche</h2>
                         <p class="text-gray-600 mb-6">Hier können Sie Aufträge für die SOL-Fächer erstellen und verwalten.</p>
@@ -104,11 +110,14 @@
                             Bitte definieren Sie zuerst SOL-Fächer in der <span class="font-semibold">Verwaltung</span>, um Aufgaben hinzuzufügen.
                         </p>
                         <div id="tasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            </div>
+                            <!-- Aufgaben-Spalten werden hier gerendert -->
+                        </div>
                     </div>
 
+                    <!-- Verwaltung -->
                     <div id="verwaltung-content" class="tab-content">
                         <div class="space-y-8">
+                            <!-- Jahresstundenplan -->
                             <div class="bg-gray-50 p-6 rounded-lg shadow-md">
                                 <h3 class="text-xl font-semibold mb-4 text-gray-800">Jahresstundenplan</h3>
                                 <div class="overflow-x-auto rounded-lg shadow-sm">
@@ -129,6 +138,7 @@
                                 </div>
                             </div>
 
+                            <!-- SOL-Fächer definieren -->
                             <div class="bg-gray-50 p-6 rounded-lg shadow-md">
                                 <h3 class="text-xl font-semibold mb-4 text-gray-800">SOL-Fächer definieren</h3>
                                 <p class="text-base text-gray-600 mb-4">Wählen Sie aus, welche Fächer als SOL-Lektionen angeboten werden sollen.</p>
@@ -136,6 +146,7 @@
                                 </div>
                             </div>
 
+                            <!-- Account-Verwaltung -->
                             <div class="bg-gray-50 p-6 rounded-lg shadow-md">
                                 <h3 class="text-xl font-semibold mb-4 text-gray-800">Account-Verwaltung</h3>
                                 <div class="mb-6 pb-4 border-b border-gray-200">
@@ -184,6 +195,8 @@
         </div>
     </div>
 
+    <!-- Modals -->
+    <!-- Custom Message Modal -->
     <div id="customMessageModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-[9999]">
         <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full mx-4">
             <h3 id="customMessageTitle" class="text-xl font-semibold mb-4 text-gray-900"></h3>
@@ -194,6 +207,7 @@
         </div>
     </div>
 
+    <!-- Custom Confirmation Modal -->
     <div id="customConfirmModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-[9999]">
         <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full mx-4">
             <h3 id="customConfirmTitle" class="text-xl font-semibold mb-4 text-gray-900">Bestätigung</h3>
@@ -205,6 +219,7 @@
         </div>
     </div>
 
+    <!-- Weekly Plan Edit Modal -->
     <div id="weeklyPlanEditModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
         <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full mx-4">
             <h3 class="text-xl font-semibold mb-4 text-gray-900" id="weeklyPlanModalTitle">Lektion bearbeiten</h3>
@@ -238,6 +253,7 @@
         </div>
     </div>
 
+    <!-- Task Edit Modal -->
     <div id="taskEditModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
         <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full mx-4">
             <h3 class="text-xl font-semibold mb-4 text-gray-900" id="taskModalTitle">Neue Aufgabe erstellen</h3>
@@ -285,7 +301,7 @@
         // Ihre persönliche Firebase-Konfiguration
         // ERSETZEN SIE DIESE WERTE DURCH IHRE EIGENEN
         const firebaseConfig = {
-            apiKey: "Ihre-API-Key-hier",
+            apiKey: "AIzaSyC7NrGJbCEz0BCPBCoRWxS1rssnpFHXSYk",
             authDomain: "Ihre-Auth-Domain-hier",
             projectId: "Ihre-Project-Id-hier",
             storageBucket: "Ihre-Storage-Bucket-hier",
