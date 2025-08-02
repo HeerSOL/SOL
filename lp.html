@@ -310,7 +310,6 @@
                                             focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                                             data-day="${day}" data-slot="${slot.time}">
                                         ${subjects.map(subject => 
-                                            // Hier wurde die `class` aus dem `<option>`-Tag entfernt, um die Farben dezenter zu gestalten.
                                             `<option value="${subject.name}" ${subject.name === savedSubjectName ? 'selected' : ''}>
                                                 ${subject.name}
                                             </option>`
@@ -354,7 +353,8 @@
             }
 
             showStatusMessage('Lade Stundenplan...');
-            const timetableDocRef = doc(db, 'timetables', 'schoolTimetable');
+            // Korrekter Firestore-Pfad für öffentliche Daten
+            const timetableDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'schoolTimetable');
 
             onSnapshot(timetableDocRef, (docSnap) => {
                 if (docSnap.exists()) {
@@ -397,7 +397,8 @@
             });
 
             try {
-                const timetableDocRef = doc(db, 'timetables', 'schoolTimetable');
+                // Korrekter Firestore-Pfad für öffentliche Daten
+                const timetableDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'schoolTimetable');
                 await setDoc(timetableDocRef, newTimetable);
                 showStatusMessage('Stundenplan erfolgreich gespeichert!', 'success');
             } catch (error) {
@@ -440,7 +441,8 @@
                 return;
             }
 
-            const solSubjectsDocRef = doc(db, 'settings', 'solSubjects');
+            // Korrekter Firestore-Pfad für öffentliche Daten
+            const solSubjectsDocRef = doc(db, `artifacts/${appId}/public/data/settings`, 'solSubjects');
 
             onSnapshot(solSubjectsDocRef, (docSnap) => {
                 if (docSnap.exists()) {
@@ -472,7 +474,8 @@
                                         .map(cb => cb.getAttribute('data-subject-name'));
             
             try {
-                const solSubjectsDocRef = doc(db, 'settings', 'solSubjects');
+                // Korrekter Firestore-Pfad für öffentliche Daten
+                const solSubjectsDocRef = doc(db, `artifacts/${appId}/public/data/settings`, 'solSubjects');
                 await setDoc(solSubjectsDocRef, { subjects: newSolSubjects });
                 showStatusMessage('SOL-Fächer erfolgreich gespeichert!', 'success');
             } catch (error) {
