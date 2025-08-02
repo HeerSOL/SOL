@@ -646,19 +646,23 @@
                 showCustomMessage("Fehler beim Laden der Wochenaufgaben: " + error.message, 'error', 'Ladefehler');
             });
 
-
-            // LP-Accounts: Lausche auf Änderungen in der 'lpAccounts' Kollektion (Top-Level - korrigiert)
-            onSnapshot(collection(db, 'lpAccounts'), (querySnapshot) => {
-                lpAccounts = [];
-                querySnapshot.forEach((doc) => {
-                    lpAccounts.push({ id: doc.id, ...doc.data() });
-                });
-                console.log("LP-Accounts geladen:", lpAccounts); // Debug-Log
-                updateLpAccountsDisplay();
-            }, (error) => {
-                console.error("Fehler beim Abrufen der LP-Accounts:", error);
-                showCustomMessage("Fehler beim Laden der LP-Accounts: " + error.message, 'error', 'Ladefehler');
-            });
+// LP-Accounts: Lausche auf Änderungen in der 'lpAccounts' Kollektion
+onSnapshot(collection(db, 'lpAccounts'), (querySnapshot) => {
+    lpAccounts = [];
+    querySnapshot.forEach((doc) => {
+        lpAccounts.push({ 
+            id: doc.id,        // Dokument-ID (das ist die User-UID)
+            uid: doc.id,       // Zusätzlich als uid speichern
+            ...doc.data()      // Alle anderen Daten aus dem Dokument
+        });
+    });
+    console.log("LP-Accounts geladen:", lpAccounts); // Debug-Log
+    console.log("LP-Account IDs:", lpAccounts.map(acc => acc.id)); // Debug-Log
+    updateLpAccountsDisplay();
+}, (error) => {
+    console.error("Fehler beim Abrufen der LP-Accounts:", error);
+    showCustomMessage("Fehler beim Laden der LP-Accounts: " + error.message, 'error', 'Ladefehler');
+});
 
             // SuS-Accounts: Lausche auf Änderungen in der 'susAccounts' Kollektion (Top-Level - korrigiert)
             onSnapshot(collection(db, 'susAccounts'), (querySnapshot) => {
@@ -846,8 +850,8 @@
             }
         }
 
-        // --- Account-Verwaltung ---
-        async function handleCreateAccount() {
+        // Korrigierte handleCreateAccount Funktion
+async function handleCreateAccount() {
     const email = document.getElementById('newAccountEmail').value;
     const password = document.getElementById('newAccountPassword').value;
     const type = document.getElementById('newAccountType').value;
@@ -858,33 +862,46 @@
         return;
     }
 
-    // Überprüfen, ob der aktuelle Benutzer eine LP ist
-    const isUserLP = user && lpAccounts.some(acc => acc.id === user.uid);
+    // KORRIGIERTE LP-Überprüfung: Schaue sowohl nach acc.id als auch nach der Dokument-ID
+    const isUserLP = user && (
+        lpAccounts.some(acc => acc.id === user.uid) || // Alte Methode
+        lpAccounts.some(acc => acc.uid === user.uid) || // Falls uid als Feld gespeichert
+        lpAccounts.find(acc => acc.email === user.email) // Überprüfung per E-Mail
+    );
+    
+    // Debug-Ausgabe
+    console.log("=== DEBUG LP-Überprüfung ===");
+    console.log("Aktueller User UID:", user?.uid);
+    console.log("Aktueller User Email:", user?.email);
+    console.log("Alle LP Accounts:", lpAccounts);
+    console.log("LP-Accounts IDs:", lpAccounts.map(acc => acc.id));
+    console.log("Ist User LP?", isUserLP);
+    console.log("=========================");
+
     if (!isUserLP) {
-        showCustomMessage('Nur Lehrpersonen können neue Accounts erstellen.', 'error', 'Zugriff verweigert');
+        showCustomMessage(`Nur Lehrpersonen können neue Accounts erstellen.
+        
+        Debug Info:
+        - Ihre User-ID: ${user?.uid}
+        - Ihre E-Mail: ${user?.email}
+        - Gefundene LP-Accounts: ${lpAccounts.length}
+        
+        Überprüfen Sie in der Konsole (F12) die Debug-Ausgabe.`, 'error', 'Zugriff verweigert');
         return;
     }
 
     button.disabled = true;
     button.textContent = 'Erstelle...';
 
-    // Speichere die aktuellen Anmeldedaten
-    const currentUserEmail = user.email;
-
     try {
-        // WORKAROUND: Erstelle Account direkt in Firestore ohne Firebase Auth
-        // Generiere eine eindeutige ID
-        const newUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const newUserId = userCredential.user.uid;
+
         const accountData = {
             email: email,
             role: type,
             createdAt: new Date().toISOString(),
-            createdBy: currentUserEmail,
-            status: 'created',
-            // HINWEIS: In einer echten Anwendung würden Sie das Passwort nicht so speichern!
-            // Dies ist nur für die Entwicklung
-            initialPassword: password
+            createdBy: user ? user.email : 'system'
         };
 
         const collectionPath = type === 'LP' ? 'lpAccounts' : 'susAccounts';
@@ -895,12 +912,39 @@
         document.getElementById('newAccountPassword').value = '';
         document.getElementById('newAccountType').value = 'LP';
 
-        showCustomMessage(`${type}-Account für ${email} wurde erstellt! 
-        WICHTIG: Für die Anmeldung muss der Benutzer zunächst einen Firebase Auth Account erstellen.`, 'success', 'Account erstellt');
+        showCustomMessage(`Account für ${email} wurde erfolgreich erstellt! 
+        
+        Sie wurden automatisch als der neue Benutzer angemeldet. 
+        Bitte melden Sie sich mit Ihren ursprünglichen Anmeldedaten wieder an.`, 'success', 'Account erstellt');
+        
+        setTimeout(() => {
+            signOut(auth).then(() => {
+                showLoginScreen();
+            });
+        }, 3000);
 
     } catch (error) {
         console.error("Fehler beim Erstellen des Accounts:", error);
-        showCustomMessage('Fehler beim Erstellen des Accounts: ' + error.message, 'error', 'Fehler');
+        
+        let errorMessage = 'Fehler beim Erstellen des Accounts: ';
+        switch(error.code) {
+            case 'auth/email-already-in-use':
+                errorMessage += 'Diese E-Mail-Adresse wird bereits verwendet.';
+                break;
+            case 'auth/weak-password':
+                errorMessage += 'Das Passwort ist zu schwach (mindestens 6 Zeichen).';
+                break;
+            case 'auth/invalid-email':
+                errorMessage += 'Ungültige E-Mail-Adresse.';
+                break;
+            case 'auth/operation-not-allowed':
+                errorMessage += 'E-Mail/Passwort-Authentifizierung ist nicht aktiviert.';
+                break;
+            default:
+                errorMessage += error.message;
+        }
+        
+        showCustomMessage(errorMessage, 'error', 'Fehler');
     } finally {
         button.disabled = false;
         button.textContent = '➕ Erstellen';
