@@ -135,10 +135,10 @@
 
                 if (docSnap.exists()) {
                     // Erfolgreicher Login für eine Lehrperson
-                    displayMessage(lpMessageDiv, 'Login erfolgreich! Willkommen, Lehrperson.', 'success');
+                    displayMessage(lpMessageDiv, 'Login erfolgreich! Sie werden zum Lehrpersonen-Dashboard weitergeleitet.', 'success');
                     console.log('Lehrperson angemeldet:', user.uid);
-                    // Hier könnte man den Benutzer auf eine andere Seite weiterleiten
-                    // window.location.href = '/lehrer-dashboard.html';
+                    // Leite den Benutzer auf die lp.html Seite weiter
+                    window.location.href = 'lp.html';
                 } else {
                     // Benutzer existiert nicht in der 'lpAccounts' Sammlung.
                     // Das bedeutet, ein SuS versucht, sich als Lehrperson einzuloggen.
@@ -186,10 +186,10 @@
 
                 if (docSnap.exists()) {
                     // Erfolgreicher Login für eine Schülerin/einen Schüler
-                    displayMessage(susMessageDiv, 'Login erfolgreich! Willkommen.', 'success');
+                    displayMessage(susMessageDiv, 'Login erfolgreich! Sie werden zum SuS-Dashboard weitergeleitet.', 'success');
                     console.log('SuS angemeldet:', user.uid);
-                    // Hier könnte man den Benutzer auf eine andere Seite weiterleiten
-                    // window.location.href = '/sus-dashboard.html';
+                    // Leite den Benutzer auf die sus.html Seite weiter
+                    window.location.href = 'sus.html';
                 } else {
                     // Benutzer existiert nicht in der 'susAccounts' Sammlung.
                     // Das bedeutet, eine Lehrperson versucht, sich als SuS einzuloggen.
