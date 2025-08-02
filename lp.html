@@ -59,11 +59,24 @@
             line-height: 1.25rem;
             width: 100px;
         }
+        /* Post-it-Stil für den Arbeitsplan */
+        .post-it {
+            background-color: #fcf19d; /* Helles Gelb für den Post-it-Effekt */
+            transform: rotate(1deg);
+            transition: transform 0.2s ease-in-out;
+        }
+        .post-it:hover {
+            transform: rotate(-1deg);
+        }
+        .post-it-title {
+            font-family: 'Poppins', sans-serif;
+            color: #4b5563; /* graue Farbe */
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
 
-    <!-- Header with title and logout button -->
+    <!-- Header mit Titel und Abmelde-Button -->
     <header class="header-container py-4 px-6 md:px-10 flex justify-between items-center">
         <h1 class="text-3xl font-bold text-gray-900">Lehrpersonen-Dashboard</h1>
         <button id="logoutBtn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-xl shadow hover:bg-red-600 transition duration-300">
@@ -71,13 +84,13 @@
         </button>
     </header>
 
-    <!-- Main content with tabs -->
+    <!-- Hauptinhalt mit Tabs -->
     <main class="flex-1 flex items-center justify-center p-6 md:p-10">
         <div class="main-container max-w-6xl w-full p-8 md:p-12 rounded-3xl shadow-2xl">
-            <!-- Main tab navigation -->
+            <!-- Haupt-Tab-Navigation -->
             <div class="border-b border-gray-200 mb-6">
                 <nav class="-mb-px flex flex-wrap space-x-4 md:space-x-8" aria-label="Tabs">
-                    <button id="wochenplan-tab" class="tab-button active inline-flex items-center px-1 py-4 text-lg font-medium text-gray-500 hover:text-gray-700 transition duration-200">
+                    <button id="wochenplan-tab" class="tab-button inline-flex items-center px-1 py-4 text-lg font-medium text-gray-500 hover:text-gray-700 transition duration-200">
                         Wochenstundenplan
                     </button>
                     <button id="arbeitsplan-tab" class="tab-button inline-flex items-center px-1 py-4 text-lg font-medium text-gray-500 hover:text-gray-700 transition duration-200">
@@ -92,31 +105,37 @@
                 </nav>
             </div>
 
-            <!-- Tab contents -->
+            <!-- Tab-Inhalte -->
             <div id="tab-content-container">
-                <!-- Wochenstundenplan Content (visible by default) -->
-                <div id="wochenplan-content" class="tab-content">
+                <!-- Wochenstundenplan-Inhalt -->
+                <div id="wochenplan-content" class="tab-content hidden">
                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Wochenstundenplan</h2>
                     <p class="text-gray-600">
                         Hier wird der Stundenplan für die aktuelle Woche angezeigt. Klicken Sie auf eine "SOL"-Lektion, um sie zu blockieren und eine Aktivität hinzuzufügen.
                     </p>
                     <div id="weekly-timetable-container" class="mt-6">
-                        <!-- The timetable will be inserted here by JS -->
+                        <!-- Stundenplan wird hier durch JS eingefügt -->
                         <div class="text-center text-gray-500 my-8">
                             <span class="animate-pulse">Stundenplan wird geladen...</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Arbeitsplan Content -->
+                <!-- Arbeitsplan-Inhalt -->
                 <div id="arbeitsplan-content" class="tab-content hidden">
                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Arbeitsplan</h2>
-                    <p class="text-gray-600">
-                        Hier können Lehrpersonen Arbeitspläne erstellen, bearbeiten und zuweisen.
+                    <p class="text-gray-600 mb-6">
+                        Hier können Sie Aufträge für die SOL-Fächer hinzufügen.
                     </p>
+                    <div id="sol-arbeitsplan-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <!-- Die Post-its werden hier von JS eingefügt -->
+                        <div class="text-center text-gray-500 my-8 col-span-full">
+                            <span class="animate-pulse">Arbeitspläne werden geladen...</span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- SuS-Übersicht Content -->
+                <!-- SuS-Übersicht-Inhalt -->
                 <div id="sus-content" class="tab-content hidden">
                     <h2 class="text-2xl font-bold text-gray-800 mb-4">SuS-Übersicht</h2>
                     <p class="text-gray-600">
@@ -124,9 +143,9 @@
                     </p>
                 </div>
 
-                <!-- Verwaltung Content with sub-tabs -->
+                <!-- Verwaltung-Inhalt mit Unter-Tabs -->
                 <div id="verwaltung-content" class="tab-content hidden">
-                    <!-- Sub-tab navigation -->
+                    <!-- Unter-Tab-Navigation -->
                     <div class="border-b border-gray-200 mb-6">
                         <nav class="-mb-px flex space-x-8" aria-label="Sub-Tabs">
                             <button id="stundenplan-subtab-btn" class="sub-tab-button active inline-flex items-center px-1 py-4 text-base font-medium text-gray-500 hover:text-gray-700 transition duration-200">
@@ -141,16 +160,16 @@
                         </nav>
                     </div>
 
-                    <!-- Sub-tab contents -->
+                    <!-- Unter-Tab-Inhalte -->
                     <div id="sub-tab-content-container">
-                        <!-- Stundenplan management -->
+                        <!-- Stundenplan-Verwaltung -->
                         <div id="stundenplan-subtab" class="sub-tab-content">
                             <h2 class="text-2xl font-bold text-gray-800 mb-6">Stundenplan-Verwaltung</h2>
                             <p class="text-gray-600 mb-6">
                                 Tragen Sie hier den Stundenplan für die ganze Woche ein. Die Änderungen werden gespeichert, sobald Sie auf den "Speichern"-Button klicken.
                             </p>
                             <div id="admin-timetable-container" class="overflow-x-auto">
-                                <!-- Timetable table will be inserted here by JS -->
+                                <!-- Stundenplan-Tabelle wird hier durch JS eingefügt -->
                                 <div class="text-center text-gray-500 my-8">
                                     <span class="animate-pulse">Stundenplan wird geladen...</span>
                                 </div>
@@ -163,14 +182,14 @@
                             </div>
                         </div>
 
-                        <!-- SOL subjects management -->
+                        <!-- SOL-Fächer-Verwaltung -->
                         <div id="sol-subtab" class="sub-tab-content hidden">
                             <h2 class="text-2xl font-bold text-gray-800 mb-6">SOL-Fächer-Verwaltung</h2>
                             <p class="text-gray-600 mb-6">
                                 Wählen Sie aus, welche Fächer als "Selbstorganisiertes Lernen" (SOL) unterrichtet werden sollen. Im Stundenplan werden diese dann als "SOL" angezeigt.
                             </p>
                             <div id="sol-subjects-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                <!-- Subject checkboxes will be inserted here by JS -->
+                                <!-- Fächer-Checkboxen werden hier durch JS eingefügt -->
                                 <div class="text-center text-gray-500 my-8 col-span-full">
                                     <span class="animate-pulse">SOL-Fächer werden geladen...</span>
                                 </div>
@@ -180,7 +199,7 @@
                             </button>
                         </div>
                         
-                        <!-- Accounts management (placeholder) -->
+                        <!-- Accounts-Verwaltung (Platzhalter) -->
                         <div id="accounts-subtab" class="sub-tab-content hidden">
                             <h2 class="text-2xl font-bold text-gray-800 mb-6">Accounts-Verwaltung</h2>
                             <p class="text-gray-600">
@@ -193,7 +212,7 @@
         </div>
     </main>
     
-    <!-- Modal for SOL lessons -->
+    <!-- Modal für SOL-Lektionen (im Stundenplan) -->
     <div id="sol-block-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 hidden flex items-center justify-center">
         <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full m-4">
             <h3 id="modal-title" class="text-2xl font-bold mb-4 text-gray-800">SOL-Lektion blockieren</h3>
@@ -232,8 +251,46 @@
             </form>
         </div>
     </div>
+
+    <!-- Modal für Arbeitsplan-Aufträge (im Arbeitsplan-Tab) -->
+    <div id="workplan-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full m-4">
+            <h3 id="workplan-modal-title" class="text-2xl font-bold mb-4 text-gray-800">Auftrag hinzufügen</h3>
+            <form id="workplan-form">
+                <input type="hidden" id="workplan-subject-name">
+                <input type="hidden" id="workplan-assignment-index">
+                <div class="mb-4">
+                    <label for="workplan-title" class="block text-sm font-medium text-gray-700">Titel des Auftrags</label>
+                    <input type="text" id="workplan-title" placeholder="Z.B. Einführung in Brüche" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div class="mb-4">
+                    <label for="workplan-grundanforderungen" class="block text-sm font-medium text-gray-700">Grundanforderungen</label>
+                    <textarea id="workplan-grundanforderungen" rows="3" placeholder="Beschreiben Sie hier die Grundanforderungen" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                </div>
+                <div class="mb-6">
+                    <label for="workplan-erweiterte-anforderungen" class="block text-sm font-medium text-gray-700">Erweiterte Anforderungen (optional)</label>
+                    <textarea id="workplan-erweiterte-anforderungen" rows="3" placeholder="Beschreiben Sie hier die erweiterten Anforderungen" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                </div>
+                <div class="flex justify-between">
+                    <div>
+                        <button type="button" id="save-workplan-btn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-indigo-700 transition duration-300">
+                            Speichern
+                        </button>
+                        <button type="button" id="cancel-workplan-btn" class="ml-2 bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-xl shadow hover:bg-gray-400 transition duration-300">
+                            Abbrechen
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" id="delete-workplan-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-red-600 transition duration-300 hidden">
+                            Löschen
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
     
-    <!-- Custom confirmation modal box (replaces window.confirm) -->
+    <!-- Benutzerdefinierte Bestätigungsbox (ersetzt window.confirm) -->
     <div id="confirmation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-[1000] hidden flex items-center justify-center">
         <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full m-4">
             <p id="confirmation-message" class="text-center text-lg font-medium mb-4">Sind Sie sicher?</p>
@@ -248,7 +305,7 @@
         </div>
     </div>
     
-    <!-- Custom alert modal box -->
+    <!-- Benutzerdefinierte Meldungsbox -->
     <div id="custom-alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-[1001] hidden flex items-center justify-center">
         <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full m-4 text-center">
             <p id="alert-message" class="text-lg font-medium mb-4">Meldung</p>
@@ -264,7 +321,7 @@
         import { getAuth, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // Firestore configuration (automatically provided by Canvas)
+        // Firestore-Konfiguration (automatisch vom Canvas bereitgestellt)
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyBVRTrFbNL-jMpfWtDVv739vkuqrCY8PDw",
@@ -276,18 +333,18 @@
         };
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // Initialize Firebase and services
+        // Initialisieren Sie Firebase und Dienste
         let app, auth, db;
         let isAuthReady = false;
         
-        // HTML element references
+        // HTML-Element-Referenzen
         const logoutBtn = document.getElementById('logoutBtn');
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
         const subTabButtons = document.querySelectorAll('.sub-tab-button');
         const subTabContents = document.querySelectorAll('.sub-tab-content');
         const weeklyTimetableContainer = document.getElementById('weekly-timetable-container');
-        const adminTimetableContainer = document.getElementById('admin-timetable-container'); // Changed from timetable-container to avoid conflict
+        const adminTimetableContainer = document.getElementById('admin-timetable-container');
         const saveTimetableBtn = document.getElementById('saveTimetableBtn');
         const statusMessage = document.getElementById('statusMessage');
         const solSubjectsContainer = document.getElementById('sol-subjects-container');
@@ -308,14 +365,29 @@
         const alertMessage = document.getElementById('alert-message');
         const alertOkBtn = document.getElementById('alert-ok-btn');
 
-        // Global variables for the modal and data
+        // Neue Referenzen für den Arbeitsplan
+        const solArbeitsplanContainer = document.getElementById('sol-arbeitsplan-container');
+        const workplanModal = document.getElementById('workplan-modal');
+        const workplanModalTitle = document.getElementById('workplan-modal-title');
+        const workplanForm = document.getElementById('workplan-form');
+        const workplanSubjectNameInput = document.getElementById('workplan-subject-name');
+        const workplanAssignmentIndexInput = document.getElementById('workplan-assignment-index');
+        const workplanTitleInput = document.getElementById('workplan-title');
+        const workplanGrundAnforderungenTextarea = document.getElementById('workplan-grundanforderungen');
+        const workplanErweiterteAnforderungenTextarea = document.getElementById('workplan-erweiterte-anforderungen');
+        const saveWorkplanBtn = document.getElementById('save-workplan-btn');
+        const cancelWorkplanBtn = document.getElementById('cancel-workplan-btn');
+        const deleteWorkplanBtn = document.getElementById('delete-workplan-btn');
+
+        // Globale Variablen für Modals und Daten
         let currentDay = '';
         let currentSlot = '';
         let latestTimetable = {};
         let latestSolSubjects = [];
         let latestSolBlocks = {};
+        let latestWorkPlans = {};
 
-        // Constants for subjects, time slots, and days of the week
+        // Konstanten für Fächer, Zeitfenster und Wochentage
         const subjects = [
             { name: 'Frei', color: 'bg-gray-200', lightColor: 'bg-gray-50', textColor: 'text-gray-700' },
             { name: 'SOL', color: 'bg-slate-300', lightColor: 'bg-slate-100', textColor: 'text-slate-800' },
@@ -353,8 +425,8 @@
         const daysOfWeek = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
 
         /**
-         * Displays a custom alert modal.
-         * @param {string} message The message to display.
+         * Zeigt ein benutzerdefiniertes Meldungsmodal an.
+         * @param {string} message Die anzuzeigende Meldung.
          */
         function customAlert(message) {
             alertMessage.textContent = message;
@@ -362,9 +434,9 @@
         }
 
         /**
-         * Displays a status message.
-         * @param {string} message The message to display.
-         * @param {string} type The message type ('success', 'error', 'info').
+         * Zeigt eine Statusmeldung an.
+         * @param {string} message Die anzuzeigende Meldung.
+         * @param {string} type Der Meldungstyp ('success', 'error', 'info').
          */
         function showStatusMessage(message, type = 'info') {
             statusMessage.textContent = message;
@@ -384,6 +456,12 @@
             tabButtons.forEach(button => button.classList.remove('active'));
             document.getElementById(`${tabId}-content`).classList.remove('hidden');
             document.getElementById(`${tabId}-tab`).classList.add('active');
+
+            if (tabId === 'arbeitsplan') {
+                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects);
+            } else if (tabId === 'verwaltung') {
+                showSubTab('stundenplan'); // Standard-Untertab anzeigen
+            }
         }
 
         // Unter-Tab-Wechsel-Funktionalität
@@ -393,7 +471,6 @@
             document.getElementById(`${subTabId}-subtab`).classList.remove('hidden');
             document.getElementById(`${subTabId}-subtab-btn`).classList.add('active');
             
-            // Wenn der Stundenplan-Sub-Tab angezeigt wird, lade die Daten
             if (subTabId === 'stundenplan') {
                 renderAdminTimetableGrid(latestTimetable);
             } else if (subTabId === 'sol') {
@@ -414,9 +491,9 @@
         });
 
         /**
-         * Renders the timetable table for the Wochenplan tab (teacher view).
-         * @param {object} timetable The timetable data.
-         * @param {object} solBlocks The SOL blocks data.
+         * Rendert die Stundenplan-Tabelle für den Wochenplan-Tab (Lehrpersonenansicht).
+         * @param {object} timetable Die Stundenplan-Daten.
+         * @param {object} solBlocks Die SOL-Block-Daten.
          */
         function renderWeeklyTimetableGrid(timetable, solBlocks) {
             let tableHTML = `
@@ -443,19 +520,19 @@
                         
                         if (isSol) {
                             if (block) {
-                                // Blocked SOL lesson
+                                // Geblockte SOL-Lektion
                                 cellClass += ` bg-slate-300 text-slate-800 font-bold`;
                                 cellContent = `
                                     <div class="font-bold">${block.title}</div>
                                     <div class="text-xs text-slate-600">${block.type}</div>
                                 `;
                             } else {
-                                // Unblocked SOL lesson
+                                // Nicht geblockte SOL-Lektion
                                 cellClass += ` ${subject.lightColor} text-slate-800 font-medium hover:bg-slate-200`;
                                 cellContent = 'SOL';
                             }
                         } else {
-                            // Regular lesson
+                            // Reguläre Lektion
                             cellClass += ` ${subject.lightColor} ${subject.textColor} font-medium`;
                             cellContent = subject.name;
                         }
@@ -470,8 +547,8 @@
         }
 
         /**
-         * Renders the timetable table for the Verwaltung tab (admin view).
-         * @param {object} savedTimetable The timetable data.
+         * Rendert die Stundenplan-Tabelle für den Verwaltung-Tab (Admin-Ansicht).
+         * @param {object} savedTimetable Die Stundenplan-Daten.
          */
         function renderAdminTimetableGrid(savedTimetable) {
             let tableHTML = `
@@ -508,7 +585,7 @@
 
             adminTimetableContainer.innerHTML = tableHTML;
             
-            // Create a datalist for subject suggestions
+            // Eine Datalist für Fach-Vorschläge erstellen
             const datalist = document.createElement('datalist');
             datalist.id = 'subject-list';
             subjects.forEach(subject => {
@@ -520,13 +597,13 @@
         }
 
         /**
-         * Renders the checkboxes for SOL subjects in the Verwaltung tab.
-         * @param {string[]} solSubjects The list of current SOL subjects.
+         * Rendert die Checkboxen für SOL-Fächer im Verwaltung-Tab.
+         * @param {string[]} solSubjects Die Liste der aktuellen SOL-Fächer.
          */
         function renderSolSubjectCheckboxes(solSubjects) {
             solSubjectsContainer.innerHTML = '';
             
-            // Filter out 'Frei' and 'SOL' subjects as they cannot be selected as SOL
+            // 'Frei' und 'SOL' als wählbare Fächer ausschliessen
             const selectableSubjects = subjects.filter(s => s.name !== 'Frei' && s.name !== 'SOL');
             
             selectableSubjects.forEach(subject => {
@@ -549,13 +626,88 @@
                 solSubjectsContainer.appendChild(container);
             });
         }
+
+        /**
+         * Rendert die "Post-its" für den Arbeitsplan-Tab.
+         * @param {object} workPlans Die Arbeitsplan-Daten.
+         * @param {string[]} solSubjects Die Liste der SOL-Fächer.
+         */
+        function renderArbeitsplanTab(workPlans, solSubjects) {
+            solArbeitsplanContainer.innerHTML = '';
+
+            if (solSubjects.length === 0) {
+                solArbeitsplanContainer.innerHTML = `<div class="col-span-full text-center text-gray-500 my-8">
+                    Es wurden keine SOL-Fächer in der <a href="#" onclick="showTab('verwaltung')" class="text-indigo-600 underline">Verwaltung</a> festgelegt.
+                </div>`;
+                return;
+            }
+            
+            solSubjects.forEach(subjectName => {
+                const assignments = workPlans[subjectName] || [];
+                const postIt = document.createElement('div');
+                postIt.className = 'post-it p-6 rounded-xl shadow-lg border border-gray-100 flex flex-col justify-between';
+                postIt.dataset.subject = subjectName;
+
+                let assignmentsHTML = assignments.map((assignment, index) => {
+                    return `
+                        <div class="mb-4 p-4 bg-white rounded-lg shadow-inner cursor-pointer hover:bg-gray-50 transition-colors" data-index="${index}">
+                            <div class="font-semibold text-lg text-gray-800">${assignment.title}</div>
+                            <div class="text-sm text-gray-600 mt-2">
+                                <p class="font-medium text-gray-700">Grundanforderungen:</p>
+                                <p class="whitespace-pre-wrap">${assignment.grundAnforderungen}</p>
+                            </div>
+                            ${assignment.erweiterteAnforderungen ? `
+                            <div class="text-sm text-gray-600 mt-2">
+                                <p class="font-medium text-gray-700">Erweiterte Anforderungen:</p>
+                                <p class="whitespace-pre-wrap">${assignment.erweiterteAnforderungen}</p>
+                            </div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                postIt.innerHTML = `
+                    <div>
+                        <h3 class="post-it-title text-2xl font-bold mb-4">${subjectName}</h3>
+                        <div class="assignments-list">
+                            ${assignmentsHTML}
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button class="add-assignment-btn w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl shadow-md hover:bg-indigo-700 transition duration-300 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                            Auftrag hinzufügen
+                        </button>
+                    </div>
+                `;
+                solArbeitsplanContainer.appendChild(postIt);
+            });
+
+            // Event listener für das Öffnen des Modals zum Hinzufügen von Aufträgen
+            document.querySelectorAll('.add-assignment-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const subjectName = event.target.closest('.post-it').dataset.subject;
+                    openWorkplanModal(subjectName);
+                });
+            });
+
+            // Event listener für das Bearbeiten von Aufträgen
+            document.querySelectorAll('.assignments-list > div').forEach(assignmentEl => {
+                assignmentEl.addEventListener('click', (event) => {
+                    const subjectName = event.target.closest('.post-it').dataset.subject;
+                    const index = parseInt(event.target.closest('.assignments-list > div').dataset.index);
+                    openWorkplanModal(subjectName, index);
+                });
+            });
+        }
         
         /**
-         * Saves the timetable from the admin view to Firestore.
+         * Speichert den Stundenplan von der Admin-Ansicht in Firestore.
          */
         async function saveTimetable() {
             if (!isAuthReady) {
-                customAlert('Authentication not ready. Cannot save data.');
+                customAlert('Die Authentifizierung ist nicht bereit. Daten können nicht gespeichert werden.');
                 return;
             }
 
@@ -576,17 +728,17 @@
                 await setDoc(timetableDocRef, updatedTimetable);
                 showStatusMessage('Stundenplan erfolgreich gespeichert!', 'success');
             } catch (error) {
-                console.error('Error saving timetable:', error);
+                console.error('Fehler beim Speichern des Stundenplans:', error);
                 customAlert('Fehler beim Speichern des Stundenplans. Bitte erneut versuchen.');
             }
         }
         
         /**
-         * Saves the SOL subjects from the admin view to Firestore.
+         * Speichert die SOL-Fächer von der Admin-Ansicht in Firestore.
          */
         async function saveSolSubjects() {
             if (!isAuthReady) {
-                customAlert('Authentication not ready. Cannot save data.');
+                customAlert('Die Authentifizierung ist nicht bereit. Daten können nicht gespeichert werden.');
                 return;
             }
 
@@ -600,19 +752,19 @@
                 await setDoc(solSubjectsDocRef, { subjects: updatedSolSubjects });
                 showStatusMessage('SOL-Fächer erfolgreich gespeichert!', 'success');
             } catch (error) {
-                console.error('Error saving SOL subjects:', error);
+                console.error('Fehler beim Speichern der SOL-Fächer:', error);
                 customAlert('Fehler beim Speichern der SOL-Fächer. Bitte erneut versuchen.');
             }
         }
 
-        // Event listeners for the admin section buttons
+        // Event-Listener für die Admin-Sektion-Buttons
         saveTimetableBtn.addEventListener('click', saveTimetable);
         saveSolSubjectsBtn.addEventListener('click', saveSolSubjects);
         alertOkBtn.addEventListener('click', () => {
             customAlertModal.classList.add('hidden');
         });
 
-        // Event listener for opening the modal when clicking an SOL lesson
+        // Event-Listener für das Öffnen des Modals beim Klick auf eine SOL-Lektion
         weeklyTimetableContainer.addEventListener('click', (event) => {
             const cell = event.target.closest('td');
             if (cell && cell.dataset.isSol === 'true') {
@@ -622,19 +774,19 @@
             }
         });
         
-        // Modal functions
+        // Modal-Funktionen für den Stundenplan
         async function openSolBlockModal(day, slot) {
             const block = latestSolBlocks?.[day]?.[slot];
             
             if (block) {
-                // Edit existing block
+                // Bestehenden Block bearbeiten
                 modalTitle.textContent = "SOL-Lektion bearbeiten";
                 blockTypeSelect.value = block.type;
                 blockTitleInput.value = block.title;
                 blockDescriptionTextarea.value = block.description;
                 deleteSolBlockBtn.classList.remove('hidden');
             } else {
-                // Create new block
+                // Neuen Block erstellen
                 modalTitle.textContent = "SOL-Lektion blockieren";
                 solBlockForm.reset();
                 deleteSolBlockBtn.classList.add('hidden');
@@ -647,7 +799,7 @@
             solBlockForm.reset();
         }
 
-        // Save SOL block
+        // SOL-Block speichern
         saveSolBlockBtn.addEventListener('click', async () => {
             const blockType = blockTypeSelect.value;
             const blockTitle = blockTitleInput.value.trim();
@@ -679,17 +831,17 @@
                 closeSolBlockModal();
                 showStatusMessage('Lektion erfolgreich blockiert!', 'success');
             } catch (error) {
-                console.error('Error saving SOL block:', error);
+                console.error('Fehler beim Speichern des SOL-Blocks:', error);
                 customAlert('Fehler beim Speichern der Lektion. Bitte erneut versuchen.');
             }
         });
 
-        // Delete SOL block
+        // SOL-Block löschen
         deleteSolBlockBtn.addEventListener('click', async () => {
             confirmationModal.classList.remove('hidden');
         });
 
-        // Confirmation handlers
+        // Bestätigungs-Handler
         confirmYesBtn.addEventListener('click', async () => {
             confirmationModal.classList.add('hidden');
             
@@ -715,7 +867,7 @@
                 closeSolBlockModal();
                 showStatusMessage('Lektion erfolgreich gelöscht!', 'success');
             } catch (error) {
-                console.error('Error deleting SOL block:', error);
+                console.error('Fehler beim Löschen des SOL-Blocks:', error);
                 customAlert('Fehler beim Löschen der Lektion. Bitte erneut versuchen.');
             }
         });
@@ -724,49 +876,193 @@
             confirmationModal.classList.add('hidden');
         });
 
-        // Cancel modal
+        // Modal abbrechen
         cancelSolBlockBtn.addEventListener('click', closeSolBlockModal);
 
-        // Firestore real-time listeners for all data
+        // Modal-Funktionen für den Arbeitsplan
+        function openWorkplanModal(subjectName, assignmentIndex = null) {
+            workplanSubjectNameInput.value = subjectName;
+            workplanAssignmentIndexInput.value = assignmentIndex !== null ? assignmentIndex : '';
+
+            if (assignmentIndex !== null) {
+                const assignment = latestWorkPlans[subjectName][assignmentIndex];
+                workplanModalTitle.textContent = 'Auftrag bearbeiten';
+                workplanTitleInput.value = assignment.title;
+                workplanGrundAnforderungenTextarea.value = assignment.grundAnforderungen;
+                workplanErweiterteAnforderungenTextarea.value = assignment.erweiterteAnforderungen;
+                deleteWorkplanBtn.classList.remove('hidden');
+            } else {
+                workplanModalTitle.textContent = 'Auftrag hinzufügen';
+                workplanForm.reset();
+                deleteWorkplanBtn.classList.add('hidden');
+            }
+            workplanModal.classList.remove('hidden');
+        }
+
+        function closeWorkplanModal() {
+            workplanModal.classList.add('hidden');
+            workplanForm.reset();
+        }
+
+        saveWorkplanBtn.addEventListener('click', async () => {
+            const subjectName = workplanSubjectNameInput.value;
+            const assignmentIndex = workplanAssignmentIndexInput.value !== '' ? parseInt(workplanAssignmentIndexInput.value) : null;
+            const title = workplanTitleInput.value.trim();
+            const grundAnforderungen = workplanGrundAnforderungenTextarea.value.trim();
+            const erweiterteAnforderungen = workplanErweiterteAnforderungenTextarea.value.trim();
+
+            if (!title || !grundAnforderungen) {
+                customAlert('Bitte füllen Sie mindestens den Titel und die Grundanforderungen aus.');
+                return;
+            }
+
+            const workPlanDocRef = doc(db, `artifacts/${appId}/public/data/workPlans`, 'weeklyWorkPlan');
+            const newAssignment = {
+                title,
+                grundAnforderungen,
+                erweiterteAnforderungen
+            };
+
+            let updatedWorkPlans = { ...latestWorkPlans };
+            if (!updatedWorkPlans[subjectName]) {
+                updatedWorkPlans[subjectName] = [];
+            }
+
+            if (assignmentIndex !== null) {
+                updatedWorkPlans[subjectName][assignmentIndex] = newAssignment;
+            } else {
+                updatedWorkPlans[subjectName].push(newAssignment);
+            }
+
+            try {
+                await setDoc(workPlanDocRef, updatedWorkPlans, { merge: true });
+                closeWorkplanModal();
+                showStatusMessage('Auftrag erfolgreich gespeichert!', 'success');
+            } catch (error) {
+                console.error('Fehler beim Speichern des Auftrags:', error);
+                customAlert('Fehler beim Speichern des Auftrags. Bitte erneut versuchen.');
+            }
+        });
+
+        deleteWorkplanBtn.addEventListener('click', () => {
+            confirmationModal.classList.remove('hidden');
+        });
+        
+        // Confirmation handler for deleting a workplan assignment
+        // NOTE: This overrides the existing confirmYesBtn listener. I need to make a new one or modify it.
+        // Let's modify the confirmation modal logic to be more generic.
+        let confirmationAction = null;
+        confirmYesBtn.addEventListener('click', () => {
+            confirmationModal.classList.add('hidden');
+            if (typeof confirmationAction === 'function') {
+                confirmationAction();
+            }
+        });
+
+        // Let's redefine the delete listeners with the new confirmation logic
+        deleteWorkplanBtn.addEventListener('click', () => {
+            confirmationAction = async () => {
+                const subjectName = workplanSubjectNameInput.value;
+                const assignmentIndex = parseInt(workplanAssignmentIndexInput.value);
+                
+                const workPlanDocRef = doc(db, `artifacts/${appId}/public/data/workPlans`, 'weeklyWorkPlan');
+                let updatedWorkPlans = { ...latestWorkPlans };
+                
+                updatedWorkPlans[subjectName].splice(assignmentIndex, 1);
+
+                try {
+                    await setDoc(workPlanDocRef, updatedWorkPlans, { merge: true });
+                    closeWorkplanModal();
+                    showStatusMessage('Auftrag erfolgreich gelöscht!', 'success');
+                } catch (error) {
+                    console.error('Fehler beim Löschen des Auftrags:', error);
+                    customAlert('Fehler beim Löschen des Auftrags. Bitte erneut versuchen.');
+                }
+            };
+            confirmationModal.classList.remove('hidden');
+        });
+        
+        // Update the deleteSolBlockBtn listener to use the generic confirmation logic as well
+        deleteSolBlockBtn.addEventListener('click', () => {
+            confirmationAction = async () => {
+                const solBlocksDocRef = doc(db, `artifacts/${appId}/public/data/solBlocks`, 'weeklyBlocks');
+                const updatedBlocks = {
+                    ...latestSolBlocks,
+                    [currentDay]: {
+                        ...(latestSolBlocks[currentDay] || {})
+                    }
+                };
+                delete updatedBlocks[currentDay][currentSlot];
+                
+                if (Object.keys(updatedBlocks[currentDay]).length === 0) {
+                    delete updatedBlocks[currentDay];
+                }
+
+                try {
+                    if (Object.keys(updatedBlocks).length === 0) {
+                        await deleteDoc(solBlocksDocRef);
+                    } else {
+                        await setDoc(solBlocksDocRef, updatedBlocks);
+                    }
+                    closeSolBlockModal();
+                    showStatusMessage('Lektion erfolgreich gelöscht!', 'success');
+                } catch (error) {
+                    console.error('Fehler beim Löschen des SOL-Blocks:', error);
+                    customAlert('Fehler beim Löschen der Lektion. Bitte erneut versuchen.');
+                }
+            };
+            confirmationModal.classList.remove('hidden');
+        });
+        
+        cancelWorkplanBtn.addEventListener('click', closeWorkplanModal);
+
+        // Firestore-Echtzeit-Listener für alle Daten
         function setupFirestoreListeners() {
             if (!isAuthReady) {
-                console.warn('Firestore listeners cannot be set up: Auth not ready.');
+                console.warn('Firestore-Listener können nicht eingerichtet werden: Authentifizierung nicht bereit.');
                 return;
             }
 
             const timetableRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'schoolTimetable');
             const solSubjectsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'solSubjects');
             const solBlocksRef = doc(db, `artifacts/${appId}/public/data/solBlocks`, 'weeklyBlocks');
+            const workPlansRef = doc(db, `artifacts/${appId}/public/data/workPlans`, 'weeklyWorkPlan');
 
-            // Timetable listener
+            // Stundenplan-Listener
             onSnapshot(timetableRef, (docSnap) => {
                 latestTimetable = docSnap.exists() ? docSnap.data() : {};
-                // Rerender both views with the new data
                 renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
                 renderAdminTimetableGrid(latestTimetable);
             }, (error) => {
-                console.error("Error fetching timetable:", error);
+                console.error("Fehler beim Abrufen des Stundenplans:", error);
                 showStatusMessage('Fehler beim Abrufen des Stundenplans.', 'error');
             });
 
-            // SOL subjects listener
+            // SOL-Fächer-Listener
             onSnapshot(solSubjectsRef, (docSnap) => {
                 latestSolSubjects = docSnap.exists() ? docSnap.data().subjects || [] : [];
-                // Rerender both views with the new data
                 renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
                 renderSolSubjectCheckboxes(latestSolSubjects);
+                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects); // Rerender Arbeitsplan
             }, (error) => {
-                console.error("Error fetching SOL subjects:", error);
+                console.error("Fehler beim Abrufen der SOL-Fächer:", error);
                 showStatusMessage('Fehler beim Abrufen der SOL-Fächer.', 'error');
             });
 
-            // SOL blocks listener
+            // SOL-Blöcke-Listener
             onSnapshot(solBlocksRef, (docSnap) => {
                 latestSolBlocks = docSnap.exists() ? docSnap.data() : {};
-                // Rerender the Wochenplan view with the new data
                 renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
             }, (error) => {
-                console.error("Error fetching SOL blocks:", error);
+                console.error("Fehler beim Abrufen der SOL-Blöcke:", error);
+            });
+
+            // Arbeitsplan-Listener (neu)
+            onSnapshot(workPlansRef, (docSnap) => {
+                latestWorkPlans = docSnap.exists() ? docSnap.data() : {};
+                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects);
+            }, (error) => {
+                console.error("Fehler beim Abrufen des Arbeitsplans:", error);
             });
         }
         
@@ -816,25 +1112,24 @@
                     }
                 }
                 
-                // Show the default tab
+                // Den Standard-Tab anzeigen
                 showTab('wochenplan');
-                showSubTab('stundenplan'); // Ensure default subtab is shown for Verwaltung
+                showSubTab('stundenplan');
             } catch (error) {
-                console.error('Initialization error:', error);
+                console.error('Initialisierungsfehler:', error);
                 customAlert('Die Initialisierung ist fehlgeschlagen. Bitte versuchen Sie es später erneut.');
             }
         }
         
         document.addEventListener('DOMContentLoaded', initializeAppAndAuth);
 
-        // Logout functionality
+        // Abmelde-Funktionalität
         logoutBtn.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                // Redirect or handle post-logout state
                 customAlert('Sie wurden erfolgreich abgemeldet.');
             } catch (error) {
-                console.error('Error during logout:', error);
+                console.error('Fehler beim Abmelden:', error);
                 customAlert('Fehler beim Abmelden.');
             }
         });
