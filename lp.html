@@ -192,11 +192,12 @@
     <!-- Firebase SDKs, um die Abmeldung zu ermöglichen -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Konfiguration
-        const firebaseConfig = {
+        // Firestore Konfiguration (wird automatisch vom Canvas bereitgestellt)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyBVRTrFbNL-jMpfWtDVv739vkuqrCY8PDw",
             authDomain: "selbstorganisiertes-lernen-7a.firebaseapp.com",
             projectId: "selbstorganisiertes-lernen-7a",
@@ -204,7 +205,8 @@
             messagingSenderId: "283834841911",
             appId: "1:283834841911:web:189c328bca0c2ec167b8b2"
         };
-        
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
         // Initialisiere Firebase und die Dienste
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -261,6 +263,9 @@
 
         // Speichert die Namen der als SOL markierten Fächer
         let solSubjects = [];
+
+        // Hält fest, ob die Authentifizierung abgeschlossen ist
+        let isAuthReady = false;
 
         /**
          * Zeigt eine Statusmeldung an.
@@ -347,6 +352,11 @@
          * Verwendet onSnapshot für Echtzeit-Updates.
          */
         function loadTimetable() {
+            if (!isAuthReady || !auth.currentUser) {
+                console.warn('Authentifizierung nicht bereit. Stundenplan-Ladevorgang wird verschoben.');
+                return;
+            }
+
             showStatusMessage('Lade Stundenplan...');
             const timetableDocRef = doc(db, 'timetables', 'schoolTimetable');
 
@@ -361,7 +371,7 @@
                 }
             }, (error) => {
                 console.error('Fehler beim Laden des Stundenplans:', error);
-                showStatusMessage('Fehler beim Laden des Stundenplans.', 'error');
+                showStatusMessage('Fehler beim Laden des Stundenplans. Prüfen Sie die Konsole für Details.', 'error');
                 renderTimetableGrid({});
             });
         }
@@ -370,8 +380,7 @@
          * Speichert den Stundenplan in Firestore.
          */
         async function saveTimetable() {
-            const userId = auth.currentUser?.uid;
-            if (!userId) {
+            if (!isAuthReady || !auth.currentUser) {
                 showStatusMessage('Sie müssen angemeldet sein, um zu speichern.', 'error');
                 return;
             }
@@ -397,7 +406,7 @@
                 showStatusMessage('Stundenplan erfolgreich gespeichert!', 'success');
             } catch (error) {
                 console.error('Fehler beim Speichern des Stundenplans:', error);
-                showStatusMessage('Fehler beim Speichern des Stundenplans.', 'error');
+                showStatusMessage('Fehler beim Speichern des Stundenplans. Prüfen Sie die Konsole für Details.', 'error');
             }
         }
         
@@ -430,6 +439,11 @@
          * Verwendet onSnapshot für Echtzeit-Updates.
          */
         function loadSolSubjects() {
+            if (!isAuthReady || !auth.currentUser) {
+                console.warn('Authentifizierung nicht bereit. SOL-Fächer-Ladevorgang wird verschoben.');
+                return;
+            }
+
             const solSubjectsDocRef = doc(db, 'settings', 'solSubjects');
 
             onSnapshot(solSubjectsDocRef, (docSnap) => {
@@ -450,8 +464,7 @@
          * Speichert die ausgewählten SOL-Fächer in Firestore.
          */
         async function saveSolSubjects() {
-            const userId = auth.currentUser?.uid;
-            if (!userId) {
+            if (!isAuthReady || !auth.currentUser) {
                 showStatusMessage('Sie müssen angemeldet sein, um zu speichern.', 'error');
                 return;
             }
@@ -468,7 +481,7 @@
                 showStatusMessage('SOL-Fächer erfolgreich gespeichert!', 'success');
             } catch (error) {
                 console.error('Fehler beim Speichern der SOL-Fächer:', error);
-                showStatusMessage('Fehler beim Speichern der SOL-Fächer.', 'error');
+                showStatusMessage('Fehler beim Speichern der SOL-Fächer. Prüfen Sie die Konsole für Details.', 'error');
             }
         }
         
@@ -525,6 +538,45 @@
                 showSubTab('stundenplan-subtab');
             }
         }
+        
+        /**
+         * Eine einfache, benutzerdefinierte Alert-Box-Funktion, die window.alert ersetzt.
+         * @param {string} message Die anzuzeigende Nachricht.
+         */
+        function customAlert(message) {
+            // Erstellt ein Modal-Element
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+                z-index: 1000;
+            `;
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white; padding: 20px; border-radius: 10px; text-align: center;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; width: 90%;
+            `;
+
+            const messageText = document.createElement('p');
+            messageText.textContent = message;
+            messageText.style.marginBottom = '20px';
+
+            const okButton = document.createElement('button');
+            okButton.textContent = 'OK';
+            okButton.style.cssText = `
+                background-color: #4338ca; color: white; padding: 10px 20px; border-radius: 8px;
+                cursor: pointer;
+            `;
+            okButton.addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+
+            modalContent.appendChild(messageText);
+            modalContent.appendChild(okButton);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
 
         // Event-Listener für die Haupt-Tab-Buttons
         tabButtons.forEach(button => {
@@ -551,7 +603,7 @@
             } catch (error) {
                 console.error('Abmelde-Fehler:', error);
                 // Bei einem Fehler kann eine Meldung angezeigt werden
-                alert('Abmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.');
+                customAlert('Abmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.');
             }
         });
 
@@ -561,15 +613,31 @@
         saveSolSubjectsBtn.addEventListener('click', saveSolSubjects);
 
         // Standardmäßig den ersten Haupt-Tab anzeigen, sobald die Seite geladen ist
-        document.addEventListener('DOMContentLoaded', () => {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    showTab('wochenplan');
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Anmelden mit dem bereitgestellten Token oder anonym
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
                 } else {
-                    // Wenn der Benutzer nicht angemeldet ist, zur Login-Seite zurückleiten
-                    window.location.href = 'index.html';
+                    await signInAnonymously(auth);
                 }
-            });
+
+                // Warten, bis der Authentifizierungsstatus feststeht
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        console.log('User is signed in:', user.uid);
+                        isAuthReady = true;
+                        showTab('wochenplan');
+                    } else {
+                        console.log('No user is signed in. Redirecting to index.');
+                        isAuthReady = false;
+                        window.location.href = 'index.html';
+                    }
+                });
+            } catch (error) {
+                console.error('Initialisierungsfehler:', error);
+                customAlert('Die Initialisierung ist fehlgeschlagen. Bitte versuchen Sie es später erneut.');
+            }
         });
     </script>
 </body>
