@@ -1,1 +1,364 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOL - Lehrpersonen-Dashboard</title>
+    <!-- Tailwind CSS CDN für einfaches Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Poppins', 'Inter', sans-serif;
+            background: #eef2ff;
+        }
+        /* Style für den aktiven Tab */
+        .tab-button.active {
+            color: #4338ca;
+            border-bottom-width: 3px;
+            border-color: #4338ca;
+            font-weight: 600;
+        }
+        /* CSS-Übergänge für reibungslose Tab-Wechsel */
+        .tab-content {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .timetable-grid-cell {
+            width: 140px;
+            height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header mit Titel und Logout-Button -->
+    <header class="bg-white shadow-md py-4 px-6 md:px-10 flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-900">Lehrpersonen-Dashboard</h1>
+        <button id="logoutBtn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-xl shadow hover:bg-red-600 transition duration-300">
+            Abmelden
+        </button>
+    </header>
+
+    <!-- Hauptinhalt mit Tabs -->
+    <main class="flex-1 p-6 md:p-10">
+        <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-10">
+            <!-- Tab-Navigation -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex flex-wrap space-x-4 md:space-x-8" aria-label="Tabs">
+                    <button id="wochenplan-tab" class="tab-button active inline-flex items-center px-1 py-4 text-lg font-medium text-gray-500 hover:text-gray-700 transition duration-200">
+                        Wochenstundenplan
+                    </button>
+                    <button id="arbeitsplan-tab" class="tab-button inline-flex items-center px-1 py-4 text-lg font-medium text-gray-500 hover:text-gray-700 transition duration-200">
+                        Arbeitsplan
+                    </button>
+                    <button id="sus-tab" class="tab-button inline-flex items-center px-1 py-4 text-lg font-medium text-gray-500 hover:text-gray-700 transition duration-200">
+                        SuS-Übersicht
+                    </button>
+                    <button id="verwaltung-tab" class="tab-button inline-flex items-center px-1 py-4 text-lg font-medium text-gray-500 hover:text-gray-700 transition duration-200">
+                        Verwaltung
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab-Inhalte -->
+            <div id="tab-content-container">
+                <!-- Wochenstundenplan Inhalt (standardmäßig sichtbar) -->
+                <div id="wochenplan-content" class="tab-content">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Wochenstundenplan</h2>
+                    <p class="text-gray-600">
+                        Hier wird der Stundenplan für die aktuelle Woche angezeigt.
+                    </p>
+                </div>
+
+                <!-- Arbeitsplan Inhalt -->
+                <div id="arbeitsplan-content" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Arbeitsplan</h2>
+                    <p class="text-gray-600">
+                        Hier können Lehrpersonen Arbeitspläne erstellen, bearbeiten und zuweisen.
+                    </p>
+                </div>
+
+                <!-- SuS-Übersicht Inhalt -->
+                <div id="sus-content" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">SuS-Übersicht</h2>
+                    <p class="text-gray-600">
+                        Hier erhalten Lehrpersonen einen Überblick über den Fortschritt der Schülerinnen und Schüler.
+                    </p>
+                </div>
+
+                <!-- Verwaltung Inhalt -->
+                <div id="verwaltung-content" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Stundenplan-Verwaltung</h2>
+                    <p class="text-gray-600 mb-6">
+                        Tragen Sie hier den Stundenplan für die ganze Woche ein. Die Änderungen werden gespeichert, sobald Sie auf den "Speichern"-Button klicken.
+                    </p>
+                    <div id="timetable-container" class="overflow-x-auto">
+                        <!-- Stundenplan-Tabelle wird hier per JS eingefügt -->
+                        <div class="text-center text-gray-500 my-8">
+                            <span class="animate-pulse">Stundenplan wird geladen...</span>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <button id="saveTimetableBtn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-indigo-700 transition duration-300">
+                            Stundenplan speichern
+                        </button>
+                        <div id="statusMessage" class="font-semibold text-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Firebase SDKs, um die Abmeldung zu ermöglichen -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Konfiguration (erneut einfügen, da jede Seite eigenständig sein sollte)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVRTrFbNL-jMpfWtDVv739vkuqrCY8PDw",
+            authDomain: "selbstorganisiertes-lernen-7a.firebaseapp.com",
+            projectId: "selbstorganisiertes-lernen-7a",
+            storageBucket: "selbstorganisiertes-lernen-7a.firebasestorage.app",
+            messagingSenderId: "283834841911",
+            appId: "1:283834841911:web:189c328bca0c2ec167b8b2"
+        };
+        
+        // Initialisiere Firebase und die Dienste
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Referenzen auf die HTML-Elemente
+        const logoutBtn = document.getElementById('logoutBtn');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const timetableContainer = document.getElementById('timetable-container');
+        const saveTimetableBtn = document.getElementById('saveTimetableBtn');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Konstanten für Fächer, Zeitfenster und Wochentage
+        const subjects = [
+            { name: 'Frei', color: 'bg-gray-200', lightColor: 'bg-gray-50', textColor: 'text-gray-700' },
+            { name: 'Deutsch', color: 'bg-red-400', lightColor: 'bg-red-50', textColor: 'text-red-700' },
+            { name: 'Englisch', color: 'bg-blue-400', lightColor: 'bg-blue-50', textColor: 'text-blue-700' },
+            { name: 'Franzoesisch', color: 'bg-purple-400', lightColor: 'bg-purple-50', textColor: 'text-purple-700' },
+            { name: 'Mathematik', color: 'bg-green-400', lightColor: 'bg-green-50', textColor: 'text-green-700' },
+            { name: 'Natur und Technik', color: 'bg-yellow-400', lightColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
+            { name: 'NT / MI', color: 'bg-yellow-300', lightColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
+            { name: 'Raeume Zeiten Gesellschaften', color: 'bg-orange-400', lightColor: 'bg-orange-50', textColor: 'text-orange-700' },
+            { name: 'Ethik Religion Gemeinschaft', color: 'bg-pink-400', lightColor: 'bg-pink-50', textColor: 'text-pink-700' },
+            { name: 'Bewegung und Sport', color: 'bg-red-500', lightColor: 'bg-red-50', textColor: 'text-red-700' },
+            { name: 'Textiles und Technisches Gestalten', color: 'bg-indigo-400', lightColor: 'bg-indigo-50', textColor: 'text-indigo-700' },
+            { name: 'Musik', color: 'bg-violet-400', lightColor: 'bg-violet-50', textColor: 'text-violet-700' },
+            { name: 'Bildnerisches Gestalten', color: 'bg-teal-400', lightColor: 'bg-teal-50', textColor: 'text-teal-700' },
+            { name: 'Lernatelier', color: 'bg-gray-400', lightColor: 'bg-gray-50', textColor: 'text-gray-700' },
+            { name: 'Individuelle Vertiefung', color: 'bg-cyan-400', lightColor: 'bg-cyan-50', textColor: 'text-cyan-700' },
+            { name: 'Wirtschaft, Arbeit, Haushalt', color: 'bg-amber-400', lightColor: 'bg-amber-50', textColor: 'text-amber-700' }
+        ];
+        
+        const timeSlots = [
+            { id: 1, time: '07:30 - 08:15', name: 'Lektion 1' },
+            { id: 2, time: '08:20 - 09:05', name: 'Lektion 2' },
+            { id: 3, time: '09:10 - 09:55', name: 'Lektion 3' },
+            { id: 4, time: '10:20 - 11:05', name: 'Lektion 4' },
+            { id: 5, time: '11:10 - 11:55', name: 'Lektion 5' },
+            { id: 6, time: '12:10 - 12:55', name: 'Lektion 6' },
+            { id: 7, time: '13:00 - 13:45', name: 'Lektion 7' },
+            { id: 8, time: '13:50 - 14:35', name: 'Lektion 8' },
+            { id: 9, time: '14:40 - 15:25', name: 'Lektion 9' },
+            { id: 10, time: '15:40 - 16:25', name: 'Lektion 10' },
+            { id: 11, time: '16:30 - 17:15', name: 'Lektion 11' }
+        ];
+
+        const daysOfWeek = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+
+        /**
+         * Zeigt eine Statusmeldung an.
+         * @param {string} message Die anzuzeigende Nachricht.
+         * @param {string} type Der Nachrichtentyp ('success', 'error', 'info').
+         */
+        function showStatusMessage(message, type = 'info') {
+            statusMessage.textContent = message;
+            statusMessage.className = 'font-semibold text-sm transition duration-300';
+            if (type === 'success') {
+                statusMessage.classList.add('text-green-600');
+            } else if (type === 'error') {
+                statusMessage.classList.add('text-red-600');
+            } else {
+                statusMessage.classList.add('text-gray-600');
+            }
+        }
+        
+        /**
+         * Generiert die Stundenplan-Tabelle mit Dropdown-Menüs.
+         * @param {object} savedTimetable Der aus Firestore geladene Stundenplan.
+         */
+        function renderTimetableGrid(savedTimetable) {
+            let tableHTML = `
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr>
+                            <th class="py-4 px-6 bg-gray-100 text-gray-600 font-bold uppercase text-sm rounded-tl-xl">Zeit / Tag</th>
+                            ${daysOfWeek.map(day => `<th class="py-4 px-6 bg-gray-100 text-gray-600 font-bold uppercase text-sm">${day}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            timeSlots.forEach(slot => {
+                tableHTML += `
+                    <tr>
+                        <td class="border-t border-gray-200 py-3 px-6 text-gray-700 font-semibold">${slot.name} (${slot.time})</td>
+                        ${daysOfWeek.map(day => {
+                            const savedSubject = savedTimetable?.[day]?.[slot.name] || 'Frei';
+                            return `
+                                <td class="border-t border-gray-200 py-2 px-6">
+                                    <select class="w-full p-2 border border-gray-300 rounded-lg bg-white timetable-grid-cell"
+                                            data-day="${day}" data-slot="${slot.name}">
+                                        ${subjects.map(subject => 
+                                            `<option value="${subject.name}" ${subject.name === savedSubject ? 'selected' : ''}>
+                                                ${subject.name}
+                                            </option>`
+                                        ).join('')}
+                                    </select>
+                                </td>
+                            `;
+                        }).join('')}
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            timetableContainer.innerHTML = tableHTML;
+        }
+
+        /**
+         * Lädt den Stundenplan aus Firestore und rendert die Tabelle.
+         */
+        async function loadTimetable() {
+            showStatusMessage('Lade Stundenplan...');
+            const timetableDocRef = doc(db, 'timetables', 'schoolTimetable');
+            try {
+                const docSnap = await getDoc(timetableDocRef);
+                const savedTimetable = docSnap.exists() ? docSnap.data() : {};
+                renderTimetableGrid(savedTimetable);
+                showStatusMessage('Stundenplan geladen.', 'success');
+            } catch (error) {
+                console.error('Fehler beim Laden des Stundenplans:', error);
+                showStatusMessage('Fehler beim Laden des Stundenplans.', 'error');
+                // Bei einem Fehler trotzdem die Tabelle rendern, aber leer
+                renderTimetableGrid({});
+            }
+        }
+        
+        /**
+         * Speichert den Stundenplan in Firestore.
+         */
+        async function saveTimetable() {
+            const userId = auth.currentUser?.uid;
+            if (!userId) {
+                showStatusMessage('Sie müssen angemeldet sein, um zu speichern.', 'error');
+                return;
+            }
+
+            showStatusMessage('Stundenplan wird gespeichert...');
+            const newTimetable = {};
+            const selectElements = timetableContainer.querySelectorAll('select');
+            
+            selectElements.forEach(select => {
+                const day = select.getAttribute('data-day');
+                const slot = select.getAttribute('data-slot');
+                const subject = select.value;
+                
+                if (!newTimetable[day]) {
+                    newTimetable[day] = {};
+                }
+                newTimetable[day][slot] = subject;
+            });
+
+            try {
+                const timetableDocRef = doc(db, 'timetables', 'schoolTimetable');
+                await setDoc(timetableDocRef, newTimetable);
+                showStatusMessage('Stundenplan erfolgreich gespeichert!', 'success');
+            } catch (error) {
+                console.error('Fehler beim Speichern des Stundenplans:', error);
+                showStatusMessage('Fehler beim Speichern des Stundenplans.', 'error');
+            }
+        }
+
+        /**
+         * Zeigt den ausgewählten Tab-Inhalt an und markiert den entsprechenden Tab-Button als aktiv.
+         * @param {string} tabId Die ID des anzuzeigenden Tabs.
+         */
+        function showTab(tabId) {
+            // Alle Tab-Inhalte ausblenden
+            tabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+            // Alle Tab-Buttons deaktivieren
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Den ausgewählten Inhalt anzeigen
+            document.getElementById(`${tabId}-content`).classList.remove('hidden');
+            // Den ausgewählten Button als aktiv markieren
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+
+            // Spezielle Aktionen für den "Verwaltung"-Tab
+            if (tabId === 'verwaltung') {
+                loadTimetable();
+            }
+        }
+
+        // Event-Listener für die Tab-Buttons
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.id.replace('-tab', '');
+                showTab(tabId);
+            });
+        });
+
+        // Event-Listener für den Logout-Button
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                // Leite den Benutzer nach dem Abmelden zur Index-Seite zurück
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Abmelde-Fehler:', error);
+                // Bei einem Fehler kann eine Meldung angezeigt werden
+                alert('Abmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.');
+            }
+        });
+
+        // Event-Listener für den Speichern-Button
+        saveTimetableBtn.addEventListener('click', saveTimetable);
+
+        // Standardmäßig den ersten Tab anzeigen, sobald die Seite geladen ist
+        document.addEventListener('DOMContentLoaded', () => {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    showTab('wochenplan');
+                } else {
+                    // Wenn der Benutzer nicht angemeldet ist, zur Login-Seite zurückleiten
+                    window.location.href = 'index.html';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
 
