@@ -46,12 +46,20 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Angepasste, kompaktere Stile für die Stundenplan-Zellen */
         .timetable-grid-cell {
-            width: 140px;
-            height: 60px;
+            width: 120px;
+            height: 40px;
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        .timetable-time-cell {
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem;
+            width: 100px;
         }
     </style>
 </head>
@@ -280,8 +288,8 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr>
-                            <th class="py-4 px-6 bg-gray-100 text-gray-600 font-bold uppercase text-sm rounded-tl-xl">Zeit / Tag</th>
-                            ${daysOfWeek.map(day => `<th class="py-4 px-6 bg-gray-100 text-gray-600 font-bold uppercase text-sm">${day}</th>`).join('')}
+                            <th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs rounded-tl-xl timetable-time-cell">Zeit / Tag</th>
+                            ${daysOfWeek.map(day => `<th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs">${day}</th>`).join('')}
                         </tr>
                     </thead>
                     <tbody>
@@ -290,19 +298,19 @@
             timeSlots.forEach(slot => {
                 tableHTML += `
                     <tr>
-                        <td class="border-t border-gray-200 py-3 px-6 text-gray-700 font-semibold">${slot.time}</td>
+                        <td class="border-t border-gray-200 py-2 px-3 text-gray-700 font-semibold timetable-time-cell">${slot.time}</td>
                         ${daysOfWeek.map(day => {
                             const savedSubjectName = savedTimetable?.[day]?.[slot.time] || 'Frei';
                             const savedSubject = subjects.find(s => s.name === savedSubjectName) || subjects[0];
                             return `
-                                <td class="border-t border-gray-200 py-2 px-6">
-                                    <select class="w-full p-2 border border-gray-300 rounded-lg timetable-grid-cell
+                                <td class="border-t border-gray-200 py-1 px-2">
+                                    <select class="w-full p-1 border border-gray-300 rounded-lg timetable-grid-cell
                                             ${savedSubject.lightColor} ${savedSubject.textColor}
                                             focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                                             data-day="${day}" data-slot="${slot.time}">
                                         ${subjects.map(subject => 
-                                            `<option value="${subject.name}" ${subject.name === savedSubjectName ? 'selected' : ''}
-                                                    class="${subject.color} text-white">
+                                            // Hier wurde die `class` aus dem `<option>`-Tag entfernt, um die Farben dezenter zu gestalten.
+                                            `<option value="${subject.name}" ${subject.name === savedSubjectName ? 'selected' : ''}>
                                                 ${subject.name}
                                             </option>`
                                         ).join('')}
