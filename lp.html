@@ -123,6 +123,24 @@
                         </button>
                         <div id="statusMessage" class="font-semibold text-sm"></div>
                     </div>
+
+                    <!-- Neuer Abschnitt für SOL-Fächer -->
+                    <div class="mt-12 pt-8 border-t border-gray-200">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">SOL-Fächer-Verwaltung</h2>
+                        <p class="text-gray-600 mb-6">
+                            Wählen Sie aus, welche Fächer als "Selbstorganisiertes Lernen" (SOL) unterrichtet werden sollen. Im Stundenplan werden diese dann als "SOL" angezeigt.
+                        </p>
+                        <div id="sol-subjects-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <!-- Fächer-Checkboxes werden hier per JS eingefügt -->
+                            <div class="text-center text-gray-500 my-8 col-span-full">
+                                <span class="animate-pulse">SOL-Fächer werden geladen...</span>
+                            </div>
+                        </div>
+                        <button id="saveSolSubjectsBtn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-indigo-700 transition duration-300">
+                            SOL-Fächer speichern
+                        </button>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -132,9 +150,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Konfiguration (erneut einfügen, da jede Seite eigenständig sein sollte)
+        // Firebase Konfiguration
         const firebaseConfig = {
             apiKey: "AIzaSyBVRTrFbNL-jMpfWtDVv739vkuqrCY8PDw",
             authDomain: "selbstorganisiertes-lernen-7a.firebaseapp.com",
@@ -156,6 +174,8 @@
         const timetableContainer = document.getElementById('timetable-container');
         const saveTimetableBtn = document.getElementById('saveTimetableBtn');
         const statusMessage = document.getElementById('statusMessage');
+        const solSubjectsContainer = document.getElementById('sol-subjects-container');
+        const saveSolSubjectsBtn = document.getElementById('saveSolSubjectsBtn');
 
         // Konstanten für Fächer, Zeitfenster und Wochentage
         const subjects = [
@@ -192,6 +212,9 @@
         ];
 
         const daysOfWeek = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+
+        // Speichert die Namen der als SOL markierten Fächer
+        let solSubjects = [];
 
         /**
          * Zeigt eine Statusmeldung an.
@@ -275,21 +298,26 @@
 
         /**
          * Lädt den Stundenplan aus Firestore und rendert die Tabelle.
+         * Verwendet onSnapshot für Echtzeit-Updates.
          */
-        async function loadTimetable() {
+        function loadTimetable() {
             showStatusMessage('Lade Stundenplan...');
             const timetableDocRef = doc(db, 'timetables', 'schoolTimetable');
-            try {
-                const docSnap = await getDoc(timetableDocRef);
-                const savedTimetable = docSnap.exists() ? docSnap.data() : {};
-                renderTimetableGrid(savedTimetable);
-                showStatusMessage('Stundenplan geladen.', 'success');
-            } catch (error) {
+
+            onSnapshot(timetableDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const savedTimetable = docSnap.data();
+                    renderTimetableGrid(savedTimetable);
+                    showStatusMessage('Stundenplan geladen.', 'success');
+                } else {
+                    renderTimetableGrid({});
+                    showStatusMessage('Stundenplan nicht gefunden. Beginnen Sie mit der Eingabe!', 'info');
+                }
+            }, (error) => {
                 console.error('Fehler beim Laden des Stundenplans:', error);
                 showStatusMessage('Fehler beim Laden des Stundenplans.', 'error');
-                // Bei einem Fehler trotzdem die Tabelle rendern, aber leer
                 renderTimetableGrid({});
-            }
+            });
         }
         
         /**
@@ -326,6 +354,78 @@
                 showStatusMessage('Fehler beim Speichern des Stundenplans.', 'error');
             }
         }
+        
+        /**
+         * Generiert die Checkboxen für die SOL-Fächer.
+         * @param {string[]} selectedSolSubjects Array der Namen von als SOL markierten Fächern.
+         */
+        function renderSolSubjects(selectedSolSubjects) {
+            solSubjectsContainer.innerHTML = ''; // Vorherige Inhalte löschen
+            
+            // Filtert die Fächer, um "Frei" und "Lernatelier" auszuschließen
+            const relevantSubjects = subjects.filter(s => s.name !== 'Frei' && s.name !== 'Lernatelier');
+
+            relevantSubjects.forEach(subject => {
+                const isChecked = selectedSolSubjects.includes(subject.name);
+                const html = `
+                    <div class="flex items-center space-x-2 p-3 rounded-lg border border-gray-200">
+                        <input id="sol-${subject.name.replace(/\s/g, '-')}" type="checkbox"
+                               class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                               data-subject-name="${subject.name}" ${isChecked ? 'checked' : ''}>
+                        <label for="sol-${subject.name.replace(/\s/g, '-')}" class="text-gray-700 font-medium">${subject.name}</label>
+                    </div>
+                `;
+                solSubjectsContainer.insertAdjacentHTML('beforeend', html);
+            });
+        }
+        
+        /**
+         * Lädt die SOL-Fächer-Konfiguration aus Firestore.
+         * Verwendet onSnapshot für Echtzeit-Updates.
+         */
+        function loadSolSubjects() {
+            const solSubjectsDocRef = doc(db, 'settings', 'solSubjects');
+
+            onSnapshot(solSubjectsDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const savedData = docSnap.data();
+                    solSubjects = savedData.subjects || [];
+                    renderSolSubjects(solSubjects);
+                } else {
+                    solSubjects = [];
+                    renderSolSubjects(solSubjects);
+                }
+            }, (error) => {
+                console.error('Fehler beim Laden der SOL-Fächer:', error);
+            });
+        }
+
+        /**
+         * Speichert die ausgewählten SOL-Fächer in Firestore.
+         */
+        async function saveSolSubjects() {
+            const userId = auth.currentUser?.uid;
+            if (!userId) {
+                showStatusMessage('Sie müssen angemeldet sein, um zu speichern.', 'error');
+                return;
+            }
+
+            showStatusMessage('SOL-Fächer werden gespeichert...');
+            const checkboxes = solSubjectsContainer.querySelectorAll('input[type="checkbox"]');
+            const newSolSubjects = Array.from(checkboxes)
+                                        .filter(cb => cb.checked)
+                                        .map(cb => cb.getAttribute('data-subject-name'));
+            
+            try {
+                const solSubjectsDocRef = doc(db, 'settings', 'solSubjects');
+                await setDoc(solSubjectsDocRef, { subjects: newSolSubjects });
+                showStatusMessage('SOL-Fächer erfolgreich gespeichert!', 'success');
+            } catch (error) {
+                console.error('Fehler beim Speichern der SOL-Fächer:', error);
+                showStatusMessage('Fehler beim Speichern der SOL-Fächer.', 'error');
+            }
+        }
+
 
         /**
          * Zeigt den ausgewählten Tab-Inhalt an und markiert den entsprechenden Tab-Button als aktiv.
@@ -349,6 +449,7 @@
             // Spezielle Aktionen für den "Verwaltung"-Tab
             if (tabId === 'verwaltung') {
                 loadTimetable();
+                loadSolSubjects();
             }
         }
 
@@ -375,6 +476,7 @@
 
         // Event-Listener für den Speichern-Button
         saveTimetableBtn.addEventListener('click', saveTimetable);
+        saveSolSubjectsBtn.addEventListener('click', saveSolSubjects);
 
         // Standardmäßig den ersten Tab anzeigen, sobald die Seite geladen ist
         document.addEventListener('DOMContentLoaded', () => {
