@@ -208,10 +208,9 @@
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // Initialisiere Firebase und die Dienste
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
+        let app, auth, db;
+        let isAuthReady = false;
+        
         // Referenzen auf die HTML-Elemente
         const logoutBtn = document.getElementById('logoutBtn');
         const tabButtons = document.querySelectorAll('.tab-button');
@@ -263,9 +262,6 @@
 
         // Speichert die Namen der als SOL markierten Fächer
         let solSubjects = [];
-
-        // Hält fest, ob die Authentifizierung abgeschlossen ist
-        let isAuthReady = false;
 
         /**
          * Zeigt eine Statusmeldung an.
@@ -612,33 +608,70 @@
         // Event-Listener für den Speichern-Button der SOL-Fächer
         saveSolSubjectsBtn.addEventListener('click', saveSolSubjects);
 
-        // Standardmäßig den ersten Haupt-Tab anzeigen, sobald die Seite geladen ist
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Initialisierungsfunktion, die die Firebase-Dienste startet und die Authentifizierung abwartet
+        async function initializeAppAndAuth() {
             try {
-                // Anmelden mit dem bereitgestellten Token oder anonym
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Initialisiere Firebase und die Dienste
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-                // Warten, bis der Authentifizierungsstatus feststeht
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        console.log('User is signed in:', user.uid);
-                        isAuthReady = true;
-                        showTab('wochenplan');
-                    } else {
-                        console.log('No user is signed in. Redirecting to index.');
-                        isAuthReady = false;
-                        window.location.href = 'index.html';
-                    }
+                // Warte auf den Authentifizierungsstatus
+                const user = await new Promise((resolve) => {
+                    const unsubscribe = onAuthStateChanged(auth, (user) => {
+                        unsubscribe(); // Hör-Funktion nach dem ersten Aufruf beenden
+                        resolve(user);
+                    });
                 });
+
+                if (user) {
+                    console.log('User is signed in:', user.uid);
+                    isAuthReady = true;
+                    showTab('wochenplan');
+                } else {
+                    // Wenn kein Benutzer angemeldet ist, versuchen wir, mit dem Token anzumelden
+                    if (initialAuthToken) {
+                        try {
+                            const credential = await signInWithCustomToken(auth, initialAuthToken);
+                            console.log('Signed in with custom token:', credential.user.uid);
+                            isAuthReady = true;
+                            showTab('wochenplan');
+                        } catch (tokenError) {
+                            console.error('Fehler bei signInWithCustomToken:', tokenError);
+                            customAlert('Anmeldung mit Token fehlgeschlagen. Versuche anonyme Anmeldung...');
+                            try {
+                                const anonCredential = await signInAnonymously(auth);
+                                console.log('Signed in anonymously:', anonCredential.user.uid);
+                                isAuthReady = true;
+                                showTab('wochenplan');
+                            } catch (anonError) {
+                                console.error('Fehler bei signInAnonymously:', anonError);
+                                throw new Error('Anonyme Anmeldung fehlgeschlagen.');
+                            }
+                        }
+                    } else {
+                        // Wenn kein Token vorhanden ist, anonym anmelden
+                        try {
+                            const anonCredential = await signInAnonymously(auth);
+                            console.log('Signed in anonymously:', anonCredential.user.uid);
+                            isAuthReady = true;
+                            showTab('wochenplan');
+                        } catch (anonError) {
+                            console.error('Fehler bei signInAnonymously:', anonError);
+                            throw new Error('Anonyme Anmeldung fehlgeschlagen.');
+                        }
+                    }
+                }
             } catch (error) {
                 console.error('Initialisierungsfehler:', error);
                 customAlert('Die Initialisierung ist fehlgeschlagen. Bitte versuchen Sie es später erneut.');
+                // Optional: Weiterleitung zur Startseite bei kritischem Fehler
+                // window.location.href = 'index.html';
             }
-        });
+        }
+
+        // Starte die Initialisierung, wenn das DOM geladen ist
+        document.addEventListener('DOMContentLoaded', initializeAppAndAuth);
     </script>
 </body>
 </html>
