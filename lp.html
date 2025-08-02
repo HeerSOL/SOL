@@ -432,16 +432,17 @@
          * @param {object} solBlocksData Data for blocked SOL lessons.
          */
         function renderWeeklyTimetable(timetable, solSubjectsList, solBlocksData) {
-            const solSubject = subjects.find(s => s.name === 'SOL');
-
-            if (Object.keys(timetable).length === 0) {
+            // Updated message to guide the user if the timetable is empty
+            if (!timetable || Object.keys(timetable).length === 0) {
                 weeklyTimetableContainer.innerHTML = `
                     <div class="text-center text-gray-500 my-8">
-                        Kein Stundenplan verfügbar.
+                        Der Stundenplan ist leer. Bitte gehen Sie zum Tab "Verwaltung" > "Stundenplan", um ihn zu konfigurieren.
                     </div>
                 `;
                 return;
             }
+
+            const solSubject = subjects.find(s => s.name === 'SOL');
 
             let tableHTML = `
                 <div class="overflow-x-auto">
