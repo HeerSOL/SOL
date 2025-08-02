@@ -453,6 +453,7 @@
                     }
                 } else {
                     customAlert('Firebase-Konfiguration ist nicht verfügbar.');
+                    console.error('Firebase-Konfiguration ist leer oder nicht definiert.');
                 }
             } catch (error) {
                 console.error('Initialisierungsfehler:', error);
@@ -557,10 +558,10 @@
             // Generate timetable HTML
             let timetableHTML = `
                 <div class="grid grid-cols-[100px_repeat(5,_minmax(0,_1fr))] border border-gray-300 rounded-xl overflow-hidden shadow-md">
-                    <div class="p-2 border-b border-r bg-gray-100 font-semibold text-center">Zeit</div>
+                    <div class="p-2 border-b border-r bg-gray-100 font-semibold text-center timetable-time-cell">Zeit</div>
             `;
             days.forEach(day => {
-                timetableHTML += `<div class="p-2 border-b border-r bg-gray-100 font-semibold text-center">${day}</div>`;
+                timetableHTML += `<div class="p-2 border-b border-r bg-gray-100 font-semibold text-center timetable-grid-cell">${day}</div>`;
             });
             timetableHTML += '</div>';
 
@@ -799,14 +800,14 @@
                 const lessonsRef = doc(db, `artifacts/${appId}/users/${userId}/data/sol-lessons`);
 
                 try {
-                    await updateDoc(lessonsRef, {
-                        blockedLessons: isBlocked ? arrayRemove(lesson) : arrayUnion(newBlock)
-                    }, { merge: true });
-                    
                     if (isBlocked) {
-                         await updateDoc(lessonsRef, { blockedLessons: arrayUnion(newBlock) }, { merge: true });
+                        // Zuerst die alte Lektion entfernen, dann die neue hinzufügen
+                        await updateDoc(lessonsRef, { blockedLessons: arrayRemove(lesson) });
+                        await updateDoc(lessonsRef, { blockedLessons: arrayUnion(newBlock) });
+                    } else {
+                        // Eine neue Lektion hinzufügen
+                        await updateDoc(lessonsRef, { blockedLessons: arrayUnion(newBlock) });
                     }
-                    
                     solBlockModal.classList.add('hidden');
                 } catch (e) {
                     console.error('Fehler beim Speichern der SOL-Lektion:', e);
