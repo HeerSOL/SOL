@@ -48,8 +48,6 @@
         }
         /* Angepasste, kompaktere Stile für die Stundenplan-Zellen */
         .timetable-grid-cell {
-            width: 120px;
-            height: 40px;
             font-size: 0.875rem; /* text-sm */
             line-height: 1.25rem;
             overflow: hidden;
@@ -151,7 +149,7 @@
                             <p class="text-gray-600 mb-6">
                                 Tragen Sie hier den Stundenplan für die ganze Woche ein. Die Änderungen werden gespeichert, sobald Sie auf den "Speichern"-Button klicken.
                             </p>
-                            <div id="timetable-container" class="overflow-x-auto">
+                            <div id="admin-timetable-container" class="overflow-x-auto">
                                 <!-- Timetable table will be inserted here by JS -->
                                 <div class="text-center text-gray-500 my-8">
                                     <span class="animate-pulse">Stundenplan wird geladen...</span>
@@ -250,6 +248,16 @@
         </div>
     </div>
     
+    <!-- Custom alert modal box -->
+    <div id="custom-alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-[1001] hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full m-4 text-center">
+            <p id="alert-message" class="text-lg font-medium mb-4">Meldung</p>
+            <button id="alert-ok-btn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-indigo-700 transition duration-300">
+                OK
+            </button>
+        </div>
+    </div>
+
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -279,7 +287,7 @@
         const subTabButtons = document.querySelectorAll('.sub-tab-button');
         const subTabContents = document.querySelectorAll('.sub-tab-content');
         const weeklyTimetableContainer = document.getElementById('weekly-timetable-container');
-        const timetableContainer = document.getElementById('timetable-container');
+        const adminTimetableContainer = document.getElementById('admin-timetable-container'); // Changed from timetable-container to avoid conflict
         const saveTimetableBtn = document.getElementById('saveTimetableBtn');
         const statusMessage = document.getElementById('statusMessage');
         const solSubjectsContainer = document.getElementById('sol-subjects-container');
@@ -296,10 +304,16 @@
         const confirmationModal = document.getElementById('confirmation-modal');
         const confirmYesBtn = document.getElementById('confirm-yes');
         const confirmNoBtn = document.getElementById('confirm-no');
+        const customAlertModal = document.getElementById('custom-alert-modal');
+        const alertMessage = document.getElementById('alert-message');
+        const alertOkBtn = document.getElementById('alert-ok-btn');
 
-        // Global variables for the modal
+        // Global variables for the modal and data
         let currentDay = '';
         let currentSlot = '';
+        let latestTimetable = {};
+        let latestSolSubjects = [];
+        let latestSolBlocks = {};
 
         // Constants for subjects, time slots, and days of the week
         const subjects = [
@@ -338,13 +352,14 @@
 
         const daysOfWeek = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
 
-        // Stores the names of subjects marked as SOL
-        let solSubjects = [];
-        // Global variables for real-time updates
-        let latestTimetable = {};
-        let latestSolSubjects = [];
-        let latestSolBlocks = {};
-
+        /**
+         * Displays a custom alert modal.
+         * @param {string} message The message to display.
+         */
+        function customAlert(message) {
+            alertMessage.textContent = message;
+            customAlertModal.classList.remove('hidden');
+        }
 
         /**
          * Displays a status message.
@@ -363,9 +378,100 @@
             }
         }
         
+        // Tab-Wechsel-Funktionalität
+        function showTab(tabId) {
+            tabContents.forEach(content => content.classList.add('hidden'));
+            tabButtons.forEach(button => button.classList.remove('active'));
+            document.getElementById(`${tabId}-content`).classList.remove('hidden');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        }
+
+        // Unter-Tab-Wechsel-Funktionalität
+        function showSubTab(subTabId) {
+            subTabContents.forEach(content => content.classList.add('hidden'));
+            subTabButtons.forEach(button => button.classList.remove('active'));
+            document.getElementById(`${subTabId}-subtab`).classList.remove('hidden');
+            document.getElementById(`${subTabId}-subtab-btn`).classList.add('active');
+            
+            // Wenn der Stundenplan-Sub-Tab angezeigt wird, lade die Daten
+            if (subTabId === 'stundenplan') {
+                renderAdminTimetableGrid(latestTimetable);
+            } else if (subTabId === 'sol') {
+                renderSolSubjectCheckboxes(latestSolSubjects);
+            }
+        }
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                showTab(button.id.replace('-tab', ''));
+            });
+        });
+
+        subTabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                showSubTab(button.id.replace('-subtab-btn', ''));
+            });
+        });
+
         /**
-         * Renders the timetable table with dropdown menus for administration.
-         * @param {object} savedTimetable The timetable loaded from Firestore.
+         * Renders the timetable table for the Wochenplan tab (teacher view).
+         * @param {object} timetable The timetable data.
+         * @param {object} solBlocks The SOL blocks data.
+         */
+        function renderWeeklyTimetableGrid(timetable, solBlocks) {
+            let tableHTML = `
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs rounded-tl-xl timetable-time-cell">Zeit / Tag</th>
+                            ${daysOfWeek.map(day => `<th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs">${day}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            timeSlots.forEach(slot => {
+                tableHTML += `<tr>
+                    <td class="border-t border-gray-200 py-2 px-3 text-gray-700 font-semibold timetable-time-cell">${slot.time}</td>
+                    ${daysOfWeek.map(day => {
+                        const subjectName = timetable?.[day]?.[slot.time] || 'Frei';
+                        const subject = subjects.find(s => s.name === subjectName) || subjects[0];
+                        const block = solBlocks?.[day]?.[slot.time];
+                        const isSol = latestSolSubjects.includes(subject.name);
+                        
+                        let cellContent;
+                        let cellClass = `border-t border-gray-200 py-2 px-3 timetable-grid-cell cursor-pointer transition-colors`;
+                        
+                        if (isSol) {
+                            if (block) {
+                                // Blocked SOL lesson
+                                cellClass += ` bg-slate-300 text-slate-800 font-bold`;
+                                cellContent = `
+                                    <div class="font-bold">${block.title}</div>
+                                    <div class="text-xs text-slate-600">${block.type}</div>
+                                `;
+                            } else {
+                                // Unblocked SOL lesson
+                                cellClass += ` ${subject.lightColor} text-slate-800 font-medium hover:bg-slate-200`;
+                                cellContent = 'SOL';
+                            }
+                        } else {
+                            // Regular lesson
+                            cellClass += ` ${subject.lightColor} ${subject.textColor} font-medium`;
+                            cellContent = subject.name;
+                        }
+
+                        return `<td class="${cellClass}" data-day="${day}" data-slot="${slot.time}" data-is-sol="${isSol}">${cellContent}</td>`;
+                    }).join('')}
+                </tr>`;
+            });
+
+            tableHTML += `</tbody></table>`;
+            weeklyTimetableContainer.innerHTML = tableHTML;
+        }
+
+        /**
+         * Renders the timetable table for the Verwaltung tab (admin view).
+         * @param {object} savedTimetable The timetable data.
          */
         function renderAdminTimetableGrid(savedTimetable) {
             let tableHTML = `
@@ -378,664 +484,360 @@
                     </thead>
                     <tbody>
             `;
-
             timeSlots.forEach(slot => {
-                tableHTML += `
-                    <tr>
-                        <td class="border-t border-gray-200 py-2 px-3 text-gray-700 font-semibold timetable-time-cell">${slot.time}</td>
-                        ${daysOfWeek.map(day => {
-                            const savedSubjectName = savedTimetable?.[day]?.[slot.time] || 'Frei';
-                            const savedSubject = subjects.find(s => s.name === savedSubjectName) || subjects[0];
-                            return `
-                                <td class="border-t border-gray-200 py-1 px-2">
-                                    <select class="w-full p-1 border border-gray-300 rounded-lg timetable-grid-cell
-                                            ${savedSubject.lightColor} ${savedSubject.textColor}
-                                            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                                            data-day="${day}" data-slot="${slot.time}">
-                                        ${subjects.map(subject => 
-                                            `<option value="${subject.name}" ${subject.name === savedSubjectName ? 'selected' : ''}>
-                                                ${subject.name}
-                                            </option>`
-                                        ).join('')}
-                                    </select>
-                                </td>
-                            `;
-                        }).join('')}
-                    </tr>
-                `;
+                tableHTML += `<tr>
+                    <td class="border-t border-gray-200 py-2 px-3 text-gray-700 font-semibold timetable-time-cell">${slot.time}</td>
+                    ${daysOfWeek.map(day => {
+                        const savedSubjectName = savedTimetable?.[day]?.[slot.time] || '';
+                        return `
+                            <td class="border-t border-gray-200 py-1 px-2">
+                                <input 
+                                    type="text" 
+                                    class="w-full p-1 border border-gray-300 rounded-lg timetable-grid-cell focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                                    list="subject-list" 
+                                    value="${savedSubjectName}" 
+                                    data-day="${day}" 
+                                    data-slot="${slot.time}"
+                                />
+                            </td>
+                        `;
+                    }).join('')}
+                </tr>`;
             });
+            tableHTML += `</tbody></table>`;
 
-            tableHTML += `
-                    </tbody>
-                </table>
-            `;
-            timetableContainer.innerHTML = tableHTML;
+            adminTimetableContainer.innerHTML = tableHTML;
             
-            // Event listener for color change on selection
-            timetableContainer.querySelectorAll('select').forEach(select => {
-                select.addEventListener('change', (e) => {
-                    const selectedSubjectName = e.target.value;
-                    const selectedSubject = subjects.find(s => s.name === selectedSubjectName) || subjects[0];
-                    
-                    // Remove old color classes
-                    e.target.classList.remove(...subjects.flatMap(s => [s.lightColor, s.textColor]));
-                    // Add new color classes
-                    e.target.classList.add(selectedSubject.lightColor, selectedSubject.textColor);
-                });
+            // Create a datalist for subject suggestions
+            const datalist = document.createElement('datalist');
+            datalist.id = 'subject-list';
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.name;
+                datalist.appendChild(option);
+            });
+            document.body.appendChild(datalist);
+        }
+
+        /**
+         * Renders the checkboxes for SOL subjects in the Verwaltung tab.
+         * @param {string[]} solSubjects The list of current SOL subjects.
+         */
+        function renderSolSubjectCheckboxes(solSubjects) {
+            solSubjectsContainer.innerHTML = '';
+            
+            // Filter out 'Frei' and 'SOL' subjects as they cannot be selected as SOL
+            const selectableSubjects = subjects.filter(s => s.name !== 'Frei' && s.name !== 'SOL');
+            
+            selectableSubjects.forEach(subject => {
+                const isChecked = solSubjects.includes(subject.name);
+                const container = document.createElement('label');
+                container.className = `flex items-center space-x-2 p-2 rounded-lg cursor-pointer transition-colors ${isChecked ? 'bg-indigo-100' : 'bg-gray-100 hover:bg-gray-200'}`;
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'form-checkbox h-4 w-4 text-indigo-600 rounded';
+                checkbox.value = subject.name;
+                checkbox.checked = isChecked;
+                
+                const span = document.createElement('span');
+                span.className = 'text-sm font-medium text-gray-700';
+                span.textContent = subject.name;
+                
+                container.appendChild(checkbox);
+                container.appendChild(span);
+                solSubjectsContainer.appendChild(container);
             });
         }
         
         /**
-         * Renders a static timetable table for the weekly view.
-         * @param {object} timetable The timetable data.
-         * @param {string[]} solSubjectsList The list of SOL subjects.
-         * @param {object} solBlocksData Data for blocked SOL lessons.
-         */
-        function renderWeeklyTimetable(timetable, solSubjectsList, solBlocksData) {
-            // Updated message to guide the user if the timetable is empty
-            if (!timetable || Object.keys(timetable).length === 0) {
-                weeklyTimetableContainer.innerHTML = `
-                    <div class="text-center text-gray-500 my-8">
-                        Der Stundenplan ist leer. Bitte gehen Sie zum Tab "Verwaltung" > "Stundenplan", um ihn zu konfigurieren.
-                    </div>
-                `;
-                return;
-            }
-
-            const solSubject = subjects.find(s => s.name === 'SOL');
-
-            let tableHTML = `
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr>
-                                <th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs rounded-tl-xl timetable-time-cell">Zeit / Tag</th>
-                                ${daysOfWeek.map(day => `<th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs">${day}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            timeSlots.forEach(slot => {
-                tableHTML += `
-                    <tr>
-                        <td class="border-t border-gray-200 py-2 px-3 text-gray-700 font-semibold timetable-time-cell">${slot.time}</td>
-                        ${daysOfWeek.map(day => {
-                            const subjectName = timetable?.[day]?.[slot.time] || 'Frei';
-                            const isSolSubject = solSubjectsList.includes(subjectName);
-                            
-                            let content = subjectName;
-                            let cellClass = '';
-                            let onClickEvent = '';
-
-                            if (isSolSubject) {
-                                // SOL subject
-                                const blockId = `${day}_${slot.time.replace(/[\s-:]/g, '')}`;
-                                const blockData = solBlocksData[blockId];
-                                
-                                const subjectInfo = solSubject;
-                                content = blockData ? `${blockData.type}: ${blockData.title}` : 'SOL';
-                                cellClass = `cursor-pointer hover:bg-slate-200 transition-colors`;
-                                onClickEvent = `onclick="openBlockModal('${day}', '${slot.time}')"`;
-                                
-                                tableHTML += `
-                                    <td class="border-t border-gray-200 py-2 px-3">
-                                        <div class="p-2 rounded-lg text-center font-medium timetable-grid-cell ${subjectInfo.lightColor} ${subjectInfo.textColor} ${cellClass}" ${onClickEvent} data-day="${day}" data-slot="${slot.time}">
-                                            <span class="block text-xs font-semibold">${content}</span>
-                                        </div>
-                                    </td>
-                                `;
-                            } else {
-                                // Normal subject
-                                const subjectInfo = subjects.find(s => s.name === subjectName) || subjects[0];
-                                tableHTML += `
-                                    <td class="border-t border-gray-200 py-2 px-3">
-                                        <div class="p-2 rounded-lg text-center font-medium timetable-grid-cell ${subjectInfo.lightColor} ${subjectInfo.textColor}">
-                                            ${subjectName}
-                                        </div>
-                                    </td>
-                                `;
-                            }
-                            return ''; // Avoid duplicates in the join
-                        }).join('')}
-                    </tr>
-                `;
-            });
-
-            tableHTML += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            weeklyTimetableContainer.innerHTML = tableHTML;
-        }
-
-        /**
-         * Loads the timetable from Firestore for the admin view.
-         * Uses onSnapshot for real-time updates.
-         */
-        function loadAdminTimetable() {
-            if (!isAuthReady || !auth.currentUser) {
-                console.warn('Authentication not ready. Timetable loading postponed.');
-                return;
-            }
-
-            showStatusMessage('Stundenplan wird geladen...');
-            // Correct Firestore path for public data
-            const timetableDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'schoolTimetable');
-
-            onSnapshot(timetableDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const savedTimetable = docSnap.data();
-                    renderAdminTimetableGrid(savedTimetable);
-                    showStatusMessage('Stundenplan geladen.', 'success');
-                } else {
-                    renderAdminTimetableGrid({});
-                    showStatusMessage('Stundenplan nicht gefunden. Beginnen Sie mit der Eingabe!', 'info');
-                }
-            }, (error) => {
-                console.error('Error loading timetable:', error);
-                showStatusMessage('Fehler beim Laden des Stundenplans. Prüfen Sie die Konsole für Details.', 'error');
-                renderAdminTimetableGrid({});
-            });
-        }
-        
-        /**
-         * Loads the timetable and SOL subjects for the weekly view.
-         * Uses onSnapshot for real-time updates.
-         */
-        function loadWeeklyTimetable() {
-            if (!isAuthReady || !auth.currentUser) {
-                console.warn('Authentication not ready. Weekly timetable loading postponed.');
-                return;
-            }
-
-            // Timetable data reference
-            const timetableDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'schoolTimetable');
-            // SOL subjects data reference
-            const solSubjectsDocRef = doc(db, `artifacts/${appId}/public/data/settings`, 'solSubjects');
-            // NEW reference for SOL block data
-            const solBlocksDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'solBlocks');
-            
-            weeklyTimetableContainer.innerHTML = `<div class="text-center text-gray-500 my-8"><span class="animate-pulse">Stundenplan wird geladen...</span></div>`;
-
-            // onSnapshot for the timetable
-            onSnapshot(timetableDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    latestTimetable = docSnap.data();
-                } else {
-                    latestTimetable = {};
-                }
-                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
-            }, (error) => {
-                console.error('Error loading timetable:', error);
-                latestTimetable = {};
-                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
-            });
-            
-            // onSnapshot for the SOL subjects
-            onSnapshot(solSubjectsDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const savedData = docSnap.data();
-                    latestSolSubjects = savedData.subjects || [];
-                } else {
-                    latestSolSubjects = [];
-                }
-                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
-            }, (error) => {
-                console.error('Error loading SOL subjects:', error);
-                latestSolSubjects = [];
-                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
-            });
-            
-            // NEW onSnapshot for SOL blocks
-            onSnapshot(solBlocksDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    latestSolBlocks = docSnap.data();
-                } else {
-                    latestSolBlocks = {};
-                }
-                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
-            }, (error) => {
-                console.error('Error loading SOL blocks:', error);
-                latestSolBlocks = {};
-                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
-            });
-        }
-
-        /**
-         * Saves the timetable to Firestore.
+         * Saves the timetable from the admin view to Firestore.
          */
         async function saveTimetable() {
-            if (!isAuthReady || !auth.currentUser) {
-                showStatusMessage('Sie müssen angemeldet sein, um zu speichern.', 'error');
+            if (!isAuthReady) {
+                customAlert('Authentication not ready. Cannot save data.');
                 return;
             }
 
-            showStatusMessage('Stundenplan wird gespeichert...');
-            const newTimetable = {};
-            const selectElements = timetableContainer.querySelectorAll('select');
-            
-            selectElements.forEach(select => {
-                const day = select.getAttribute('data-day');
-                const slot = select.getAttribute('data-slot');
-                const subject = select.value;
+            const updatedTimetable = {};
+            document.querySelectorAll('#admin-timetable-container input').forEach(input => {
+                const day = input.dataset.day;
+                const slot = input.dataset.slot;
+                const subject = input.value.trim();
                 
-                if (!newTimetable[day]) {
-                    newTimetable[day] = {};
+                if (!updatedTimetable[day]) {
+                    updatedTimetable[day] = {};
                 }
-                newTimetable[day][slot] = subject;
+                updatedTimetable[day][slot] = subject;
             });
-
+            
             try {
-                // Correct Firestore path for public data
                 const timetableDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'schoolTimetable');
-                await setDoc(timetableDocRef, newTimetable);
+                await setDoc(timetableDocRef, updatedTimetable);
                 showStatusMessage('Stundenplan erfolgreich gespeichert!', 'success');
             } catch (error) {
                 console.error('Error saving timetable:', error);
-                showStatusMessage('Fehler beim Speichern des Stundenplans. Prüfen Sie die Konsole für Details.', 'error');
+                customAlert('Fehler beim Speichern des Stundenplans. Bitte erneut versuchen.');
             }
         }
         
         /**
-         * Generates the checkboxes for the SOL subjects.
-         * @param {string[]} selectedSolSubjects Array of names of subjects marked as SOL.
-         */
-        function renderSolSubjects(selectedSolSubjects) {
-            solSubjectsContainer.innerHTML = ''; // Clear previous content
-            
-            // Filters subjects to exclude "Frei" and "Lernatelier"
-            const relevantSubjects = subjects.filter(s => s.name !== 'Frei' && s.name !== 'Lernatelier' && s.name !== 'SOL');
-
-            relevantSubjects.forEach(subject => {
-                const isChecked = selectedSolSubjects.includes(subject.name);
-                const html = `
-                    <div class="flex items-center space-x-2 p-3 rounded-lg border border-gray-200">
-                        <input id="sol-${subject.name.replace(/\s/g, '-')}" type="checkbox"
-                               class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                               data-subject-name="${subject.name}" ${isChecked ? 'checked' : ''}>
-                        <label for="sol-${subject.name.replace(/\s/g, '-')}" class="text-gray-700 font-medium">${subject.name}</label>
-                    </div>
-                `;
-                solSubjectsContainer.insertAdjacentHTML('beforeend', html);
-            });
-        }
-        
-        /**
-         * Loads the SOL subjects configuration from Firestore.
-         * Uses onSnapshot for real-time updates.
-         */
-        function loadSolSubjects() {
-            if (!isAuthReady || !auth.currentUser) {
-                console.warn('Authentication not ready. SOL subjects loading postponed.');
-                return;
-            }
-
-            // Correct Firestore path for public data
-            const solSubjectsDocRef = doc(db, `artifacts/${appId}/public/data/settings`, 'solSubjects');
-
-            onSnapshot(solSubjectsDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const savedData = docSnap.data();
-                    solSubjects = savedData.subjects || [];
-                    renderSolSubjects(solSubjects);
-                } else {
-                    solSubjects = [];
-                    renderSolSubjects(solSubjects);
-                }
-            }, (error) => {
-                console.error('Error loading SOL subjects:', error);
-            });
-        }
-
-        /**
-         * Saves the selected SOL subjects to Firestore.
+         * Saves the SOL subjects from the admin view to Firestore.
          */
         async function saveSolSubjects() {
-            if (!isAuthReady || !auth.currentUser) {
-                showStatusMessage('Sie müssen angemeldet sein, um zu speichern.', 'error');
+            if (!isAuthReady) {
+                customAlert('Authentication not ready. Cannot save data.');
                 return;
             }
 
-            showStatusMessage('SOL-Fächer werden gespeichert...');
-            const checkboxes = solSubjectsContainer.querySelectorAll('input[type="checkbox"]');
-            const newSolSubjects = Array.from(checkboxes)
-                                        .filter(cb => cb.checked)
-                                        .map(cb => cb.getAttribute('data-subject-name'));
+            const updatedSolSubjects = [];
+            document.querySelectorAll('#sol-subjects-container input[type="checkbox"]:checked').forEach(checkbox => {
+                updatedSolSubjects.push(checkbox.value);
+            });
             
             try {
-                // Correct Firestore path for public data
                 const solSubjectsDocRef = doc(db, `artifacts/${appId}/public/data/settings`, 'solSubjects');
-                await setDoc(solSubjectsDocRef, { subjects: newSolSubjects });
+                await setDoc(solSubjectsDocRef, { subjects: updatedSolSubjects });
                 showStatusMessage('SOL-Fächer erfolgreich gespeichert!', 'success');
             } catch (error) {
                 console.error('Error saving SOL subjects:', error);
-                showStatusMessage('Fehler beim Speichern der SOL-Fächer. Prüfen Sie die Konsole für Details.', 'error');
-            }
-        }
-        
-        /**
-         * Shows the selected sub-tab and marks the corresponding button.
-         * @param {string} subTabId The ID of the sub-tab to display.
-         */
-        function showSubTab(subTabId) {
-            // Hide all sub-tab contents
-            subTabContents.forEach(content => {
-                content.classList.add('hidden');
-            });
-            // Deactivate all sub-tab buttons
-            subTabButtons.forEach(button => {
-                button.classList.remove('active');
-            });
-
-            // Show the selected content
-            document.getElementById(subTabId).classList.remove('hidden');
-            // Mark the selected button as active
-            document.getElementById(`${subTabId}-btn`).classList.add('active');
-
-            // Special actions when switching sub-tabs
-            if (subTabId === 'stundenplan-subtab') {
-                loadAdminTimetable();
-            } else if (subTabId === 'sol-subtab') {
-                loadSolSubjects();
+                customAlert('Fehler beim Speichern der SOL-Fächer. Bitte erneut versuchen.');
             }
         }
 
+        // Event listeners for the admin section buttons
+        saveTimetableBtn.addEventListener('click', saveTimetable);
+        saveSolSubjectsBtn.addEventListener('click', saveSolSubjects);
+        alertOkBtn.addEventListener('click', () => {
+            customAlertModal.classList.add('hidden');
+        });
 
-        /**
-         * Shows the selected main tab content and marks the corresponding tab button as active.
-         * @param {string} tabId The ID of the tab to display.
-         */
-        function showTab(tabId) {
-            // Hide all main tab contents
-            tabContents.forEach(content => {
-                content.classList.add('hidden');
-            });
-            // Deactivate all main tab buttons
-            tabButtons.forEach(button => {
-                button.classList.remove('active');
-            });
-
-            // Show the selected main content
-            document.getElementById(`${tabId}-content`).classList.remove('hidden');
-            // Mark the selected main button as active
-            document.getElementById(`${tabId}-tab`).classList.add('active');
-
-            // Special actions for the "Verwaltung" and "Wochenplan" tabs
-            if (tabId === 'verwaltung') {
-                // Display the first sub-tab by default
-                showSubTab('stundenplan-subtab');
-            } else if (tabId === 'wochenplan') {
-                loadWeeklyTimetable();
+        // Event listener for opening the modal when clicking an SOL lesson
+        weeklyTimetableContainer.addEventListener('click', (event) => {
+            const cell = event.target.closest('td');
+            if (cell && cell.dataset.isSol === 'true') {
+                currentDay = cell.dataset.day;
+                currentSlot = cell.dataset.slot;
+                openSolBlockModal(currentDay, currentSlot);
             }
-        }
+        });
         
-        /**
-         * A simple, custom alert box function that replaces window.alert.
-         * @param {string} message The message to display.
-         */
-        function customAlert(message) {
-            // Creates a modal element
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-                z-index: 1000;
-            `;
-
-            const modalContent = document.createElement('div');
-            modalContent.style.cssText = `
-                background: white; padding: 20px; border-radius: 10px; text-align: center;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; width: 90%;
-            `;
-
-            const messageText = document.createElement('p');
-            messageText.textContent = message;
-            messageText.style.marginBottom = '20px';
-
-            const okButton = document.createElement('button');
-            okButton.textContent = 'OK';
-            okButton.style.cssText = `
-                background-color: #4338ca; color: white; padding: 10px 20px; border-radius: 8px;
-                cursor: pointer;
-            `;
-            okButton.addEventListener('click', () => {
-                document.body.removeChild(modal);
-            });
-
-            modalContent.appendChild(messageText);
-            modalContent.appendChild(okButton);
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
-        }
-
-        /**
-         * Shows the confirmation box.
-         * @param {string} message Message for confirmation.
-         * @returns {Promise<boolean>} Resolves to true for Yes, false for No.
-         */
-        function showConfirmation(message) {
-            return new Promise((resolve) => {
-                document.getElementById('confirmation-message').textContent = message;
-                confirmationModal.classList.remove('hidden');
-
-                const handleYes = () => {
-                    confirmationModal.classList.add('hidden');
-                    confirmYesBtn.removeEventListener('click', handleYes);
-                    confirmNoBtn.removeEventListener('click', handleNo);
-                    resolve(true);
-                };
-
-                const handleNo = () => {
-                    confirmationModal.classList.add('hidden');
-                    confirmYesBtn.removeEventListener('click', handleYes);
-                    confirmNoBtn.removeEventListener('click', handleNo);
-                    resolve(false);
-                };
-
-                confirmYesBtn.addEventListener('click', handleYes);
-                confirmNoBtn.addEventListener('click', handleNo);
-            });
-        }
-        
-        /**
-         * Opens the modal for adding/editing an SOL block.
-         * @param {string} day Weekday.
-         * @param {string} slot Time slot.
-         */
-        async function openBlockModal(day, slot) {
-            currentDay = day;
-            currentSlot = slot;
+        // Modal functions
+        async function openSolBlockModal(day, slot) {
+            const block = latestSolBlocks?.[day]?.[slot];
             
-            const blockId = `${day}_${slot.replace(/[\s-:]/g, '')}`;
-            const blockData = latestSolBlocks[blockId];
-            
-            solBlockForm.reset(); // Reset form
-            deleteSolBlockBtn.classList.add('hidden'); // Hide delete button
-
-            if (blockData) {
-                // Editing an existing block
-                modalTitle.textContent = `SOL-Lektion bearbeiten (${day}, ${slot})`;
-                blockTypeSelect.value = blockData.type || 'Lernkontrolle';
-                blockTitleInput.value = blockData.title || '';
-                blockDescriptionTextarea.value = blockData.description || '';
+            if (block) {
+                // Edit existing block
+                modalTitle.textContent = "SOL-Lektion bearbeiten";
+                blockTypeSelect.value = block.type;
+                blockTitleInput.value = block.title;
+                blockDescriptionTextarea.value = block.description;
                 deleteSolBlockBtn.classList.remove('hidden');
             } else {
-                // Creating a new block
-                modalTitle.textContent = `SOL-Lektion blockieren (${day}, ${slot})`;
+                // Create new block
+                modalTitle.textContent = "SOL-Lektion blockieren";
+                solBlockForm.reset();
+                deleteSolBlockBtn.classList.add('hidden');
             }
-
             solBlockModal.classList.remove('hidden');
         }
 
-        /**
-         * Closes the SOL block modal.
-         */
-        function closeBlockModal() {
+        function closeSolBlockModal() {
             solBlockModal.classList.add('hidden');
+            solBlockForm.reset();
         }
 
-        /**
-         * Saves an SOL block to Firestore.
-         */
-        async function saveSolBlock() {
-            const blockId = `${currentDay}_${currentSlot.replace(/[\s-:]/g, '')}`;
-            
-            if (!blockTitleInput.value) {
+        // Save SOL block
+        saveSolBlockBtn.addEventListener('click', async () => {
+            const blockType = blockTypeSelect.value;
+            const blockTitle = blockTitleInput.value.trim();
+            const blockDescription = blockDescriptionTextarea.value.trim();
+
+            if (!blockTitle) {
                 customAlert('Bitte geben Sie einen Titel für die Lektion ein.');
                 return;
             }
             
-            const blockData = {
-                day: currentDay,
-                slot: currentSlot,
-                type: blockTypeSelect.value,
-                title: blockTitleInput.value,
-                description: blockDescriptionTextarea.value
+            const block = {
+                type: blockType,
+                title: blockTitle,
+                description: blockDescription
             };
             
-            try {
-                const solBlocksDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'solBlocks');
-                const newSolBlocks = { ...latestSolBlocks, [blockId]: blockData };
+            const solBlocksDocRef = doc(db, `artifacts/${appId}/public/data/solBlocks`, 'weeklyBlocks');
+            
+            const updatedBlocks = {
+                ...latestSolBlocks,
+                [currentDay]: {
+                    ...(latestSolBlocks[currentDay] || {}),
+                    [currentSlot]: block
+                }
+            };
 
-                await setDoc(solBlocksDocRef, newSolBlocks);
-                showStatusMessage('SOL-Lektion erfolgreich gespeichert!', 'success');
-                closeBlockModal();
+            try {
+                await setDoc(solBlocksDocRef, updatedBlocks);
+                closeSolBlockModal();
+                showStatusMessage('Lektion erfolgreich blockiert!', 'success');
             } catch (error) {
                 console.error('Error saving SOL block:', error);
-                customAlert('Fehler beim Speichern. Bitte versuchen Sie es erneut.');
+                customAlert('Fehler beim Speichern der Lektion. Bitte erneut versuchen.');
             }
-        }
-        
-        /**
-         * Deletes an SOL block from Firestore.
-         */
-        async function deleteSolBlock() {
-            const isConfirmed = await showConfirmation('Soll die blockierte Lektion wirklich gelöscht werden?');
-            if (!isConfirmed) {
+        });
+
+        // Delete SOL block
+        deleteSolBlockBtn.addEventListener('click', async () => {
+            confirmationModal.classList.remove('hidden');
+        });
+
+        // Confirmation handlers
+        confirmYesBtn.addEventListener('click', async () => {
+            confirmationModal.classList.add('hidden');
+            
+            const solBlocksDocRef = doc(db, `artifacts/${appId}/public/data/solBlocks`, 'weeklyBlocks');
+            const updatedBlocks = {
+                ...latestSolBlocks,
+                [currentDay]: {
+                    ...(latestSolBlocks[currentDay] || {})
+                }
+            };
+            delete updatedBlocks[currentDay][currentSlot];
+            
+            if (Object.keys(updatedBlocks[currentDay]).length === 0) {
+                delete updatedBlocks[currentDay];
+            }
+
+            try {
+                if (Object.keys(updatedBlocks).length === 0) {
+                    await deleteDoc(solBlocksDocRef);
+                } else {
+                    await setDoc(solBlocksDocRef, updatedBlocks);
+                }
+                closeSolBlockModal();
+                showStatusMessage('Lektion erfolgreich gelöscht!', 'success');
+            } catch (error) {
+                console.error('Error deleting SOL block:', error);
+                customAlert('Fehler beim Löschen der Lektion. Bitte erneut versuchen.');
+            }
+        });
+
+        confirmNoBtn.addEventListener('click', () => {
+            confirmationModal.classList.add('hidden');
+        });
+
+        // Cancel modal
+        cancelSolBlockBtn.addEventListener('click', closeSolBlockModal);
+
+        // Firestore real-time listeners for all data
+        function setupFirestoreListeners() {
+            if (!isAuthReady) {
+                console.warn('Firestore listeners cannot be set up: Auth not ready.');
                 return;
             }
 
-            const blockId = `${currentDay}_${currentSlot.replace(/[\s-:]/g, '')}`;
+            const timetableRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'schoolTimetable');
+            const solSubjectsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'solSubjects');
+            const solBlocksRef = doc(db, `artifacts/${appId}/public/data/solBlocks`, 'weeklyBlocks');
 
-            try {
-                const solBlocksDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'solBlocks');
-                const updatedSolBlocks = { ...latestSolBlocks };
-                delete updatedSolBlocks[blockId];
-                
-                await setDoc(solBlocksDocRef, updatedSolBlocks);
-                showStatusMessage('SOL-Lektion erfolgreich gelöscht!', 'success');
-                closeBlockModal();
-            } catch (error) {
-                console.error('Error deleting SOL block:', error);
-                customAlert('Fehler beim Löschen. Bitte versuchen Sie es erneut.');
-            }
+            // Timetable listener
+            onSnapshot(timetableRef, (docSnap) => {
+                latestTimetable = docSnap.exists() ? docSnap.data() : {};
+                // Rerender both views with the new data
+                renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
+                renderAdminTimetableGrid(latestTimetable);
+            }, (error) => {
+                console.error("Error fetching timetable:", error);
+                showStatusMessage('Fehler beim Abrufen des Stundenplans.', 'error');
+            });
+
+            // SOL subjects listener
+            onSnapshot(solSubjectsRef, (docSnap) => {
+                latestSolSubjects = docSnap.exists() ? docSnap.data().subjects || [] : [];
+                // Rerender both views with the new data
+                renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
+                renderSolSubjectCheckboxes(latestSolSubjects);
+            }, (error) => {
+                console.error("Error fetching SOL subjects:", error);
+                showStatusMessage('Fehler beim Abrufen der SOL-Fächer.', 'error');
+            });
+
+            // SOL blocks listener
+            onSnapshot(solBlocksRef, (docSnap) => {
+                latestSolBlocks = docSnap.exists() ? docSnap.data() : {};
+                // Rerender the Wochenplan view with the new data
+                renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
+            }, (error) => {
+                console.error("Error fetching SOL blocks:", error);
+            });
         }
         
-        // Event listeners for the main tab buttons
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const tabId = button.id.replace('-tab', '');
-                showTab(tabId);
-            });
-        });
-        
-        // Event listeners for the sub-tab buttons
-        subTabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const subTabId = button.id.replace('-btn', '');
-                showSubTab(subTabId);
-            });
-        });
-
-        // Event listener for the logout button
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                // Redirect the user back to the index page after signing out
-                window.location.href = 'index.html';
-            } catch (error) {
-                console.error('Logout error:', error);
-                // An alert can be displayed in case of an error
-                customAlert('Abmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.');
-            }
-        });
-
-        // Event listener for the timetable save button
-        saveTimetableBtn.addEventListener('click', saveTimetable);
-        // Event listener for the SOL subjects save button
-        saveSolSubjectsBtn.addEventListener('click', saveSolSubjects);
-        // Event listeners for the SOL block modal
-        saveSolBlockBtn.addEventListener('click', saveSolBlock);
-        cancelSolBlockBtn.addEventListener('click', closeBlockModal);
-        deleteSolBlockBtn.addEventListener('click', deleteSolBlock);
-
-
-        // Initialization function that starts Firebase services and waits for authentication
+        // Initialisierungsfunktion
         async function initializeAppAndAuth() {
             try {
-                // Initialize Firebase and services
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // Wait for the authentication status
                 const user = await new Promise((resolve) => {
                     const unsubscribe = onAuthStateChanged(auth, (user) => {
-                        unsubscribe(); // Unsubscribe after the first call
+                        unsubscribe();
                         resolve(user);
                     });
                 });
 
                 if (user) {
-                    console.log('User is signed in:', user.uid);
                     isAuthReady = true;
-                    showTab('wochenplan');
+                    setupFirestoreListeners();
                 } else {
-                    // If no user is signed in, try to sign in with the token
                     if (initialAuthToken) {
                         try {
-                            const credential = await signInWithCustomToken(auth, initialAuthToken);
-                            console.log('Signed in with custom token:', credential.user.uid);
+                            await signInWithCustomToken(auth, initialAuthToken);
                             isAuthReady = true;
-                            showTab('wochenplan');
+                            setupFirestoreListeners();
                         } catch (tokenError) {
                             console.error('Error with signInWithCustomToken:', tokenError);
-                            customAlert('Anmeldung mit Token fehlgeschlagen. Versuche anonyme Anmeldung...');
                             try {
-                                const anonCredential = await signInAnonymously(auth);
-                                console.log('Signed in anonymously:', anonCredential.user.uid);
+                                await signInAnonymously(auth);
                                 isAuthReady = true;
-                                showTab('wochenplan');
+                                setupFirestoreListeners();
                             } catch (anonError) {
                                 console.error('Error with signInAnonymously:', anonError);
                                 throw new Error('Anonyme Anmeldung fehlgeschlagen.');
                             }
                         }
                     } else {
-                        // If no token is available, sign in anonymously
                         try {
-                            const anonCredential = await signInAnonymously(auth);
-                            console.log('Signed in anonymously:', anonCredential.user.uid);
+                            await signInAnonymously(auth);
                             isAuthReady = true;
-                            showTab('wochenplan');
+                            setupFirestoreListeners();
                         } catch (anonError) {
                             console.error('Error with signInAnonymously:', anonError);
                             throw new Error('Anonyme Anmeldung fehlgeschlagen.');
                         }
                     }
                 }
+                
+                // Show the default tab
+                showTab('wochenplan');
+                showSubTab('stundenplan'); // Ensure default subtab is shown for Verwaltung
             } catch (error) {
                 console.error('Initialization error:', error);
                 customAlert('Die Initialisierung ist fehlgeschlagen. Bitte versuchen Sie es später erneut.');
-                // Optional: Redirect to the start page in case of a critical error
-                // window.location.href = 'index.html';
             }
         }
-
-        // Start initialization when the DOM is loaded
+        
         document.addEventListener('DOMContentLoaded', initializeAppAndAuth);
+
+        // Logout functionality
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                // Redirect or handle post-logout state
+                customAlert('Sie wurden erfolgreich abgemeldet.');
+            } catch (error) {
+                console.error('Error during logout:', error);
+                customAlert('Fehler beim Abmelden.');
+            }
+        });
     </script>
 </body>
 </html>
