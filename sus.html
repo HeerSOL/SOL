@@ -84,11 +84,13 @@
             line-height: 1.25rem;
             border-bottom: 1px solid #e5e7eb;
             border-right: 1px solid #e5e7eb;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
             display: flex;
             align-items: center;
+            justify-content: center;
+            text-align: center;
+            /* Ermöglicht Textumbruch */
+            word-wrap: break-word; 
+            white-space: normal;
         }
         
         .timetable-cell:last-child {
@@ -102,9 +104,12 @@
             border-left: 1px solid #e5e7eb;
             border-right: 1px solid #e5e7eb;
             display: flex;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            text-align: center;
         }
-        
+
         /* Hover-Effekt für klickbare Zellen */
         .timetable-cell.cursor-pointer:hover {
             background-color: #e0e7ff; /* Helles Indigo */
@@ -199,6 +204,12 @@
                     <!-- Aufträge werden hier eingefügt -->
                 </select>
             </div>
+            <!-- NEUES Textfeld für "Anderes" -->
+            <div id="custom-assignment-container" class="mb-4 hidden">
+                <label for="custom-assignment-input" class="block text-sm font-medium text-gray-700">Was möchtest du tun?</label>
+                <textarea id="custom-assignment-input" rows="3" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm" placeholder="Gib hier deine geplante Aktivität ein..."></textarea>
+            </div>
+            
             <div class="flex justify-end space-x-3 mt-6">
                 <button id="cancel-sol-choice-btn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-xl shadow hover:bg-gray-400 transition duration-300">
                     Abbrechen
@@ -245,6 +256,8 @@
         const solChoiceModal = document.getElementById('sol-choice-modal');
         const solSubjectSelect = document.getElementById('sol-subject-select');
         const solAssignmentSelect = document.getElementById('sol-assignment-select');
+        const customAssignmentContainer = document.getElementById('custom-assignment-container');
+        const customAssignmentInput = document.getElementById('custom-assignment-input');
         const cancelSolChoiceBtn = document.getElementById('cancel-sol-choice-btn');
         const saveSolChoiceBtn = document.getElementById('save-sol-choice-btn');
 
@@ -336,7 +349,9 @@
             timeSlots.forEach(slot => {
                 tableHTML += `
                     <div class="timetable-row">
-                        <div class="timetable-time-cell">${slot.time}</div>
+                        <div class="timetable-time-cell">
+                            <div>${slot.time.replace(' - ', '<br>')}</div>
+                        </div>
                         ${daysOfWeek.map(day => {
                             const subjectName = timetable?.[day]?.[slot.time] || 'Frei';
                             const subject = subjects.find(s => s.name === subjectName) || subjects[0];
@@ -378,7 +393,7 @@
                             } else {
                                 // Reguläre Lektion
                                 cellClass += ` ${subject.textColor} font-medium`;
-                                cellContent = subject.name;
+                                cellContent = `<div>${subject.name.replace(' ', '<br>')}</div>`; // Hinzufügen von Zeilenumbrüchen für lange Namen
                             }
 
                             return `<div class="${cellClass}">${cellContent}</div>`;
@@ -461,12 +476,23 @@
             });
 
             // Vorhandene Auswahl setzen
-            const existingChoice = studentChoices?.[day]?.[time];
+            const existingChoice = studentChoices[day] ? studentChoices[day][time] : null;
+
             if (existingChoice) {
                 solSubjectSelect.value = existingChoice.subject;
-                populateAssignmentSelect(existingChoice.subject, existingChoice.assignment.title);
+                if (existingChoice.assignment.isCustom) {
+                    // Wenn es eine benutzerdefinierte Aufgabe ist
+                    populateAssignmentSelect(existingChoice.subject, 'Anderes');
+                    customAssignmentInput.value = existingChoice.assignment.title;
+                    customAssignmentContainer.classList.remove('hidden');
+                } else {
+                    // Normale Aufgabe
+                    populateAssignmentSelect(existingChoice.subject, existingChoice.assignment.title);
+                    customAssignmentContainer.classList.add('hidden');
+                }
             } else {
                 solAssignmentSelect.innerHTML = '<option value="">Auftrag wählen...</option>';
+                customAssignmentContainer.classList.add('hidden');
             }
 
             solChoiceModal.classList.remove('hidden');
@@ -479,11 +505,19 @@
                 const isSelected = assignment.title === selectedTitle;
                 solAssignmentSelect.innerHTML += `<option value="${index}" ${isSelected ? 'selected' : ''}>${assignment.title}</option>`;
             });
+            // Füge die Option "Anderes" hinzu
+            const isCustomSelected = selectedTitle === 'Anderes';
+            solAssignmentSelect.innerHTML += `<option value="anderes" ${isCustomSelected ? 'selected' : ''}>Anderes</option>`;
         }
 
         function closeSolChoiceModal() {
             solChoiceModal.classList.add('hidden');
             activeSolSlot = { day: null, time: null };
+            // Felder zurücksetzen
+            solSubjectSelect.value = '';
+            solAssignmentSelect.innerHTML = '<option value="">Auftrag wählen...</option>';
+            customAssignmentInput.value = '';
+            customAssignmentContainer.classList.add('hidden');
         }
         
         // Event-Listener für das Meldungsmodal
@@ -499,18 +533,38 @@
             populateAssignmentSelect(subject);
         });
 
+        solAssignmentSelect.addEventListener('change', (e) => {
+            const selectedValue = e.target.value;
+            if (selectedValue === 'anderes') {
+                customAssignmentContainer.classList.remove('hidden');
+            } else {
+                customAssignmentContainer.classList.add('hidden');
+            }
+        });
+
         saveSolChoiceBtn.addEventListener('click', async () => {
             const subject = solSubjectSelect.value;
             const assignmentIndex = solAssignmentSelect.value;
+            let assignment;
 
-            if (!subject || assignmentIndex === '') {
+            if (!subject || (!assignmentIndex && assignmentIndex !== 'anderes')) {
                 customAlert('Bitte wählen Sie ein Fach und einen Auftrag aus.');
                 return;
+            }
+
+            if (assignmentIndex === 'anderes') {
+                const customText = customAssignmentInput.value.trim();
+                if (!customText) {
+                    customAlert('Bitte geben Sie eine Aktivität ein.');
+                    return;
+                }
+                assignment = { title: customText, isCustom: true };
+            } else {
+                assignment = latestWorkPlans[subject][assignmentIndex];
             }
             
             const day = activeSolSlot.day;
             const time = activeSolSlot.time;
-            const assignment = latestWorkPlans[subject][assignmentIndex];
 
             // Daten für Firestore vorbereiten
             const newChoice = { subject, assignment };
