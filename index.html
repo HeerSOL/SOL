@@ -1,5 +1,222 @@
-html<!-- Einfache Auswahl-Seite -->
-<div>
-  <a href="lp-portal.html">Lehrpersonen Portal</a>
-  <a href="sus-portal.html">Schüler Portal</a>
-</div>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOL - Login</title>
+    <!-- Tailwind CSS CDN für einfaches Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Poppins', 'Inter', sans-serif;
+            background: #eef2ff; /* Ein helleres, beruhigendes Lila */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+    <!-- Hauptcontainer -->
+    <div class="w-full max-w-5xl p-10 bg-white rounded-3xl shadow-2xl flex flex-col md:flex-row items-center gap-12">
+
+        <!-- Titel und Beschreibung -->
+        <div class="flex-1 text-center md:text-left mb-8 md:mb-0">
+            <h1 class="text-5xl font-bold text-gray-900 mb-4">SOL</h1>
+            <h2 class="text-3xl font-semibold text-indigo-700 mb-8">Selbstorganisiertes Lernen</h2>
+            <p class="text-gray-600 leading-relaxed text-lg">
+                Willkommen bei SOL. Bitte melden Sie sich mit Ihrem entsprechenden Konto an, um auf die Plattform zuzugreifen. Die Anmeldefenster sind spezifisch für Lehrpersonen und Schülerinnen/Schüler.
+            </p>
+        </div>
+
+        <!-- Login-Formulare -->
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- Login für Lehrpersonen -->
+            <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 p-8 rounded-2xl border border-indigo-200 shadow-lg">
+                <h3 class="text-2xl font-bold text-indigo-800 mb-6">Lehrpersonen Login</h3>
+                <div class="mb-4">
+                    <label for="lpEmail" class="block text-gray-700 font-semibold mb-2">E-Mail</label>
+                    <input type="email" id="lpEmail" class="w-full p-3 border-2 border-indigo-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
+                </div>
+                <div class="mb-6">
+                    <label for="lpPassword" class="block text-gray-700 font-semibold mb-2">Passwort</label>
+                    <input type="password" id="lpPassword" class="w-full p-3 border-2 border-indigo-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
+                </div>
+                <button id="lpLoginBtn" class="w-full bg-indigo-600 text-white py-3 px-6 rounded-xl font-bold text-lg hover:bg-indigo-700 transform hover:scale-105 transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-md hover:shadow-xl">
+                    Login als Lehrperson
+                </button>
+                <div id="lpMessage" class="mt-6 text-center p-3 rounded-lg font-semibold border"></div>
+            </div>
+
+            <!-- Login für Schülerinnen und Schüler (SuS) -->
+            <div class="bg-gradient-to-br from-teal-50 to-teal-100 p-8 rounded-2xl border border-teal-200 shadow-lg">
+                <h3 class="text-2xl font-bold text-teal-800 mb-6">SuS Login</h3>
+                <div class="mb-4">
+                    <label for="susEmail" class="block text-gray-700 font-semibold mb-2">E-Mail</label>
+                    <input type="email" id="susEmail" class="w-full p-3 border-2 border-teal-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition duration-300">
+                </div>
+                <div class="mb-6">
+                    <label for="susPassword" class="block text-gray-700 font-semibold mb-2">Passwort</label>
+                    <input type="password" id="susPassword" class="w-full p-3 border-2 border-teal-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition duration-300">
+                </div>
+                <button id="susLoginBtn" class="w-full bg-teal-600 text-white py-3 px-6 rounded-xl font-bold text-lg hover:bg-teal-700 transform hover:scale-105 transition duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-md hover:shadow-xl">
+                    Login als SuS
+                </button>
+                <div id="susMessage" class="mt-6 text-center p-3 rounded-lg font-semibold border"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Konfiguration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVRTrFbNL-jMpfWtDVv739vkuqrCY8PDw",
+            authDomain: "selbstorganisiertes-lernen-7a.firebaseapp.com",
+            projectId: "selbstorganisiertes-lernen-7a",
+            storageBucket: "selbstorganisiertes-lernen-7a.firebasestorage.app",
+            messagingSenderId: "283834841911",
+            appId: "1:283834841911:web:189c328bca0c2ec167b8b2"
+        };
+        
+        // Initialisiere Firebase und die Dienste
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Referenzen auf die HTML-Elemente
+        const lpEmailInput = document.getElementById('lpEmail');
+        const lpPasswordInput = document.getElementById('lpPassword');
+        const lpLoginBtn = document.getElementById('lpLoginBtn');
+        const lpMessageDiv = document.getElementById('lpMessage');
+
+        const susEmailInput = document.getElementById('susEmail');
+        const susPasswordInput = document.getElementById('susPassword');
+        const susLoginBtn = document.getElementById('susLoginBtn');
+        const susMessageDiv = document.getElementById('susMessage');
+
+        /**
+         * Zeigt eine Meldung im angegebenen Element an.
+         * @param {HTMLElement} element Das HTML-Element, in dem die Meldung angezeigt werden soll.
+         * @param {string} message Der anzuzeigende Text.
+         * @param {string} type Der Typ der Meldung ('success' oder 'error').
+         */
+        function displayMessage(element, message, type) {
+            element.textContent = message;
+            if (type === 'success') {
+                element.className = 'mt-6 text-center p-3 rounded-lg font-semibold border-2 bg-green-100 border-green-300 text-green-800 animate-pulse';
+            } else if (type === 'error') {
+                element.className = 'mt-6 text-center p-3 rounded-lg font-semibold border-2 bg-red-100 border-red-300 text-red-800';
+            } else {
+                element.className = 'mt-6 text-center p-3 rounded-lg font-semibold border';
+            }
+        }
+
+        /**
+         * Handhabt den Login-Versuch für Lehrpersonen.
+         */
+        lpLoginBtn.addEventListener('click', async () => {
+            const email = lpEmailInput.value;
+            const password = lpPasswordInput.value;
+            displayMessage(lpMessageDiv, '', '');
+
+            try {
+                // Versuche, den Benutzer anzumelden
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Überprüfe, ob der Benutzer in der 'lpAccounts' Sammlung existiert
+                const docRef = doc(db, 'lpAccounts', user.uid);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    // Erfolgreicher Login für eine Lehrperson
+                    displayMessage(lpMessageDiv, 'Login erfolgreich! Willkommen, Lehrperson.', 'success');
+                    console.log('Lehrperson angemeldet:', user.uid);
+                    // Hier könnte man den Benutzer auf eine andere Seite weiterleiten
+                    // window.location.href = '/lehrer-dashboard.html';
+                } else {
+                    // Benutzer existiert nicht in der 'lpAccounts' Sammlung.
+                    // Das bedeutet, ein SuS versucht, sich als Lehrperson einzuloggen.
+                    await signOut(auth);
+                    displayMessage(lpMessageDiv, 'Fehler: Dieses Konto ist nicht für Lehrpersonen vorgesehen.', 'error');
+                }
+            } catch (error) {
+                // Behandle Authentifizierungsfehler (z.B. falsche E-Mail/Passwort)
+                console.error('Login-Fehler als Lehrperson:', error);
+                let errorMessage = 'Ein Fehler ist aufgetreten.';
+                switch (error.code) {
+                    case 'auth/invalid-email':
+                        errorMessage = 'Ungültiges E-Mail-Format.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = 'Dieses Benutzerkonto wurde deaktiviert.';
+                        break;
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        errorMessage = 'Ungültige E-Mail oder falsches Passwort.';
+                        break;
+                    default:
+                        errorMessage = 'Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.';
+                }
+                displayMessage(lpMessageDiv, errorMessage, 'error');
+            }
+        });
+
+        /**
+         * Handhabt den Login-Versuch für Schülerinnen und Schüler.
+         */
+        susLoginBtn.addEventListener('click', async () => {
+            const email = susEmailInput.value;
+            const password = susPasswordInput.value;
+            displayMessage(susMessageDiv, '', '');
+
+            try {
+                // Versuche, den Benutzer anzumelden
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Überprüfe, ob der Benutzer in der 'susAccounts' Sammlung existiert
+                const docRef = doc(db, 'susAccounts', user.uid);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    // Erfolgreicher Login für eine Schülerin/einen Schüler
+                    displayMessage(susMessageDiv, 'Login erfolgreich! Willkommen.', 'success');
+                    console.log('SuS angemeldet:', user.uid);
+                    // Hier könnte man den Benutzer auf eine andere Seite weiterleiten
+                    // window.location.href = '/sus-dashboard.html';
+                } else {
+                    // Benutzer existiert nicht in der 'susAccounts' Sammlung.
+                    // Das bedeutet, eine Lehrperson versucht, sich als SuS einzuloggen.
+                    await signOut(auth);
+                    displayMessage(susMessageDiv, 'Fehler: Dieses Konto ist nicht für SuS vorgesehen.', 'error');
+                }
+            } catch (error) {
+                // Behandle Authentifizierungsfehler
+                console.error('Login-Fehler als SuS:', error);
+                let errorMessage = 'Ein Fehler ist aufgetreten.';
+                switch (error.code) {
+                    case 'auth/invalid-email':
+                        errorMessage = 'Ungültiges E-Mail-Format.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = 'Dieses Benutzerkonto wurde deaktiviert.';
+                        break;
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        errorMessage = 'Ungültige E-Mail oder falsches Passwort.';
+                        break;
+                    default:
+                        errorMessage = 'Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.';
+                }
+                displayMessage(susMessageDiv, errorMessage, 'error');
+            }
+        });
+    </script>
+</body>
+</html>
