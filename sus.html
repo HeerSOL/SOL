@@ -117,6 +117,12 @@
             transition: all 0.2s ease-in-out;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
+
+        /* Style für erledigte Aufträge im Arbeitsplan */
+        .assignment-done {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
         /* --- ENDE NEUE STYLES --- */
     </style>
 </head>
@@ -267,6 +273,7 @@
         let latestSolBlocks = {};
         let latestWorkPlans = {};
         let studentChoices = {};
+        let assignmentProgress = {}; // NEU: Objekt für den Fortschritt der Aufgaben
         let activeSolSlot = { day: null, time: null };
 
         // Konstanten für Fächer, Zeitfenster und Wochentage
@@ -323,7 +330,8 @@
             document.getElementById(`${tabId}-tab`).classList.add('active');
 
             if (tabId === 'arbeitsplan') {
-                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects);
+                // Den Arbeitsplan-Tab neu rendern, um den erledigten Status zu berücksichtigen
+                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects, assignmentProgress);
             }
         }
 
@@ -419,10 +427,11 @@
          * Rendert die "Post-its" für den Arbeitsplan-Tab (Schüleransicht).
          * @param {object} workPlans Die Arbeitsplan-Daten.
          * @param {string[]} solSubjects Die Liste der SOL-Fächer.
+         * @param {object} progress Fortschrittsdaten des Schülers.
          */
-        function renderArbeitsplanTab(workPlans, solSubjects) {
+        function renderArbeitsplanTab(workPlans, solSubjects, progress) {
             solArbeitsplanContainer.innerHTML = '';
-
+        
             if (solSubjects.length === 0) {
                 solArbeitsplanContainer.innerHTML = `<div class="col-span-full text-center text-gray-500 my-8">
                     Es wurden noch keine SOL-Fächer festgelegt.
@@ -430,29 +439,43 @@
                 return;
             }
             
+            // Schleife über alle SOL-Fächer
             solSubjects.forEach(subjectName => {
                 const assignments = workPlans[subjectName] || [];
                 const postIt = document.createElement('div');
                 postIt.className = 'post-it p-6 rounded-xl shadow-lg border border-gray-100 flex flex-col justify-between';
                 postIt.dataset.subject = subjectName;
-
+        
                 let assignmentsHTML = assignments.map((assignment, index) => {
+                    const assignmentId = `${subjectName.replace(/\s/g, '_')}_${index}`;
+                    const isDone = progress[assignmentId]?.status === 'done';
+                    const assignmentClass = isDone ? 'assignment-done' : '';
+        
                     return `
-                        <div class="mb-4 p-4 bg-white rounded-lg shadow-inner">
-                            <div class="font-semibold text-lg text-gray-800">${assignment.title}</div>
-                            <div class="text-sm text-gray-600 mt-2">
-                                <p class="font-medium text-gray-700">Grundanforderungen:</p>
-                                <p class="whitespace-pre-wrap">${assignment.grundAnforderungen}</p>
+                        <div class="mb-4 p-4 bg-white rounded-lg shadow-inner flex flex-col">
+                            <div class="flex-grow">
+                                <div class="font-semibold text-lg text-gray-800 ${assignmentClass}">${assignment.title}</div>
+                                <div class="text-sm text-gray-600 mt-2">
+                                    <p class="font-medium text-gray-700">Grundanforderungen:</p>
+                                    <p class="whitespace-pre-wrap">${assignment.grundAnforderungen}</p>
+                                </div>
+                                ${assignment.erweiterteAnforderungen ? `
+                                <div class="text-sm text-gray-600 mt-2">
+                                    <p class="font-medium text-gray-700">Erweiterte Anforderungen:</p>
+                                    <p class="whitespace-pre-wrap">${assignment.erweiterteAnforderungen}</p>
+                                </div>` : ''}
                             </div>
-                            ${assignment.erweiterteAnforderungen ? `
-                            <div class="text-sm text-gray-600 mt-2">
-                                <p class="font-medium text-gray-700">Erweiterte Anforderungen:</p>
-                                <p class="whitespace-pre-wrap">${assignment.erweiterteAnforderungen}</p>
-                            </div>` : ''}
+                            <div class="mt-4 flex items-center justify-end">
+                                <label class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                                    <input type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                           data-assignment-id="${assignmentId}" ${isDone ? 'checked' : ''}>
+                                    <span class="ml-2">Erledigt</span>
+                                </label>
+                            </div>
                         </div>
                     `;
                 }).join('');
-
+        
                 postIt.innerHTML = `
                     <div>
                         <h3 class="post-it-title text-2xl font-bold mb-4">${subjectName}</h3>
@@ -463,6 +486,36 @@
                 `;
                 solArbeitsplanContainer.appendChild(postIt);
             });
+        
+            // Event-Listener für die Checkboxen hinzufügen
+            solArbeitsplanContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', handleAssignmentProgressChange);
+            });
+        }
+        
+        /**
+         * Verarbeitet die Änderung des Erledigt-Status eines Auftrags.
+         * @param {Event} event Das change-Event der Checkbox.
+         */
+        async function handleAssignmentProgressChange(event) {
+            const assignmentId = event.target.dataset.assignmentId;
+            const isDone = event.target.checked;
+        
+            try {
+                const progressRef = doc(db, `artifacts/${appId}/users/${userId}/assignmentProgress`, 'progress');
+                
+                await setDoc(progressRef, {
+                    [assignmentId]: {
+                        status: isDone ? 'done' : 'undone',
+                        timestamp: new Date()
+                    }
+                }, { merge: true });
+                
+                console.log(`Fortschritt für Auftrag ${assignmentId} wurde aktualisiert.`);
+            } catch (error) {
+                console.error('Fehler beim Aktualisieren des Fortschritts:', error);
+                customAlert('Fehler beim Speichern des Fortschritts.');
+            }
         }
         
         // Modal-Funktionen
@@ -602,6 +655,7 @@
 
             // Persönliche Daten des Schülers
             const choicesRef = doc(db, `artifacts/${appId}/users/${userId}/studentChoices`, 'weeklyChoices');
+            const progressRef = doc(db, `artifacts/${appId}/users/${userId}/assignmentProgress`, 'progress');
 
 
             // Stundenplan-Listener
@@ -617,7 +671,7 @@
             onSnapshot(solSubjectsRef, (docSnap) => {
                 latestSolSubjects = docSnap.exists() ? docSnap.data().subjects || [] : [];
                 renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
-                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects);
+                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects, assignmentProgress);
             }, (error) => {
                 console.error("Fehler beim Abrufen der SOL-Fächer:", error);
                 customAlert('Fehler beim Abrufen der SOL-Fächer.');
@@ -634,7 +688,7 @@
             // Arbeitsplan-Listener
             onSnapshot(workPlansRef, (docSnap) => {
                 latestWorkPlans = docSnap.exists() ? docSnap.data() : {};
-                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects);
+                renderArbeitsplanTab(latestWorkPlans, latestSolSubjects, assignmentProgress);
             }, (error) => {
                 console.error("Fehler beim Abrufen des Arbeitsplans:", error);
             });
@@ -645,6 +699,17 @@
                 renderWeeklyTimetableGrid(latestTimetable, latestSolBlocks);
             }, (error) => {
                 console.error("Fehler beim Abrufen der Schülerauswahl:", error);
+            });
+            
+            // NEU: Fortschritts-Listener
+            onSnapshot(progressRef, (docSnap) => {
+                assignmentProgress = docSnap.exists() ? docSnap.data() : {};
+                // Den Arbeitsplan-Tab neu rendern, um den Fortschritt zu zeigen, falls dieser gerade aktiv ist
+                if (document.getElementById('arbeitsplan-content').classList.contains('hidden') === false) {
+                    renderArbeitsplanTab(latestWorkPlans, latestSolSubjects, assignmentProgress);
+                }
+            }, (error) => {
+                console.error("Fehler beim Abrufen des Fortschritts:", error);
             });
         }
         
