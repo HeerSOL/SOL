@@ -195,12 +195,12 @@
     <!-- JavaScript und Firebase-Initialisierung -->
     <script type="module">
         // Importiere alle notwendigen Firebase SDK-Funktionen.
+        // HINWEIS: 'getDoc' wurde hier hinzugefügt, um den 'ReferenceError' zu beheben.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
 
         // Korrekte Firebase Konfiguration einfügen.
-        // Diese Konfiguration muss mit Ihrem neuen Firebase-Projekt "selbstorganisiertes-lernen-7a" übereinstimmen.
         const firebaseConfig = {
             apiKey: "AIzaSyBVRTrFbNL-jMpfWtDVv739vkuqrCY8PDw",
             authDomain: "selbstorganisiertes-lernen-7a.firebaseapp.com",
@@ -280,7 +280,6 @@
             createButton.textContent = 'Account wird erstellt...';
 
             try {
-                // Erstelle den neuen Benutzer über Firebase Auth
                 const userCredential = await createUserWithEmailAndPassword(auth, newEmail, newPassword);
                 const newUserId = userCredential.user.uid;
 
