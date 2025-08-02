@@ -24,15 +24,22 @@
             background-color: #ffffff;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
-        /* Style für den aktiven Tab */
+        /* Style für den aktiven Haupt-Tab */
         .tab-button.active {
             color: #4338ca;
             border-bottom-width: 3px;
             border-color: #4338ca;
             font-weight: 600;
         }
+        /* Style für den aktiven Unter-Tab */
+        .sub-tab-button.active {
+            color: #4338ca;
+            border-bottom-width: 2px;
+            border-color: #4338ca;
+            font-weight: 600;
+        }
         /* CSS-Übergänge für reibungslose Tab-Wechsel */
-        .tab-content {
+        .tab-content, .sub-tab-content {
             animation: fadeIn 0.5s ease-in-out;
         }
         @keyframes fadeIn {
@@ -61,7 +68,7 @@
     <!-- Hauptinhalt mit Tabs -->
     <main class="flex-1 flex items-center justify-center p-6 md:p-10">
         <div class="main-container max-w-6xl w-full p-8 md:p-12 rounded-3xl shadow-2xl">
-            <!-- Tab-Navigation -->
+            <!-- Haupt-Tab-Navigation -->
             <div class="border-b border-gray-200 mb-6">
                 <nav class="-mb-px flex flex-wrap space-x-4 md:space-x-8" aria-label="Tabs">
                     <button id="wochenplan-tab" class="tab-button active inline-flex items-center px-1 py-4 text-lg font-medium text-gray-500 hover:text-gray-700 transition duration-200">
@@ -105,42 +112,70 @@
                     </p>
                 </div>
 
-                <!-- Verwaltung Inhalt -->
+                <!-- Verwaltung Inhalt mit Unter-Tabs -->
                 <div id="verwaltung-content" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Stundenplan-Verwaltung</h2>
-                    <p class="text-gray-600 mb-6">
-                        Tragen Sie hier den Stundenplan für die ganze Woche ein. Die Änderungen werden gespeichert, sobald Sie auf den "Speichern"-Button klicken.
-                    </p>
-                    <div id="timetable-container" class="overflow-x-auto">
-                        <!-- Stundenplan-Tabelle wird hier per JS eingefügt -->
-                        <div class="text-center text-gray-500 my-8">
-                            <span class="animate-pulse">Stundenplan wird geladen...</span>
-                        </div>
-                    </div>
-                    <div class="mt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <button id="saveTimetableBtn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-indigo-700 transition duration-300">
-                            Stundenplan speichern
-                        </button>
-                        <div id="statusMessage" class="font-semibold text-sm"></div>
+                    <!-- Unter-Tab-Navigation -->
+                    <div class="border-b border-gray-200 mb-6">
+                        <nav class="-mb-px flex space-x-8" aria-label="Sub-Tabs">
+                            <button id="stundenplan-subtab-btn" class="sub-tab-button active inline-flex items-center px-1 py-4 text-base font-medium text-gray-500 hover:text-gray-700 transition duration-200">
+                                Stundenplan
+                            </button>
+                            <button id="sol-subtab-btn" class="sub-tab-button inline-flex items-center px-1 py-4 text-base font-medium text-gray-500 hover:text-gray-700 transition duration-200">
+                                SOL-Fächer
+                            </button>
+                            <button id="accounts-subtab-btn" class="sub-tab-button inline-flex items-center px-1 py-4 text-base font-medium text-gray-500 hover:text-gray-700 transition duration-200">
+                                Accounts
+                            </button>
+                        </nav>
                     </div>
 
-                    <!-- Neuer Abschnitt für SOL-Fächer -->
-                    <div class="mt-12 pt-8 border-t border-gray-200">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-6">SOL-Fächer-Verwaltung</h2>
-                        <p class="text-gray-600 mb-6">
-                            Wählen Sie aus, welche Fächer als "Selbstorganisiertes Lernen" (SOL) unterrichtet werden sollen. Im Stundenplan werden diese dann als "SOL" angezeigt.
-                        </p>
-                        <div id="sol-subjects-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                            <!-- Fächer-Checkboxes werden hier per JS eingefügt -->
-                            <div class="text-center text-gray-500 my-8 col-span-full">
-                                <span class="animate-pulse">SOL-Fächer werden geladen...</span>
+                    <!-- Unter-Tab-Inhalte -->
+                    <div id="sub-tab-content-container">
+                        <!-- Stundenplan-Verwaltung -->
+                        <div id="stundenplan-subtab" class="sub-tab-content">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Stundenplan-Verwaltung</h2>
+                            <p class="text-gray-600 mb-6">
+                                Tragen Sie hier den Stundenplan für die ganze Woche ein. Die Änderungen werden gespeichert, sobald Sie auf den "Speichern"-Button klicken.
+                            </p>
+                            <div id="timetable-container" class="overflow-x-auto">
+                                <!-- Stundenplan-Tabelle wird hier per JS eingefügt -->
+                                <div class="text-center text-gray-500 my-8">
+                                    <span class="animate-pulse">Stundenplan wird geladen...</span>
+                                </div>
+                            </div>
+                            <div class="mt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                                <button id="saveTimetableBtn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-indigo-700 transition duration-300">
+                                    Stundenplan speichern
+                                </button>
+                                <div id="statusMessage" class="font-semibold text-sm"></div>
                             </div>
                         </div>
-                        <button id="saveSolSubjectsBtn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-indigo-700 transition duration-300">
-                            SOL-Fächer speichern
-                        </button>
-                    </div>
 
+                        <!-- SOL-Fächer-Verwaltung -->
+                        <div id="sol-subtab" class="sub-tab-content hidden">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">SOL-Fächer-Verwaltung</h2>
+                            <p class="text-gray-600 mb-6">
+                                Wählen Sie aus, welche Fächer als "Selbstorganisiertes Lernen" (SOL) unterrichtet werden sollen. Im Stundenplan werden diese dann als "SOL" angezeigt.
+                            </p>
+                            <div id="sol-subjects-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                <!-- Fächer-Checkboxes werden hier per JS eingefügt -->
+                                <div class="text-center text-gray-500 my-8 col-span-full">
+                                    <span class="animate-pulse">SOL-Fächer werden geladen...</span>
+                                </div>
+                            </div>
+                            <button id="saveSolSubjectsBtn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-indigo-700 transition duration-300">
+                                SOL-Fächer speichern
+                            </button>
+                        </div>
+                        
+                        <!-- Accounts-Verwaltung (Platzhalter) -->
+                        <div id="accounts-subtab" class="sub-tab-content hidden">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Accounts-Verwaltung</h2>
+                            <p class="text-gray-600">
+                                Hier werden in Zukunft Accounts für Schülerinnen, Schüler und Lehrpersonen verwaltet.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -171,6 +206,9 @@
         const logoutBtn = document.getElementById('logoutBtn');
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
+        const subTabButtons = document.querySelectorAll('.sub-tab-button');
+        const subTabContents = document.querySelectorAll('.sub-tab-content');
+
         const timetableContainer = document.getElementById('timetable-container');
         const saveTimetableBtn = document.getElementById('saveTimetableBtn');
         const statusMessage = document.getElementById('statusMessage');
@@ -425,39 +463,74 @@
                 showStatusMessage('Fehler beim Speichern der SOL-Fächer.', 'error');
             }
         }
-
-
+        
         /**
-         * Zeigt den ausgewählten Tab-Inhalt an und markiert den entsprechenden Tab-Button als aktiv.
-         * @param {string} tabId Die ID des anzuzeigenden Tabs.
+         * Zeigt den ausgewählten Unter-Tab an und markiert den entsprechenden Button.
+         * @param {string} subTabId Die ID des anzuzeigenden Unter-Tabs.
          */
-        function showTab(tabId) {
-            // Alle Tab-Inhalte ausblenden
-            tabContents.forEach(content => {
+        function showSubTab(subTabId) {
+            // Alle Unter-Tab-Inhalte ausblenden
+            subTabContents.forEach(content => {
                 content.classList.add('hidden');
             });
-            // Alle Tab-Buttons deaktivieren
-            tabButtons.forEach(button => {
+            // Alle Unter-Tab-Buttons deaktivieren
+            subTabButtons.forEach(button => {
                 button.classList.remove('active');
             });
 
             // Den ausgewählten Inhalt anzeigen
-            document.getElementById(`${tabId}-content`).classList.remove('hidden');
+            document.getElementById(subTabId).classList.remove('hidden');
             // Den ausgewählten Button als aktiv markieren
-            document.getElementById(`${tabId}-tab`).classList.add('active');
+            document.getElementById(`${subTabId}-btn`).classList.add('active');
 
-            // Spezielle Aktionen für den "Verwaltung"-Tab
-            if (tabId === 'verwaltung') {
+            // Spezielle Aktionen beim Wechsel der Unter-Tabs
+            if (subTabId === 'stundenplan-subtab') {
                 loadTimetable();
+            } else if (subTabId === 'sol-subtab') {
                 loadSolSubjects();
             }
         }
 
-        // Event-Listener für die Tab-Buttons
+
+        /**
+         * Zeigt den ausgewählten Haupt-Tab-Inhalt an und markiert den entsprechenden Tab-Button als aktiv.
+         * @param {string} tabId Die ID des anzuzeigenden Tabs.
+         */
+        function showTab(tabId) {
+            // Alle Haupt-Tab-Inhalte ausblenden
+            tabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+            // Alle Haupt-Tab-Buttons deaktivieren
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Den ausgewählten Haupt-Inhalt anzeigen
+            document.getElementById(`${tabId}-content`).classList.remove('hidden');
+            // Den ausgewählten Haupt-Button als aktiv markieren
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+
+            // Spezielle Aktionen für den "Verwaltung"-Tab
+            if (tabId === 'verwaltung') {
+                // Den ersten Unter-Tab standardmäßig anzeigen
+                showSubTab('stundenplan-subtab');
+            }
+        }
+
+        // Event-Listener für die Haupt-Tab-Buttons
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const tabId = button.id.replace('-tab', '');
                 showTab(tabId);
+            });
+        });
+        
+        // Event-Listener für die Unter-Tab-Buttons
+        subTabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const subTabId = button.id.replace('-btn', '');
+                showSubTab(subTabId);
             });
         });
 
@@ -474,11 +547,12 @@
             }
         });
 
-        // Event-Listener für den Speichern-Button
+        // Event-Listener für den Speichern-Button des Stundenplans
         saveTimetableBtn.addEventListener('click', saveTimetable);
+        // Event-Listener für den Speichern-Button der SOL-Fächer
         saveSolSubjectsBtn.addEventListener('click', saveSolSubjects);
 
-        // Standardmäßig den ersten Tab anzeigen, sobald die Seite geladen ist
+        // Standardmäßig den ersten Haupt-Tab anzeigen, sobald die Seite geladen ist
         document.addEventListener('DOMContentLoaded', () => {
             onAuthStateChanged(auth, (user) => {
                 if (user) {
