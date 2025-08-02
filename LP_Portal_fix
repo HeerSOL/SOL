@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOL Lehrpersonen Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); }
+        .modal-content { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .modern-button { transition: all 0.2s ease-in-out; }
+        .modern-button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        .modern-button:active { transform: translateY(0); box-shadow: none; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div id="loadingScreen" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md text-center">
+            <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-gray-600">Firebase wird geladen...</p>
+        </div>
+    </div>
+
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-96">
+            <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">SOL Portal Login</h1>
+            <div>
+                <div class="mb-4">
+                    <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-2">E-Mail</label>
+                    <input type="email" id="loginEmail" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div class="mb-6">
+                    <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-2">Passwort</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <button id="loginButton" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 modern-button text-lg font-semibold">
+                    Anmelden
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainApp" class="min-h-screen hidden">
+        <div class="bg-white shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <h1 class="text-3xl font-bold text-gray-900">SOL Lehrpersonen Portal</h1>
+                    <div class="flex items-center space-x-4">
+                        <span id="userEmail" class="text-base text-gray-600 font-medium"></span>
+                        <button id="logoutButton" class="flex items-center space-x-2 text-gray-600 hover:text-gray-900 p-2 rounded-md hover:bg-gray-100 transition-colors modern-button">
+                            <span>Abmelden</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white rounded-xl shadow-lg">
+                <div class="border-b border-gray-200">
+                    <nav class="flex space-x-8 px-6">
+                        <button data-tab="stundenplan" class="tab-button py-4 px-2 border-b-2 font-medium text-base border-transparent text-gray-500 hover:text-gray-700 transition-colors">
+                            📅 Stundenplan der Woche
+                        </button>
+                        <button data-tab="arbeitsplan" class="tab-button py-4 px-2 border-b-2 font-medium text-base border-transparent text-gray-500 hover:text-gray-700 transition-colors">
+                            📋 Arbeitsplan der Woche
+                        </button>
+                        <button data-tab="verwaltung" class="tab-button py-4 px-2 border-b-2 font-medium text-base border-blue-500 text-blue-600 transition-colors">
+                            ⚙️ Verwaltung
+                        </button>
+                    </nav>
+                </div>
+
+                <div class="p-8">
+                    <div id="stundenplan-content" class="tab-content hidden">
+                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Stundenplan der Woche</h2>
+                        <p class="text-gray-600 mb-6">Definieren und verwalten Sie spezifische Lektionen für die aktuelle Woche.</p>
+                        <div class="overflow-x-auto rounded-lg shadow-sm">
+                            <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="px-4 py-3 border-b text-left font-semibold text-gray-700 rounded-tl-lg">Zeit</th>
+                                        <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Montag</th>
+                                        <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Dienstag</th>
+                                        <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Mittwoch</th>
+                                        <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Donnerstag</th>
+                                        <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Freitag</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="weeklyPlanBody">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="arbeitsplan-content" class="tab-content hidden">
+                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Arbeitsplan der Woche</h2>
+                        <p class="text-gray-600 mb-6">Hier können Sie Aufträge für die SOL-Fächer erstellen und verwalten.</p>
+                        <p id="noSolSubjectsMessage" class="text-gray-500 text-center mt-8 hidden">
+                            Bitte definieren Sie zuerst SOL-Fächer in der <span class="font-semibold">Verwaltung</span>, um Aufgaben hinzuzufügen.
+                        </p>
+                        <div id="tasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            </div>
+                    </div>
+
+                    <div id="verwaltung-content" class="tab-content">
+                        <div class="space-y-8">
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-md">
+                                <h3 class="text-xl font-semibold mb-4 text-gray-800">Jahresstundenplan</h3>
+                                <div class="overflow-x-auto rounded-lg shadow-sm">
+                                    <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                                        <thead>
+                                            <tr class="bg-gray-100">
+                                                <th class="px-4 py-3 border-b text-left font-semibold text-gray-700 rounded-tl-lg">Zeit</th>
+                                                <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Montag</th>
+                                                <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Dienstag</th>
+                                                <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Mittwoch</th>
+                                                <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Donnerstag</th>
+                                                <th class="px-4 py-3 border-b text-center font-semibold text-gray-700">Freitag</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="timetableBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-md">
+                                <h3 class="text-xl font-semibold mb-4 text-gray-800">SOL-Fächer definieren</h3>
+                                <p class="text-base text-gray-600 mb-4">Wählen Sie aus, welche Fächer als SOL-Lektionen angeboten werden sollen.</p>
+                                <div id="solSubjectsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 rounded-lg shadow-md">
+                                <h3 class="text-xl font-semibold mb-4 text-gray-800">Account-Verwaltung</h3>
+                                <div class="mb-6 pb-4 border-b border-gray-200">
+                                    <h4 class="font-semibold text-lg mb-3 text-gray-700">Neuen Account erstellen</h4>
+                                    <div class="flex flex-wrap gap-4 items-end">
+                                        <div class="flex-1 min-w-[200px]">
+                                            <label for="newAccountEmail" class="sr-only">E-Mail-Adresse</label>
+                                            <input type="email" id="newAccountEmail" placeholder="E-Mail-Adresse" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                        </div>
+                                        <div class="flex-1 min-w-[200px]">
+                                            <label for="newAccountPassword" class="sr-only">Passwort</label>
+                                            <input type="password" id="newAccountPassword" placeholder="Passwort" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                        </div>
+                                        <select id="newAccountType" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="LP">Lehrperson</option>
+                                            <option value="SuS">Schüler/in</option>
+                                        </select>
+                                        <button id="createAccountButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 modern-button text-base font-semibold">
+                                            ➕ Erstellen
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-6">
+                                    <h4 class="font-semibold text-lg mb-3 flex items-center text-gray-700">
+                                        👥 Lehrpersonen-Accounts (<span id="lpAccountCount">0</span>)
+                                    </h4>
+                                    <div id="lpAccountsList" class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                                        <p class="p-4 text-gray-500 text-center">Noch keine LP-Accounts erstellt.</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 class="font-semibold text-lg mb-3 flex items-center text-gray-700">
+                                        👥 Schüler/innen-Accounts (<span id="susAccountCount">0</span>)
+                                    </h4>
+                                    <div id="susAccountsList" class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                                        <p class="p-4 text-gray-500 text-center">Noch keine SuS-Accounts erstellt.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="customMessageModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-[9999]">
+        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full mx-4">
+            <h3 id="customMessageTitle" class="text-xl font-semibold mb-4 text-gray-900"></h3>
+            <p id="customMessageContent" class="text-gray-700 mb-6"></p>
+            <div class="flex justify-end">
+                <button id="customMessageCloseButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="customConfirmModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-[9999]">
+        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full mx-4">
+            <h3 id="customConfirmTitle" class="text-xl font-semibold mb-4 text-gray-900">Bestätigung</h3>
+            <p id="customConfirmContent" class="text-gray-700 mb-6"></p>
+            <div class="flex justify-end space-x-4">
+                <button id="customConfirmCancelButton" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 modern-button">Abbrechen</button>
+                <button id="customConfirmOkButton" class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 modern-button">Löschen</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="weeklyPlanEditModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
+        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <h3 class="text-xl font-semibold mb-4 text-gray-900" id="weeklyPlanModalTitle">Lektion bearbeiten</h3>
+            <form id="weeklyPlanForm" class="space-y-4">
+                <div>
+                    <label for="weeklyPlanSubject" class="block text-sm font-medium text-gray-700">Fach</label>
+                    <select id="weeklyPlanSubject" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                </div>
+                <div>
+                    <label for="weeklyPlanTimeSlot" class="block text-sm font-medium text-gray-700">Zeitfenster</label>
+                    <input type="text" id="weeklyPlanTimeSlot" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed" readonly>
+                </div>
+                <div>
+                    <label for="weeklyPlanTitle" class="block text-sm font-medium text-gray-700">Titel</label>
+                    <input type="text" id="weeklyPlanTitle" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="weeklyPlanDescription" class="block text-sm font-medium text-gray-700">Beschreibung</label>
+                    <textarea id="weeklyPlanDescription" rows="3" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label for="weeklyPlanExternalUrl" class="block text-sm font-medium text-gray-700">Externe URL</label>
+                    <input type="url" id="weeklyPlanExternalUrl" placeholder="https://example.com" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="weeklyPlanCancelButton" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 modern-button">Abbrechen</button>
+                    <button type="submit" id="weeklyPlanSaveButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button">Speichern</button>
+                    <button type="button" id="weeklyPlanDeleteButton" class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hidden modern-button">Löschen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="taskEditModal" class="modal-overlay fixed inset-0 hidden flex items-center justify-center z-50">
+        <div class="modal-content bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <h3 class="text-xl font-semibold mb-4 text-gray-900" id="taskModalTitle">Neue Aufgabe erstellen</h3>
+            <form id="taskForm" class="space-y-4">
+                <div>
+                    <label for="taskSubject" class="block text-sm font-medium text-gray-700">Fach</label>
+                    <select id="taskSubject" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required></select>
+                </div>
+                <div>
+                    <label for="taskTitle" class="block text-sm font-medium text-gray-700">Titel der Aufgabe</label>
+                    <input type="text" id="taskTitle" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="taskMaterials" class="block text-sm font-medium text-gray-700">Materialien (Links, Bücher, etc.)</label>
+                    <textarea id="taskMaterials" rows="3" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Anforderungstyp</label>
+                    <div class="flex items-center space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="requirementType" value="basic" class="form-radio h-4 w-4 text-blue-600" checked>
+                            <span class="ml-2 text-gray-700">🔵 Grundanforderung</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="requirementType" value="advanced" class="form-radio h-4 w-4 text-yellow-500">
+                            <span class="ml-2 text-gray-700">⭐ Erweiterte Anforderung</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="taskCancelButton" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 modern-button">Abbrechen</button>
+                    <button type="submit" id="taskSaveButton" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button">Speichern</button>
+                    <button type="button" id="taskDeleteButton" class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hidden modern-button">Löschen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Ihre persönliche Firebase-Konfiguration
+        // ERSETZEN SIE DIESE WERTE DURCH IHRE EIGENEN
+        const firebaseConfig = {
+            apiKey: "Ihre-API-Key-hier",
+            authDomain: "Ihre-Auth-Domain-hier",
+            projectId: "Ihre-Project-Id-hier",
+            storageBucket: "Ihre-Storage-Bucket-hier",
+            messagingSenderId: "Ihre-Messaging-Sender-Id-hier",
+            appId: "Ihre-App-Id-hier",
+            measurementId: "Ihre-Measurement-Id-hier"
+        };
+
+        // Initialisiere Firebase App und Dienste
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Globale Variablen für den Anwendungsstatus
+        let user = null;
+        let userId = null;
+        let activeTab = 'verwaltung';
+        let timetable = {}; // Jahresstundenplan
+        let solSubjects = []; // Als SOL definierte Fächer
+        let lpAccounts = []; // Lehrer-Accounts
+        let susAccounts = []; // Schüler-Accounts
+        let weeklyPlanEntries = {}; // Wochenplan-Einträge
+        let weeklyTasks = []; // Wochenaufgaben
+        let currentWeeklyPlanEntry = null; // Aktuell bearbeiteter Wochenplan-Eintrag
+        let currentTaskEntry = null; // Aktuell bearbeitete Aufgabe
+
+        // Konstanten für Fächer, Zeitfenster und Wochentage
+        const subjects = [
+            { name: 'Deutsch', color: 'bg-red-400', lightColor: 'bg-red-50', textColor: 'text-red-700' },
+            { name: 'Englisch', color: 'bg-blue-400', lightColor: 'bg-blue-50', textColor: 'text-blue-700' },
+            { name: 'Franzoesisch', color: 'bg-purple-400', lightColor: 'bg-purple-50', textColor: 'text-purple-700' },
+            { name: 'Mathematik', color: 'bg-green-400', lightColor: 'bg-green-50', textColor: 'text-green-700' },
+            { name: 'Natur und Technik', color: 'bg-yellow-400', lightColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
+            { name: 'NT / MI', color: 'bg-yellow-300', lightColor: 'bg-yellow-50', textColor: 'text-yellow-700' },
+            { name: 'Raeume Zeiten Gesellschaften', color: 'bg-orange-400', lightColor: 'bg-orange-50', textColor: 'text-orange-700' },
+            { name: 'Ethik Religion Gemeinschaft', color: 'bg-pink-400', lightColor: 'bg-pink-50', textColor: 'text-pink-700' },
+            { name: 'Bewegung und Sport', color: 'bg-red-500', lightColor: 'bg-red-50', textColor: 'text-red-700' },
+            { name: 'Textiles und Technisches Gestalten', color: 'bg-indigo-400', lightColor: 'bg-indigo-50', textColor: 'text-indigo-700' },
+            { name: 'Musik', color: 'bg-violet-400', lightColor: 'bg-violet-50', textColor: 'text-violet-700' },
+            { name: 'Bildnerisches Gestalten', color: 'bg-teal-400', lightColor: 'bg-teal-50', textColor: 'text-teal-700' },
+            { name: 'Lernatelier', color: 'bg-gray-400', lightColor: 'bg-gray-50', textColor: 'text-gray-700' },
+            { name: 'Individuelle Vertiefung', color: 'bg-cyan-400', lightColor: 'bg-cyan-50', textColor: 'text-cyan-700' },
+            { name: 'Wirtschaft, Arbeit, Haushalt', color: 'bg-amber-400', lightColor: 'bg-amber-50', textColor: 'text-amber-700' }
+        ];
+
+        const timeSlots = [
+            { id: 1, time: '07:30 - 08:15', name: 'Lektion 1' },
+            { id: 2, time: '08:20 - 09:05', name: 'Lektion 2' },
+            { id: 3, time: '09:10 - 09:55', name: 'Lektion 3' },
+            { id: 4, time: '10:20 - 11:05', name: 'Lektion 4' },
+            { id: 5, time: '11:10 - 11:55', name: 'Lektion 5' },
+            { id: 6, time: '12:10 - 12:55', name: 'Lektion 6' },
+            { id: 7, time: '13:00 - 13:45', name: 'Lektion 7' },
+            { id: 8, time: '13:50 - 14:35', name: 'Lektion 8' },
+            { id: 9, time: '14:40 - 15:25', name: 'Lektion 9' },
+            { id: 10, time: '15:40 - 16:25', name: 'Lektion 10' },
+            { id: 11, time: '16:30 - 17:15', name: 'Lektion 11' }
+        ];
+
+        const weekDays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+
+        // --- UI Zustandsverwaltung ---
+        function hideLoadingScreen() { document.getElementById('loadingScreen').classList.add('hidden'); }
+        function showLoginScreen() { document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('mainApp').classList.add('hidden'); }
+        function showMainApp() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden'); document.getElementById('userEmail').textContent = user ? user.email : 'Gast'; switchTab(activeTab); }
+        
+        function switchTab(tabName) {
+            activeTab = tabName;
+            document.querySelectorAll('.tab-button').forEach(button => {
+                const isActive = button.dataset.tab === tabName;
+                button.classList.toggle('border-blue-500', isActive);
+                button.classList.toggle('text-blue-600', isActive);
+                button.classList.toggle('border-transparent', !isActive);
+                button.classList.toggle('text-gray-500', !isActive);
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+
+            if (tabName === 'stundenplan') { updateWeeklyPlanDisplay(); }
+            if (tabName === 'arbeitsplan') { updateArbeitsplanDisplay(); }
+        }
+
+        // --- Benutzerdefinierte Modals ---
+        function showCustomMessage(message, title = 'Nachricht') {
+            const modal = document.getElementById('customMessageModal');
+            document.getElementById('customMessageTitle').textContent = title;
+            document.getElementById('customMessageContent').textContent = message;
+            modal.classList.remove('hidden');
+        }
+        function hideCustomMessage() { document.getElementById('customMessageModal').classList.add('hidden'); }
+        document.getElementById('customMessageCloseButton').addEventListener('click', hideCustomMessage);
+
+        function showCustomConfirm(message, callback, title = 'Bestätigen') {
+            const modal = document.getElementById('customConfirmModal');
+            document.getElementById('customConfirmTitle').textContent = title;
+            document.getElementById('customConfirmContent').textContent = message;
+            modal.classList.remove('hidden');
+
+            const okButton = document.getElementById('customConfirmOkButton');
+            const cancelButton = document.getElementById('customConfirmCancelButton');
+
+            okButton.onclick = () => { modal.classList.add('hidden'); callback(true); };
+            cancelButton.onclick = () => { modal.classList.add('hidden'); callback(false); };
+        }
+
+        // --- Firebase Initialisierung und Event-Listener ---
+        window.addEventListener('DOMContentLoaded', () => {
+            onAuthStateChanged(auth, async (firebaseUser) => {
+                user = firebaseUser;
+                if (user) {
+                    userId = user.uid;
+                    showMainApp();
+                    await loadUserData();
+                } else {
+                    signInAnonymously(auth).catch(error => {
+                        console.error("Anonymer Login fehlgeschlagen:", error);
+                        showLoginScreen();
+                        showCustomMessage('Anmeldung erforderlich. Anonymer Zugriff fehlgeschlagen oder nicht konfiguriert.', 'Anmeldefehler');
+                    });
+                }
+            });
+
+            initializeEventListeners();
+            generateTimetable();
+            generateSolSubjectsGrid();
+            generateWeeklyPlanTable();
+            hideLoadingScreen();
+        });
+
+        function initializeEventListeners() {
+            document.getElementById('loginButton').addEventListener('click', handleLogin);
+            document.getElementById('loginPassword').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+            document.getElementById('logoutButton').addEventListener('click', handleLogout);
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function() { switchTab(this.dataset.tab); });
+            });
+            document.getElementById('createAccountButton').addEventListener('click', handleCreateAccount);
+            document.getElementById('weeklyPlanForm').addEventListener('submit', handleSaveWeeklyPlanEntry);
+            document.getElementById('weeklyPlanCancelButton').addEventListener('click', hideWeeklyPlanEditModal);
+            document.getElementById('weeklyPlanDeleteButton').addEventListener('click', handleDeleteWeeklyPlanEntry);
+            document.getElementById('taskForm').addEventListener('submit', handleSaveTask);
+            document.getElementById('taskCancelButton').addEventListener('click', hideTaskEditModal);
+            document.getElementById('taskDeleteButton').addEventListener('click', handleDeleteTask);
+        }
+
+        // --- Authentifizierungs-Handler ---
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) {
+                showCustomMessage('Bitte E-Mail und Passwort eingeben.', 'Eingabe erforderlich');
+                return;
+            }
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                showCustomMessage('Login fehlgeschlagen: ' + error.message, 'Login Fehler');
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                showCustomMessage("Fehler beim Abmelden: " + error.message, 'Abmeldefehler');
+            }
+        }
+
+        // --- Daten aus Firestore laden (mit Live-Update) ---
+        async function loadUserData() {
+            // Stundenplan
+            onSnapshot(doc(db, 'public_data', 'annualTimetable'), docSnapshot => {
+                timetable = docSnapshot.exists() ? docSnapshot.data() : {};
+                updateTimetableDisplay();
+                updateWeeklyPlanDisplay();
+            });
+            // SOL-Fächer
+            onSnapshot(doc(db, 'public_data', 'enabledSolSubjects'), docSnapshot => {
+                solSubjects = docSnapshot.exists() ? docSnapshot.data().subjects || [] : [];
+                updateSolSubjectsDisplay();
+                updateWeeklyPlanDisplay();
+                updateArbeitsplanDisplay();
+            });
+            // Wochenplan-Einträge
+            onSnapshot(collection(db, 'weeklyPlanEntries'), querySnapshot => {
+                weeklyPlanEntries = {};
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const key = `${data.day}_${data.slotId}`;
+                    weeklyPlanEntries[key] = { id: doc.id, ...data };
+                });
+                updateWeeklyPlanDisplay();
+            });
+            // Wochenaufgaben
+            onSnapshot(collection(db, 'weeklyTasks'), querySnapshot => {
+                weeklyTasks = [];
+                querySnapshot.forEach(doc => {
+                    weeklyTasks.push({ id: doc.id, ...doc.data() });
+                });
+                updateArbeitsplanDisplay();
+            });
+            // LP-Accounts
+            onSnapshot(collection(db, 'lpAccounts'), querySnapshot => {
+                lpAccounts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateLpAccountsDisplay();
+            });
+            // SuS-Accounts
+            onSnapshot(collection(db, 'susAccounts'), querySnapshot => {
+                susAccounts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateSusAccountsDisplay();
+            });
+        }
+        
+        // --- Anzeigefunktionen (DOM-Manipulation) ---
+        function updateTimetableDisplay() {
+            // Logik zum Aktualisieren der Jahresstundenplan-Tabelle
+            const tbody = document.getElementById('timetableBody');
+            tbody.innerHTML = '';
+            timeSlots.forEach(slot => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-4 py-2 border-b font-medium text-sm text-gray-700">${slot.time}</td>
+                    ${weekDays.map(day => {
+                        const subjectName = (timetable[day] && timetable[day][slot.id]) || '';
+                        const subject = subjects.find(s => s.name === subjectName);
+                        return `
+                            <td class="px-4 py-2 border-b">
+                                <select class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" data-day="${day}" data-slot="${slot.id}">
+                                    <option value="">Frei</option>
+                                    ${subjects.map(s => `<option value="${s.name}" ${s.name === subjectName ? 'selected' : ''}>${s.name}</option>`).join('')}
+                                </select>
+                                <div class="mt-1 h-2 rounded ${subject ? subject.color : 'hidden'}"></div>
+                            </td>
+                        `;
+                    }).join('')}
+                `;
+                tbody.appendChild(row);
+                row.querySelectorAll('select').forEach(select => {
+                    select.addEventListener('change', function() {
+                        handleTimetableChange(this.dataset.day, parseInt(this.dataset.slot), this.value);
+                    });
+                });
+            });
+        }
+        
+        function updateSolSubjectsDisplay() {
+            // Logik zum Aktualisieren des Grids der SOL-Fächer
+            const grid = document.getElementById('solSubjectsGrid');
+            grid.innerHTML = '';
+            subjects.forEach(subject => {
+                const isSol = solSubjects.includes(subject.name);
+                const button = document.createElement('button');
+                button.className = `p-4 rounded-lg shadow-sm text-center font-medium modern-button transition-colors ${isSol ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`;
+                button.innerHTML = `
+                    <span class="text-lg">${subject.name}</span>
+                `;
+                button.addEventListener('click', () => handleSolSubjectToggle(subject.name, isSol));
+                grid.appendChild(button);
+            });
+        }
+
+        function updateWeeklyPlanDisplay() {
+            // Logik zum Aktualisieren der Wochenplan-Tabelle
+            const tbody = document.getElementById('weeklyPlanBody');
+            tbody.innerHTML = '';
+            timeSlots.forEach(slot => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-4 py-2 border-b font-medium text-sm text-gray-700">${slot.time}</td>
+                    ${weekDays.map(day => {
+                        const entry = weeklyPlanEntries[`${day}_${slot.id}`];
+                        const subjectName = entry ? entry.subject : (timetable[day] ? timetable[day][slot.id] : '');
+                        const isSol = solSubjects.includes(subjectName);
+                        const subject = subjects.find(s => s.name === subjectName);
+                        let cellContent = '';
+
+                        if (isSol) {
+                            cellContent = `<span class="inline-block px-2 py-1 text-xs font-semibold rounded-full ${subject.lightColor} ${subject.textColor}">SOL</span>`;
+                        } else if (subject) {
+                            cellContent = `
+                                <div class="flex items-center space-x-2">
+                                    <span class="inline-block w-3 h-3 rounded-full ${subject.color}"></span>
+                                    <span class="text-sm font-medium text-gray-800">${subject.name}</span>
+                                </div>`;
+                        } else {
+                            cellContent = 'Frei';
+                        }
+                        
+                        const buttonClass = entry ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700';
+                        const buttonText = entry ? `Bearbeiten` : '+ Hinzufügen';
+
+                        return `
+                            <td class="px-4 py-2 border-b text-center">
+                                ${cellContent}
+                                ${subjectName ? `
+                                    <button class="add-weekly-plan-button mt-2 px-3 py-1 text-xs rounded-full ${buttonClass} modern-button" data-day="${day}" data-slot="${slot.id}" data-entry-id="${entry ? entry.id : ''}">
+                                        ${buttonText}
+                                    </button>
+                                ` : ''}
+                            </td>
+                        `;
+                    }).join('')}
+                `;
+                tbody.appendChild(row);
+                row.querySelectorAll('.add-weekly-plan-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const entryId = this.dataset.entryId;
+                        const day = this.dataset.day;
+                        const slotId = parseInt(this.dataset.slot);
+                        if (entryId) {
+                            const entry = weeklyPlanEntries[day + '_' + slotId];
+                            showWeeklyPlanEditModal(day, slotId, entry);
+                        } else {
+                            showWeeklyPlanEditModal(day, slotId);
+                        }
+                    });
+                });
+            });
+        }
+        
+        function updateArbeitsplanDisplay() {
+            // Logik zum Aktualisieren des Arbeitsplans
+            const tasksContainer = document.getElementById('tasksContainer');
+            const noSubjectsMessage = document.getElementById('noSolSubjectsMessage');
+            tasksContainer.innerHTML = '';
+            
+            if (solSubjects.length === 0) {
+                noSubjectsMessage.classList.remove('hidden');
+            } else {
+                noSubjectsMessage.classList.add('hidden');
+                solSubjects.forEach(subjectName => {
+                    const subject = subjects.find(s => s.name === subjectName);
+                    const subjectTasks = weeklyTasks.filter(task => task.subject === subjectName);
+                    
+                    const column = document.createElement('div');
+                    column.className = `bg-white p-6 rounded-lg shadow-md border-t-4 ${subject.color}`;
+                    column.innerHTML = `
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-lg font-semibold text-gray-800">${subject.name}</h4>
+                            <button class="add-task-button px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 modern-button" data-subject="${subject.name}">
+                                ➕ Aufgabe
+                            </button>
+                        </div>
+                        <div class="space-y-4" id="tasks-list-${subject.name}">
+                            ${subjectTasks.length > 0 ? subjectTasks.map(task => `
+                                <div class="task-item p-4 rounded-lg bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" data-task-id="${task.id}">
+                                    <div class="flex justify-between items-start">
+                                        <h5 class="font-medium text-gray-900">${task.title}</h5>
+                                        <span class="flex-shrink-0 ml-2 text-xs font-semibold px-2 py-1 rounded-full ${task.requirementType === 'basic' ? 'bg-blue-200 text-blue-800' : 'bg-yellow-200 text-yellow-800'}">
+                                            ${task.requirementType === 'basic' ? '🔵 Grund' : '⭐ Erweitert'}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1">${task.materials}</p>
+                                </div>
+                            `).join('') : '<p class="text-sm text-gray-500">Noch keine Aufgaben erstellt.</p>'}
+                        </div>
+                    `;
+                    tasksContainer.appendChild(column);
+                });
+
+                document.querySelectorAll('.add-task-button').forEach(button => {
+                    button.addEventListener('click', function() { showTaskEditModal(this.dataset.subject); });
+                });
+                document.querySelectorAll('.task-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const task = weeklyTasks.find(t => t.id === this.dataset.taskId);
+                        showTaskEditModal(task.subject, task);
+                    });
+                });
+            }
+        }
+        
+        function updateLpAccountsDisplay() {
+            // Logik zum Aktualisieren der Lehrer-Accounts
+            const list = document.getElementById('lpAccountsList');
+            document.getElementById('lpAccountCount').textContent = lpAccounts.length;
+            list.innerHTML = lpAccounts.length === 0 ? '<p class="p-4 text-gray-500 text-center">Noch keine LP-Accounts erstellt.</p>' : '';
+            lpAccounts.forEach(account => {
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center p-4 border-b border-gray-100 last:border-b-0';
+                item.innerHTML = `
+                    <span class="font-medium text-gray-800">${account.email}</span>
+                    <button class="delete-account-button px-3 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 modern-button" data-user-id="${account.id}" data-user-email="${account.email}">Löschen</button>
+                `;
+                list.appendChild(item);
+            });
+            document.querySelectorAll('.delete-account-button').forEach(button => {
+                button.addEventListener('click', function() { handleDeleteAccount(this.dataset.userId, this.dataset.userEmail); });
+            });
+        }
+        
+        function updateSusAccountsDisplay() {
+            // Logik zum Aktualisieren der Schüler-Accounts
+            const list = document.getElementById('susAccountsList');
+            document.getElementById('susAccountCount').textContent = susAccounts.length;
+            list.innerHTML = susAccounts.length === 0 ? '<p class="p-4 text-gray-500 text-center">Noch keine SuS-Accounts erstellt.</p>' : '';
+            susAccounts.forEach(account => {
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center p-4 border-b border-gray-100 last:border-b-0';
+                item.innerHTML = `
+                    <span class="font-medium text-gray-800">${account.email}</span>
+                    <button class="delete-account-button px-3 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 modern-button" data-user-id="${account.id}" data-user-email="${account.email}">Löschen</button>
+                `;
+                list.appendChild(item);
+            });
+            document.querySelectorAll('.delete-account-button').forEach(button => {
+                button.addEventListener('click', function() { handleDeleteAccount(this.dataset.userId, this.dataset.userEmail); });
+            });
+        }
+
+        // --- CRUD-Operationen ---
+        async function handleTimetableChange(day, slotId, subjectName) {
+            const docRef = doc(db, 'public_data', 'annualTimetable');
+            const updatedTimetable = { ...timetable };
+            if (!updatedTimetable[day]) updatedTimetable[day] = {};
+            updatedTimetable[day][slotId] = subjectName;
+            try {
+                await setDoc(docRef, updatedTimetable);
+            } catch (e) {
+                console.error("Fehler beim Speichern des Stundenplans:", e);
+                showCustomMessage('Fehler beim Speichern des Stundenplans: ' + e.message, 'Speicherfehler');
+            }
+        }
+        
+        async function handleSolSubjectToggle(subjectName, isCurrentlySol) {
+            const docRef = doc(db, 'public_data', 'enabledSolSubjects');
+            let newSolSubjects = [...solSubjects];
+            if (isCurrentlySol) {
+                newSolSubjects = newSolSubjects.filter(s => s !== subjectName);
+            } else {
+                newSolSubjects.push(subjectName);
+            }
+            try {
+                await setDoc(docRef, { subjects: newSolSubjects });
+            } catch (e) {
+                console.error("Fehler beim Speichern der SOL-Fächer:", e);
+                showCustomMessage('Fehler beim Speichern der SOL-Fächer: ' + e.message, 'Speicherfehler');
+            }
+        }
+
+        async function handleCreateAccount() {
+            const email = document.getElementById('newAccountEmail').value;
+            const password = document.getElementById('newAccountPassword').value;
+            const accountType = document.getElementById('newAccountType').value;
+            
+            if (!email || !password) {
+                showCustomMessage('Bitte E-Mail und Passwort eingeben.', 'Eingabe erforderlich');
+                return;
+            }
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                const accountData = { email: user.email, type: accountType };
+                await setDoc(doc(db, accountType === 'LP' ? 'lpAccounts' : 'susAccounts', user.uid), accountData);
+                
+                showCustomMessage(`Account für ${email} erfolgreich erstellt.`, 'Erfolg');
+                document.getElementById('newAccountEmail').value = '';
+                document.getElementById('newAccountPassword').value = '';
+            } catch (error) {
+                showCustomMessage('Fehler beim Erstellen des Accounts: ' + error.message, 'Erstellungsfehler');
+            }
+        }
+
+        async function handleDeleteAccount(userId, userEmail) {
+            showCustomConfirm(`Möchten Sie den Account für ${userEmail} wirklich löschen?`, async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        const userToDelete = await getAuth().getUser(userId); // Erfordert Admin SDK auf dem Server, hier nur als Platzhalter
+                        // await getAuth().deleteUser(userId);
+                        await deleteDoc(doc(db, userToDelete.type === 'LP' ? 'lpAccounts' : 'susAccounts', userId));
+                        showCustomMessage('Account erfolgreich gelöscht.', 'Erfolg');
+                    } catch (error) {
+                        showCustomMessage('Fehler beim Löschen des Accounts: ' + error.message, 'Löschfehler');
+                    }
+                }
+            }, 'Account löschen');
+        }
+        
+        async function handleSaveWeeklyPlanEntry(e) {
+            e.preventDefault();
+            const form = e.target;
+            const day = form.dataset.day;
+            const slotId = parseInt(form.dataset.slot);
+            const subject = document.getElementById('weeklyPlanSubject').value;
+            const title = document.getElementById('weeklyPlanTitle').value;
+            const description = document.getElementById('weeklyPlanDescription').value;
+            const externalUrl = document.getElementById('weeklyPlanExternalUrl').value;
+            const entryId = currentWeeklyPlanEntry ? currentWeeklyPlanEntry.id : null;
+
+            const entryData = { day, slotId, subject, title, description, externalUrl };
+            
+            try {
+                if (entryId) {
+                    await setDoc(doc(db, 'weeklyPlanEntries', entryId), entryData);
+                    showCustomMessage('Lektion erfolgreich aktualisiert.', 'Erfolg');
+                } else {
+                    await addDoc(collection(db, 'weeklyPlanEntries'), entryData);
+                    showCustomMessage('Neue Lektion erfolgreich erstellt.', 'Erfolg');
+                }
+                hideWeeklyPlanEditModal();
+            } catch (error) {
+                showCustomMessage('Fehler beim Speichern der Lektion: ' + error.message, 'Speicherfehler');
+            }
+        }
+        
+        async function handleDeleteWeeklyPlanEntry() {
+            if (!currentWeeklyPlanEntry) return;
+            const entryId = currentWeeklyPlanEntry.id;
+            
+            showCustomConfirm('Möchten Sie diese Lektion wirklich löschen?', async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        await deleteDoc(doc(db, 'weeklyPlanEntries', entryId));
+                        showCustomMessage('Lektion erfolgreich gelöscht.', 'Erfolg');
+                        hideWeeklyPlanEditModal();
+                    } catch (error) {
+                        showCustomMessage('Fehler beim Löschen der Lektion: ' + error.message, 'Löschfehler');
+                    }
+                }
+            }, 'Lektion löschen');
+        }
+
+        async function handleSaveTask(e) {
+            e.preventDefault();
+            const form = e.target;
+            const taskSubject = document.getElementById('taskSubject').value;
+            const taskTitle = document.getElementById('taskTitle').value;
+            const taskMaterials = document.getElementById('taskMaterials').value;
+            const requirementType = form.querySelector('input[name="requirementType"]:checked').value;
+            const taskId = currentTaskEntry ? currentTaskEntry.id : null;
+            
+            const taskData = { subject: taskSubject, title: taskTitle, materials: taskMaterials, requirementType };
+            
+            try {
+                if (taskId) {
+                    await setDoc(doc(db, 'weeklyTasks', taskId), taskData);
+                    showCustomMessage('Aufgabe erfolgreich aktualisiert.', 'Erfolg');
+                } else {
+                    await addDoc(collection(db, 'weeklyTasks'), taskData);
+                    showCustomMessage('Neue Aufgabe erfolgreich erstellt.', 'Erfolg');
+                }
+                hideTaskEditModal();
+            } catch (error) {
+                showCustomMessage('Fehler beim Speichern der Aufgabe: ' + error.message, 'Speicherfehler');
+            }
+        }
+        
+        async function handleDeleteTask() {
+            if (!currentTaskEntry) return;
+            const taskId = currentTaskEntry.id;
+            
+            showCustomConfirm('Möchten Sie diese Aufgabe wirklich löschen?', async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        await deleteDoc(doc(db, 'weeklyTasks', taskId));
+                        showCustomMessage('Aufgabe erfolgreich gelöscht.', 'Erfolg');
+                        hideTaskEditModal();
+                    } catch (error) {
+                        showCustomMessage('Fehler beim Löschen der Aufgabe: ' + error.message, 'Löschfehler');
+                    }
+                }
+            }, 'Aufgabe löschen');
+        }
+
+        // --- Modal-Steuerung ---
+        function showWeeklyPlanEditModal(day, slotId, entry = null) {
+            const modal = document.getElementById('weeklyPlanEditModal');
+            const form = document.getElementById('weeklyPlanForm');
+            form.dataset.day = day;
+            form.dataset.slot = slotId;
+            currentWeeklyPlanEntry = entry;
+            
+            const timeSlot = timeSlots.find(s => s.id === slotId);
+            const subjectSelect = document.getElementById('weeklyPlanSubject');
+            subjectSelect.innerHTML = subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+
+            document.getElementById('weeklyPlanModalTitle').textContent = entry ? 'Lektion bearbeiten' : 'Neue Lektion erstellen';
+            document.getElementById('weeklyPlanTimeSlot').value = `${day}, ${timeSlot.time}`;
+            document.getElementById('weeklyPlanTitle').value = entry ? entry.title : '';
+            document.getElementById('weeklyPlanDescription').value = entry ? entry.description : '';
+            document.getElementById('weeklyPlanExternalUrl').value = entry ? entry.externalUrl : '';
+            
+            if (entry) {
+                subjectSelect.value = entry.subject;
+                document.getElementById('weeklyPlanDeleteButton').classList.remove('hidden');
+            } else {
+                document.getElementById('weeklyPlanDeleteButton').classList.add('hidden');
+            }
+            
+            modal.classList.remove('hidden');
+        }
+        function hideWeeklyPlanEditModal() { document.getElementById('weeklyPlanEditModal').classList.add('hidden'); }
+        
+        function showTaskEditModal(subjectName, task = null) {
+            const modal = document.getElementById('taskEditModal');
+            const form = document.getElementById('taskForm');
+            currentTaskEntry = task;
+
+            const subjectSelect = document.getElementById('taskSubject');
+            subjectSelect.innerHTML = `<option value="${subjectName}">${subjectName}</option>`;
+            
+            document.getElementById('taskModalTitle').textContent = task ? 'Aufgabe bearbeiten' : 'Neue Aufgabe erstellen';
+            document.getElementById('taskTitle').value = task ? task.title : '';
+            document.getElementById('taskMaterials').value = task ? task.materials : '';
+            form.querySelector(`input[value="${task ? task.requirementType : 'basic'}"]`).checked = true;
+
+            if (task) {
+                document.getElementById('taskDeleteButton').classList.remove('hidden');
+            } else {
+                document.getElementById('taskDeleteButton').classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+        function hideTaskEditModal() { document.getElementById('taskEditModal').classList.add('hidden'); }
+        
+    </script>
+</body>
+</html>
