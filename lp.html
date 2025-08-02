@@ -337,6 +337,7 @@
         let app, auth, db;
         let isAuthReady = false;
         let userId = null;
+        let dataLoadedFlags = { timetable: false, solSubjects: false, solBlocks: false };
 
         // HTML-Element-Referenzen
         const logoutBtn = document.getElementById('logoutBtn');
@@ -419,10 +420,13 @@
 
         const daysOfWeek = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
 
-        // Initialisierung des Stundenplans für die Verwaltung
-        function initAdminTimetable(currentTimetable) {
-            tempTimetable = JSON.parse(JSON.stringify(currentTimetable));
-            renderAdminTimetable(tempTimetable);
+        /**
+         * Prüft, ob alle notwendigen Daten für den Wochenplan geladen sind und rendert dann.
+         */
+        function checkAndRenderWeeklyTimetable() {
+            if (dataLoadedFlags.timetable && dataLoadedFlags.solSubjects && dataLoadedFlags.solBlocks) {
+                renderWeeklyTimetableGrid(latestTimetable, latestSolSubjects, latestSolBlocks);
+            }
         }
 
         /**
@@ -467,8 +471,8 @@
             document.getElementById(`${tabId}-tab`).classList.add('active');
             
             if (tabId === 'wochenplan') {
-                // Bei Wechsel zum Wochenplan den Stundenplan neu rendern, um die neuesten Daten anzuzeigen
-                renderWeeklyTimetableGrid(latestTimetable, latestSolSubjects, latestSolBlocks);
+                // Bei Wechsel zum Wochenplan den Stundenplan nur rendern, wenn alle Daten bereit sind
+                checkAndRenderWeeklyTimetable();
             } else if (tabId === 'verwaltung') {
                 // Bei Wechsel zur Verwaltung den Admin-Stundenplan und SOL-Fächer neu rendern
                 showSubTab('stundenplan');
@@ -524,28 +528,32 @@
                             const isSol = solSubjects.includes(subject.name);
                             
                             let cellContent;
-                            let cellClass = `p-2 border-b border-r border-gray-200 flex flex-col justify-center items-center text-center timetable-grid-cell ${subject.lightColor} ${subject.textColor} ${isSol ? 'cursor-pointer hover:bg-indigo-100 transition-colors' : ''}`;
-                            
+                            let cellClass = `p-2 border-b border-r border-gray-200 flex flex-col justify-center items-center text-center timetable-grid-cell`;
+                            let isClickable = false;
+
                             if (isSol) {
+                                isClickable = true;
                                 if (block) {
                                     // Geblockte SOL-Lektion
-                                    cellClass = `p-2 border-b border-r border-gray-200 flex flex-col justify-center items-center text-center timetable-grid-cell bg-indigo-200 text-indigo-800 font-bold cursor-pointer hover:bg-indigo-300 transition-colors`;
+                                    cellClass += ` bg-indigo-200 text-indigo-800 font-bold cursor-pointer hover:bg-indigo-300 transition-colors`;
                                     cellContent = `
                                         <div class="font-bold">${block.title}</div>
                                         <div class="text-xs text-indigo-600">${block.type}</div>
                                     `;
                                 } else {
                                     // Normale SOL-Lektion
-                                    cellClass = `p-2 border-b border-r border-gray-200 flex flex-col justify-center items-center text-center timetable-grid-cell ${subject.lightColor} ${subject.textColor} font-bold cursor-pointer hover:bg-indigo-100 transition-colors`;
+                                    cellClass += ` ${subject.lightColor} ${subject.textColor} font-bold cursor-pointer hover:bg-indigo-100 transition-colors`;
                                     cellContent = `<div>${subject.name}</div>`;
                                 }
                             } else {
                                 // Reguläre Lektion
-                                cellClass += ` ${subject.textColor} font-medium`;
+                                cellClass += ` ${subject.lightColor} ${subject.textColor} font-medium`;
                                 cellContent = `<div>${subject.name.replace(' ', '<br>')}</div>`;
                             }
+                            
+                            const dataAttributes = isClickable ? `data-day="${day}" data-time="${slot.time}"` : '';
 
-                            return `<div class="${cellClass}" data-day="${day}" data-time="${slot.time}">${cellContent}</div>`;
+                            return `<div class="${cellClass}" ${dataAttributes}>${cellContent}</div>`;
                         }).join('')}
                     </div>
                 `;
@@ -563,6 +571,12 @@
             });
         }
         
+        // Initialisierung des Stundenplans für die Verwaltung
+        function initAdminTimetable(currentTimetable) {
+            tempTimetable = JSON.parse(JSON.stringify(currentTimetable));
+            renderAdminTimetable(tempTimetable);
+        }
+
         // Rendert die Stundenplan-Tabelle für die Verwaltung
         function renderAdminTimetable(timetable) {
             let selectOptions = subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
@@ -704,7 +718,7 @@
                 const updatedBlocks = {
                     ...currentBlocks,
                     [selectedSolBlockDay]: {
-                        ...currentBlocks[selectedSolBlockDay],
+                        ...(currentBlocks[selectedSolBlockDay] || {}),
                         [selectedSolBlockTime]: blockData,
                     },
                 };
@@ -912,8 +926,9 @@
             // Stundenplan-Listener
             onSnapshot(timetableRef, (docSnap) => {
                 latestTimetable = docSnap.exists() ? docSnap.data() : {};
+                dataLoadedFlags.timetable = true;
                 if (document.getElementById('wochenplan-content').classList.contains('active')) {
-                    renderWeeklyTimetableGrid(latestTimetable, latestSolSubjects, latestSolBlocks);
+                    checkAndRenderWeeklyTimetable();
                 }
                 if (document.getElementById('stundenplan-subtab').classList.contains('active')) {
                     initAdminTimetable(latestTimetable);
@@ -926,8 +941,9 @@
             // SOL-Fächer-Listener
             onSnapshot(solSubjectsRef, (docSnap) => {
                 latestSolSubjects = docSnap.exists() ? docSnap.data().subjects || [] : [];
+                dataLoadedFlags.solSubjects = true;
                 if (document.getElementById('wochenplan-content').classList.contains('active')) {
-                    renderWeeklyTimetableGrid(latestTimetable, latestSolSubjects, latestSolBlocks);
+                    checkAndRenderWeeklyTimetable();
                 }
                 if (document.getElementById('sol-subtab').classList.contains('active')) {
                     renderSolSubjectsAdmin(latestSolSubjects);
@@ -940,8 +956,9 @@
             // SOL-Blöcke-Listener
             onSnapshot(solBlocksRef, (docSnap) => {
                 latestSolBlocks = docSnap.exists() ? docSnap.data() : {};
+                dataLoadedFlags.solBlocks = true;
                 if (document.getElementById('wochenplan-content').classList.contains('active')) {
-                    renderWeeklyTimetableGrid(latestTimetable, latestSolSubjects, latestSolBlocks);
+                    checkAndRenderWeeklyTimetable();
                 }
             }, (error) => {
                 console.error("Fehler beim Abrufen der SOL-Blöcke:", error);
