@@ -100,7 +100,7 @@
                 <div id="wochenplan-content" class="tab-content">
                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Wochenstundenplan</h2>
                     <p class="text-gray-600">
-                        Hier wird der Stundenplan für die aktuelle Woche angezeigt.
+                        Hier wird der Stundenplan für die aktuelle Woche angezeigt. Klicken Sie auf eine "SOL"-Lektion, um sie zu blockieren und eine Aktivität hinzuzufügen.
                     </p>
                     <div id="weekly-timetable-container" class="mt-6">
                         <!-- Der Stundenplan wird hier per JS eingefügt -->
@@ -195,11 +195,66 @@
         </div>
     </main>
     
+    <!-- Modal für SOL-Lektionen -->
+    <div id="sol-block-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full m-4">
+            <h3 id="modal-title" class="text-2xl font-bold mb-4 text-gray-800">SOL-Lektion blockieren</h3>
+            <form id="sol-block-form">
+                <div class="mb-4">
+                    <label for="block-type" class="block text-sm font-medium text-gray-700">Aktivitätstyp</label>
+                    <select id="block-type" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="Lernkontrolle">Lernkontrolle</option>
+                        <option value="LP-Input">LP-Input</option>
+                        <option value="Anderes">Anderes</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="block-title" class="block text-sm font-medium text-gray-700">Titel</label>
+                    <input type="text" id="block-title" placeholder="Kurzer Titel für die Lektion" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div class="mb-6">
+                    <label for="block-description" class="block text-sm font-medium text-gray-700">Beschreibung</label>
+                    <textarea id="block-description" rows="3" placeholder="Genaue Beschreibung, worum es geht" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                </div>
+                <div class="flex justify-between">
+                    <div>
+                        <button type="button" id="save-sol-block-btn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-indigo-700 transition duration-300">
+                            Speichern
+                        </button>
+                        <button type="button" id="cancel-sol-block-btn" class="ml-2 bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-xl shadow hover:bg-gray-400 transition duration-300">
+                            Abbrechen
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" id="delete-sol-block-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-red-600 transition duration-300 hidden">
+                            Löschen
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modale Bestätigungsbox (ersetzt window.confirm) -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-[1000] hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full m-4">
+            <p id="confirmation-message" class="text-center text-lg font-medium mb-4">Sind Sie sicher?</p>
+            <div class="flex justify-end space-x-2">
+                <button id="confirm-yes" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-red-600 transition duration-300">
+                    Ja
+                </button>
+                <button id="confirm-no" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-xl shadow hover:bg-gray-400 transition duration-300">
+                    Nein
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Firebase SDKs, um die Abmeldung zu ermöglichen -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firestore Konfiguration (wird automatisch vom Canvas bereitgestellt)
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -224,7 +279,7 @@
         const subTabButtons = document.querySelectorAll('.sub-tab-button');
         const subTabContents = document.querySelectorAll('.sub-tab-content');
 
-        // NEUE Referenz für den Wochenstundenplan
+        // NEUE Referenzen für den Wochenstundenplan
         const weeklyTimetableContainer = document.getElementById('weekly-timetable-container');
 
         const timetableContainer = document.getElementById('timetable-container');
@@ -232,11 +287,31 @@
         const statusMessage = document.getElementById('statusMessage');
         const solSubjectsContainer = document.getElementById('sol-subjects-container');
         const saveSolSubjectsBtn = document.getElementById('saveSolSubjectsBtn');
+        
+        // Modal-Elemente
+        const solBlockModal = document.getElementById('sol-block-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const solBlockForm = document.getElementById('sol-block-form');
+        const blockTypeSelect = document.getElementById('block-type');
+        const blockTitleInput = document.getElementById('block-title');
+        const blockDescriptionTextarea = document.getElementById('block-description');
+        const saveSolBlockBtn = document.getElementById('save-sol-block-btn');
+        const cancelSolBlockBtn = document.getElementById('cancel-sol-block-btn');
+        const deleteSolBlockBtn = document.getElementById('delete-sol-block-btn');
+        
+        // Confirmation Modal Elemente
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const confirmYesBtn = document.getElementById('confirm-yes');
+        const confirmNoBtn = document.getElementById('confirm-no');
+        
+        // Globale Variablen für das Modal
+        let currentDay = '';
+        let currentSlot = '';
 
         // Konstanten für Fächer, Zeitfenster und Wochentage
         const subjects = [
             { name: 'Frei', color: 'bg-gray-200', lightColor: 'bg-gray-50', textColor: 'text-gray-700' },
-            { name: 'SOL', color: 'bg-slate-300', lightColor: 'bg-slate-100', textColor: 'text-slate-800' }, // NEUES SOL-Fach
+            { name: 'SOL', color: 'bg-slate-300', lightColor: 'bg-slate-100', textColor: 'text-slate-800' },
             { name: 'Deutsch', color: 'bg-red-400', lightColor: 'bg-red-50', textColor: 'text-red-700' },
             { name: 'Englisch', color: 'bg-blue-400', lightColor: 'bg-blue-50', textColor: 'text-blue-700' },
             { name: 'Franzoesisch', color: 'bg-purple-400', lightColor: 'bg-purple-50', textColor: 'text-purple-700' },
@@ -275,6 +350,9 @@
         // Globale Variablen für Echtzeit-Updates
         let latestTimetable = {};
         let latestSolSubjects = [];
+        // NEUE globale Variable für SOL-Block-Daten
+        let latestSolBlocks = {};
+
 
         /**
          * Zeigt eine Statusmeldung an.
@@ -359,9 +437,9 @@
          * Generiert eine statische Stundenplan-Tabelle für die Wochenansicht.
          * @param {object} timetable Der Stundenplan-Daten.
          * @param {string[]} solSubjectsList Die Liste der SOL-Fächer.
+         * @param {object} solBlocksData Daten der blockierten SOL-Lektionen.
          */
-        function renderWeeklyTimetable(timetable, solSubjectsList) {
-            // Finde das SOL-Fach-Objekt
+        function renderWeeklyTimetable(timetable, solSubjectsList, solBlocksData) {
             const solSubject = subjects.find(s => s.name === 'SOL');
 
             if (Object.keys(timetable).length === 0) {
@@ -391,24 +469,41 @@
                         <td class="border-t border-gray-200 py-2 px-3 text-gray-700 font-semibold timetable-time-cell">${slot.time}</td>
                         ${daysOfWeek.map(day => {
                             const subjectName = timetable?.[day]?.[slot.time] || 'Frei';
-                            
-                            // Prüfen, ob das Fach ein SOL-Fach ist
                             const isSolSubject = solSubjectsList.includes(subjectName);
-                            const displaySubject = isSolSubject ? 'SOL' : subjectName;
                             
-                            // Die Farbkodierung basierend auf der Bedingung festlegen
-                            const subjectInfo = isSolSubject 
-                                ? solSubject
-                                : (subjects.find(s => s.name === displaySubject) || subjects[0]);
+                            let content = subjectName;
+                            let cellClass = '';
+                            let onClickEvent = '';
 
-                            return `
-                                <td class="border-t border-gray-200 py-2 px-3">
-                                    <div class="p-2 rounded-lg text-center font-medium timetable-grid-cell
-                                            ${subjectInfo.lightColor} ${subjectInfo.textColor}">
-                                        ${displaySubject}
-                                    </div>
-                                </td>
-                            `;
+                            if (isSolSubject) {
+                                // SOL-Fach
+                                const blockId = `${day}_${slot.time.replace(/[\s-:]/g, '')}`;
+                                const blockData = solBlocksData[blockId];
+                                
+                                const subjectInfo = solSubject;
+                                content = blockData ? `${blockData.type}: ${blockData.title}` : 'SOL';
+                                cellClass = `cursor-pointer hover:bg-slate-200 transition-colors`;
+                                onClickEvent = `onclick="openBlockModal('${day}', '${slot.time}')"`;
+                                
+                                tableHTML += `
+                                    <td class="border-t border-gray-200 py-2 px-3">
+                                        <div class="p-2 rounded-lg text-center font-medium timetable-grid-cell ${subjectInfo.lightColor} ${subjectInfo.textColor} ${cellClass}" ${onClickEvent} data-day="${day}" data-slot="${slot.time}">
+                                            <span class="block text-xs font-semibold">${content}</span>
+                                        </div>
+                                    </td>
+                                `;
+                            } else {
+                                // Normales Fach
+                                const subjectInfo = subjects.find(s => s.name === subjectName) || subjects[0];
+                                tableHTML += `
+                                    <td class="border-t border-gray-200 py-2 px-3">
+                                        <div class="p-2 rounded-lg text-center font-medium timetable-grid-cell ${subjectInfo.lightColor} ${subjectInfo.textColor}">
+                                            ${subjectName}
+                                        </div>
+                                    </td>
+                                `;
+                            }
+                            return ''; // Vermeide Duplikate im join
                         }).join('')}
                     </tr>
                 `;
@@ -466,6 +561,8 @@
             const timetableDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'schoolTimetable');
             // SOL-Fächer-Daten-Referenz
             const solSubjectsDocRef = doc(db, `artifacts/${appId}/public/data/settings`, 'solSubjects');
+            // NEUE Referenz für die SOL-Block-Daten
+            const solBlocksDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'solBlocks');
             
             weeklyTimetableContainer.innerHTML = `<div class="text-center text-gray-500 my-8"><span class="animate-pulse">Stundenplan wird geladen...</span></div>`;
 
@@ -476,11 +573,11 @@
                 } else {
                     latestTimetable = {};
                 }
-                renderWeeklyTimetable(latestTimetable, latestSolSubjects);
+                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
             }, (error) => {
                 console.error('Fehler beim Laden des Stundenplans:', error);
                 latestTimetable = {};
-                renderWeeklyTimetable(latestTimetable, latestSolSubjects);
+                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
             });
             
             // onSnapshot für die SOL-Fächer
@@ -491,11 +588,25 @@
                 } else {
                     latestSolSubjects = [];
                 }
-                renderWeeklyTimetable(latestTimetable, latestSolSubjects);
+                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
             }, (error) => {
                 console.error('Fehler beim Laden der SOL-Fächer:', error);
                 latestSolSubjects = [];
-                renderWeeklyTimetable(latestTimetable, latestSolSubjects);
+                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
+            });
+            
+            // NEUE onSnapshot für die SOL-Blöcke
+            onSnapshot(solBlocksDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    latestSolBlocks = docSnap.data();
+                } else {
+                    latestSolBlocks = {};
+                }
+                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
+            }, (error) => {
+                console.error('Fehler beim Laden der SOL-Blöcke:', error);
+                latestSolBlocks = {};
+                renderWeeklyTimetable(latestTimetable, latestSolSubjects, latestSolBlocks);
             });
         }
 
@@ -706,6 +817,131 @@
             document.body.appendChild(modal);
         }
 
+        /**
+         * Zeigt die Bestätigungsbox an.
+         * @param {string} message Nachricht für die Bestätigung.
+         * @returns {Promise<boolean>} Resolves zu true bei Ja, false bei Nein.
+         */
+        function showConfirmation(message) {
+            return new Promise((resolve) => {
+                document.getElementById('confirmation-message').textContent = message;
+                confirmationModal.classList.remove('hidden');
+
+                const handleYes = () => {
+                    confirmationModal.classList.add('hidden');
+                    confirmYesBtn.removeEventListener('click', handleYes);
+                    confirmNoBtn.removeEventListener('click', handleNo);
+                    resolve(true);
+                };
+
+                const handleNo = () => {
+                    confirmationModal.classList.add('hidden');
+                    confirmYesBtn.removeEventListener('click', handleYes);
+                    confirmNoBtn.removeEventListener('click', handleNo);
+                    resolve(false);
+                };
+
+                confirmYesBtn.addEventListener('click', handleYes);
+                confirmNoBtn.addEventListener('click', handleNo);
+            });
+        }
+        
+        /**
+         * Öffnet das Modal zum Hinzufügen/Bearbeiten einer SOL-Blockierung.
+         * @param {string} day Wochentag.
+         * @param {string} slot Zeitfenster.
+         */
+        async function openBlockModal(day, slot) {
+            currentDay = day;
+            currentSlot = slot;
+            
+            const blockId = `${day}_${slot.replace(/[\s-:]/g, '')}`;
+            const blockData = latestSolBlocks[blockId];
+            
+            solBlockForm.reset(); // Formular zurücksetzen
+            deleteSolBlockBtn.classList.add('hidden'); // Lösch-Button verstecken
+
+            if (blockData) {
+                // Bearbeiten eines bestehenden Blocks
+                modalTitle.textContent = `SOL-Lektion bearbeiten (${day}, ${slot})`;
+                blockTypeSelect.value = blockData.type || 'Lernkontrolle';
+                blockTitleInput.value = blockData.title || '';
+                blockDescriptionTextarea.value = blockData.description || '';
+                deleteSolBlockBtn.classList.remove('hidden');
+            } else {
+                // Erstellen eines neuen Blocks
+                modalTitle.textContent = `SOL-Lektion blockieren (${day}, ${slot})`;
+            }
+
+            solBlockModal.classList.remove('hidden');
+        }
+
+        /**
+         * Schließt das SOL-Block-Modal.
+         */
+        function closeBlockModal() {
+            solBlockModal.classList.add('hidden');
+        }
+
+        /**
+         * Speichert einen SOL-Block in Firestore.
+         */
+        async function saveSolBlock() {
+            const blockId = `${currentDay}_${currentSlot.replace(/[\s-:]/g, '')}`;
+            
+            if (!blockTitleInput.value) {
+                customAlert('Bitte geben Sie einen Titel für die Lektion ein.');
+                return;
+            }
+            
+            const blockData = {
+                day: currentDay,
+                slot: currentSlot,
+                type: blockTypeSelect.value,
+                title: blockTitleInput.value,
+                description: blockDescriptionTextarea.value
+            };
+            
+            try {
+                // Da wir das ganze 'solBlocks' Dokument aktualisieren, holen wir es
+                // und fügen den neuen Block hinzu.
+                const solBlocksDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'solBlocks');
+                const newSolBlocks = { ...latestSolBlocks, [blockId]: blockData };
+
+                await setDoc(solBlocksDocRef, newSolBlocks);
+                showStatusMessage('SOL-Lektion erfolgreich gespeichert!', 'success');
+                closeBlockModal();
+            } catch (error) {
+                console.error('Fehler beim Speichern des SOL-Blocks:', error);
+                customAlert('Fehler beim Speichern. Bitte versuchen Sie es erneut.');
+            }
+        }
+        
+        /**
+         * Löscht einen SOL-Block aus Firestore.
+         */
+        async function deleteSolBlock() {
+            const isConfirmed = await showConfirmation('Soll die blockierte Lektion wirklich gelöscht werden?');
+            if (!isConfirmed) {
+                return;
+            }
+
+            const blockId = `${currentDay}_${currentSlot.replace(/[\s-:]/g, '')}`;
+
+            try {
+                const solBlocksDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'solBlocks');
+                const updatedSolBlocks = { ...latestSolBlocks };
+                delete updatedSolBlocks[blockId];
+                
+                await setDoc(solBlocksDocRef, updatedSolBlocks);
+                showStatusMessage('SOL-Lektion erfolgreich gelöscht!', 'success');
+                closeBlockModal();
+            } catch (error) {
+                console.error('Fehler beim Löschen des SOL-Blocks:', error);
+                customAlert('Fehler beim Löschen. Bitte versuchen Sie es erneut.');
+            }
+        }
+        
         // Event-Listener für die Haupt-Tab-Buttons
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -739,6 +975,11 @@
         saveTimetableBtn.addEventListener('click', saveTimetable);
         // Event-Listener für den Speichern-Button der SOL-Fächer
         saveSolSubjectsBtn.addEventListener('click', saveSolSubjects);
+        // Event-Listener für das SOL-Block-Modal
+        saveSolBlockBtn.addEventListener('click', saveSolBlock);
+        cancelSolBlockBtn.addEventListener('click', closeBlockModal);
+        deleteSolBlockBtn.addEventListener('click', deleteSolBlock);
+
 
         // Initialisierungsfunktion, die die Firebase-Dienste startet und die Authentifizierung abwartet
         async function initializeAppAndAuth() {
