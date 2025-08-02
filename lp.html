@@ -102,6 +102,12 @@
                     <p class="text-gray-600">
                         Hier wird der Stundenplan für die aktuelle Woche angezeigt.
                     </p>
+                    <div id="weekly-timetable-container" class="mt-6">
+                        <!-- Der Stundenplan wird hier per JS eingefügt -->
+                        <div class="text-center text-gray-500 my-8">
+                            <span class="animate-pulse">Stundenplan wird geladen...</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Arbeitsplan Inhalt -->
@@ -218,6 +224,9 @@
         const subTabButtons = document.querySelectorAll('.sub-tab-button');
         const subTabContents = document.querySelectorAll('.sub-tab-content');
 
+        // NEUE Referenz für den Wochenstundenplan
+        const weeklyTimetableContainer = document.getElementById('weekly-timetable-container');
+
         const timetableContainer = document.getElementById('timetable-container');
         const saveTimetableBtn = document.getElementById('saveTimetableBtn');
         const statusMessage = document.getElementById('statusMessage');
@@ -227,6 +236,7 @@
         // Konstanten für Fächer, Zeitfenster und Wochentage
         const subjects = [
             { name: 'Frei', color: 'bg-gray-200', lightColor: 'bg-gray-50', textColor: 'text-gray-700' },
+            { name: 'SOL', color: 'bg-slate-300', lightColor: 'bg-slate-100', textColor: 'text-slate-800' }, // NEUES SOL-Fach
             { name: 'Deutsch', color: 'bg-red-400', lightColor: 'bg-red-50', textColor: 'text-red-700' },
             { name: 'Englisch', color: 'bg-blue-400', lightColor: 'bg-blue-50', textColor: 'text-blue-700' },
             { name: 'Franzoesisch', color: 'bg-purple-400', lightColor: 'bg-purple-50', textColor: 'text-purple-700' },
@@ -262,6 +272,9 @@
 
         // Speichert die Namen der als SOL markierten Fächer
         let solSubjects = [];
+        // Globale Variablen für Echtzeit-Updates
+        let latestTimetable = {};
+        let latestSolSubjects = [];
 
         /**
          * Zeigt eine Statusmeldung an.
@@ -281,10 +294,10 @@
         }
         
         /**
-         * Generiert die Stundenplan-Tabelle mit Dropdown-Menüs.
+         * Generiert die Stundenplan-Tabelle mit Dropdown-Menüs für die Verwaltung.
          * @param {object} savedTimetable Der aus Firestore geladene Stundenplan.
          */
-        function renderTimetableGrid(savedTimetable) {
+        function renderAdminTimetableGrid(savedTimetable) {
             let tableHTML = `
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -341,12 +354,79 @@
                 });
             });
         }
+        
+        /**
+         * Generiert eine statische Stundenplan-Tabelle für die Wochenansicht.
+         * @param {object} timetable Der Stundenplan-Daten.
+         * @param {string[]} solSubjectsList Die Liste der SOL-Fächer.
+         */
+        function renderWeeklyTimetable(timetable, solSubjectsList) {
+            // Finde das SOL-Fach-Objekt
+            const solSubject = subjects.find(s => s.name === 'SOL');
+
+            if (Object.keys(timetable).length === 0) {
+                weeklyTimetableContainer.innerHTML = `
+                    <div class="text-center text-gray-500 my-8">
+                        Kein Stundenplan verfügbar.
+                    </div>
+                `;
+                return;
+            }
+
+            let tableHTML = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs rounded-tl-xl timetable-time-cell">Zeit / Tag</th>
+                                ${daysOfWeek.map(day => `<th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs">${day}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            timeSlots.forEach(slot => {
+                tableHTML += `
+                    <tr>
+                        <td class="border-t border-gray-200 py-2 px-3 text-gray-700 font-semibold timetable-time-cell">${slot.time}</td>
+                        ${daysOfWeek.map(day => {
+                            const subjectName = timetable?.[day]?.[slot.time] || 'Frei';
+                            
+                            // Prüfen, ob das Fach ein SOL-Fach ist
+                            const isSolSubject = solSubjectsList.includes(subjectName);
+                            const displaySubject = isSolSubject ? 'SOL' : subjectName;
+                            
+                            // Die Farbkodierung basierend auf der Bedingung festlegen
+                            const subjectInfo = isSolSubject 
+                                ? solSubject
+                                : (subjects.find(s => s.name === displaySubject) || subjects[0]);
+
+                            return `
+                                <td class="border-t border-gray-200 py-2 px-3">
+                                    <div class="p-2 rounded-lg text-center font-medium timetable-grid-cell
+                                            ${subjectInfo.lightColor} ${subjectInfo.textColor}">
+                                        ${displaySubject}
+                                    </div>
+                                </td>
+                            `;
+                        }).join('')}
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            weeklyTimetableContainer.innerHTML = tableHTML;
+        }
 
         /**
-         * Lädt den Stundenplan aus Firestore und rendert die Tabelle.
+         * Lädt den Stundenplan aus Firestore für die Verwaltungsansicht.
          * Verwendet onSnapshot für Echtzeit-Updates.
          */
-        function loadTimetable() {
+        function loadAdminTimetable() {
             if (!isAuthReady || !auth.currentUser) {
                 console.warn('Authentifizierung nicht bereit. Stundenplan-Ladevorgang wird verschoben.');
                 return;
@@ -359,19 +439,66 @@
             onSnapshot(timetableDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const savedTimetable = docSnap.data();
-                    renderTimetableGrid(savedTimetable);
+                    renderAdminTimetableGrid(savedTimetable);
                     showStatusMessage('Stundenplan geladen.', 'success');
                 } else {
-                    renderTimetableGrid({});
+                    renderAdminTimetableGrid({});
                     showStatusMessage('Stundenplan nicht gefunden. Beginnen Sie mit der Eingabe!', 'info');
                 }
             }, (error) => {
                 console.error('Fehler beim Laden des Stundenplans:', error);
                 showStatusMessage('Fehler beim Laden des Stundenplans. Prüfen Sie die Konsole für Details.', 'error');
-                renderTimetableGrid({});
+                renderAdminTimetableGrid({});
             });
         }
         
+        /**
+         * Lädt den Stundenplan und die SOL-Fächer für die Wochenansicht.
+         * Verwendet onSnapshot für Echtzeit-Updates.
+         */
+        function loadWeeklyTimetable() {
+            if (!isAuthReady || !auth.currentUser) {
+                console.warn('Authentifizierung nicht bereit. Wochenstundenplan-Ladevorgang wird verschoben.');
+                return;
+            }
+
+            // Stundenplan-Daten-Referenz
+            const timetableDocRef = doc(db, `artifacts/${appId}/public/data/timetables`, 'schoolTimetable');
+            // SOL-Fächer-Daten-Referenz
+            const solSubjectsDocRef = doc(db, `artifacts/${appId}/public/data/settings`, 'solSubjects');
+            
+            weeklyTimetableContainer.innerHTML = `<div class="text-center text-gray-500 my-8"><span class="animate-pulse">Stundenplan wird geladen...</span></div>`;
+
+            // onSnapshot für den Stundenplan
+            onSnapshot(timetableDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    latestTimetable = docSnap.data();
+                } else {
+                    latestTimetable = {};
+                }
+                renderWeeklyTimetable(latestTimetable, latestSolSubjects);
+            }, (error) => {
+                console.error('Fehler beim Laden des Stundenplans:', error);
+                latestTimetable = {};
+                renderWeeklyTimetable(latestTimetable, latestSolSubjects);
+            });
+            
+            // onSnapshot für die SOL-Fächer
+            onSnapshot(solSubjectsDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const savedData = docSnap.data();
+                    latestSolSubjects = savedData.subjects || [];
+                } else {
+                    latestSolSubjects = [];
+                }
+                renderWeeklyTimetable(latestTimetable, latestSolSubjects);
+            }, (error) => {
+                console.error('Fehler beim Laden der SOL-Fächer:', error);
+                latestSolSubjects = [];
+                renderWeeklyTimetable(latestTimetable, latestSolSubjects);
+            });
+        }
+
         /**
          * Speichert den Stundenplan in Firestore.
          */
@@ -415,7 +542,7 @@
             solSubjectsContainer.innerHTML = ''; // Vorherige Inhalte löschen
             
             // Filtert die Fächer, um "Frei" und "Lernatelier" auszuschließen
-            const relevantSubjects = subjects.filter(s => s.name !== 'Frei' && s.name !== 'Lernatelier');
+            const relevantSubjects = subjects.filter(s => s.name !== 'Frei' && s.name !== 'Lernatelier' && s.name !== 'SOL');
 
             relevantSubjects.forEach(subject => {
                 const isChecked = selectedSolSubjects.includes(subject.name);
@@ -505,7 +632,7 @@
 
             // Spezielle Aktionen beim Wechsel der Unter-Tabs
             if (subTabId === 'stundenplan-subtab') {
-                loadTimetable();
+                loadAdminTimetable();
             } else if (subTabId === 'sol-subtab') {
                 loadSolSubjects();
             }
@@ -531,10 +658,12 @@
             // Den ausgewählten Haupt-Button als aktiv markieren
             document.getElementById(`${tabId}-tab`).classList.add('active');
 
-            // Spezielle Aktionen für den "Verwaltung"-Tab
+            // Spezielle Aktionen für den "Verwaltung"-Tab und "Wochenplan"-Tab
             if (tabId === 'verwaltung') {
                 // Den ersten Unter-Tab standardmäßig anzeigen
                 showSubTab('stundenplan-subtab');
+            } else if (tabId === 'wochenplan') {
+                loadWeeklyTimetable();
             }
         }
         
