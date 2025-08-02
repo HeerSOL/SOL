@@ -38,19 +38,6 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Angepasste, kompaktere Stile für die Stundenplan-Zellen */
-        .timetable-grid-cell {
-            font-size: 0.875rem; /* text-sm */
-            line-height: 1.25rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .timetable-time-cell {
-            font-size: 0.875rem; /* text-sm */
-            line-height: 1.25rem;
-            width: 100px;
-        }
         /* Post-it-Stil für den Arbeitsplan */
         .post-it {
             background-color: #fcf19d; /* Helles Gelb für den Post-it-Effekt */
@@ -65,6 +52,67 @@
             font-family: 'Poppins', sans-serif;
             color: #4b5563; /* graue Farbe */
         }
+
+        /* --- NEUE STYLES FÜR GLEICHMÄSSIGEN STUNDENPLAN --- */
+        .timetable-grid-container {
+            display: grid;
+            grid-template-columns: 100px repeat(5, 1fr); /* 100px für Zeit, 5 gleiche Spalten für Tage */
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .timetable-header, .timetable-row {
+            display: contents;
+        }
+
+        .timetable-header-cell {
+            padding: 0.75rem;
+            background-color: #f3f4f6;
+            color: #4b5563;
+            font-weight: 600;
+            text-align: left;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            border-bottom: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+        }
+        
+        .timetable-cell {
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            border-bottom: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+        }
+        
+        .timetable-cell:last-child {
+            border-right: none;
+        }
+
+        .timetable-time-cell {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            border-left: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Hover-Effekt für klickbare Zellen */
+        .timetable-cell.cursor-pointer:hover {
+            background-color: #e0e7ff; /* Helles Indigo */
+            transform: scale(1.01);
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        /* --- ENDE NEUE STYLES --- */
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -279,72 +327,71 @@
          */
         function renderWeeklyTimetableGrid(timetable, solBlocks) {
             let tableHTML = `
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr>
-                            <th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs rounded-tl-xl timetable-time-cell">Zeit / Tag</th>
-                            ${daysOfWeek.map(day => `<th class="py-2 px-3 bg-gray-100 text-gray-600 font-bold uppercase text-xs">${day}</th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="timetable-grid-container border rounded-xl shadow-sm">
+                    <div class="timetable-header">
+                        <div class="timetable-header-cell rounded-tl-xl">Zeit / Tag</div>
+                        ${daysOfWeek.map((day, index) => `<div class="timetable-header-cell ${index === 4 ? 'rounded-tr-xl' : ''}">${day}</div>`).join('')}
+                    </div>
             `;
             timeSlots.forEach(slot => {
-                tableHTML += `<tr>
-                    <td class="border-t border-gray-200 py-2 px-3 text-gray-700 font-semibold timetable-time-cell">${slot.time}</td>
-                    ${daysOfWeek.map(day => {
-                        const subjectName = timetable?.[day]?.[slot.time] || 'Frei';
-                        const subject = subjects.find(s => s.name === subjectName) || subjects[0];
-                        const block = solBlocks?.[day]?.[slot.time];
-                        const isSol = latestSolSubjects.includes(subject.name);
-                        
-                        let cellContent;
-                        let cellClass = `border-t border-gray-200 py-2 px-3 timetable-grid-cell`;
-                        
-                        if (isSol) {
-                            if (block) {
-                                // Geblockte SOL-Lektion
-                                cellClass += ` bg-slate-300 text-slate-800 font-bold`;
-                                cellContent = `
-                                    <div class="font-bold">${block.title}</div>
-                                    <div class="text-xs text-slate-600">${block.description}</div>
-                                `;
-                            } else {
-                                // Nicht geblockte SOL-Lektion - Hier kommt die neue Funktionalität ins Spiel
-                                const studentChoice = studentChoices[day] ? studentChoices[day][slot.time] : null;
-                                if (studentChoice) {
-                                    // Anzeige der gespeicherten Auswahl
-                                    const chosenSubject = studentChoice.subject;
-                                    const chosenAssignment = studentChoice.assignment;
-                                    cellClass += ` bg-indigo-200 text-indigo-800 font-bold cursor-pointer`;
+                tableHTML += `
+                    <div class="timetable-row">
+                        <div class="timetable-time-cell">${slot.time}</div>
+                        ${daysOfWeek.map(day => {
+                            const subjectName = timetable?.[day]?.[slot.time] || 'Frei';
+                            const subject = subjects.find(s => s.name === subjectName) || subjects[0];
+                            const block = solBlocks?.[day]?.[slot.time];
+                            const isSol = latestSolSubjects.includes(subject.name);
+                            
+                            let cellContent;
+                            let cellClass = `timetable-cell ${subject.lightColor} ${subject.textColor}`;
+                            
+                            if (isSol) {
+                                if (block) {
+                                    // Geblockte SOL-Lektion
+                                    cellClass = `timetable-cell bg-slate-300 text-slate-800 font-bold`;
                                     cellContent = `
-                                        <div class="font-bold">${chosenSubject}</div>
-                                        <div class="text-xs text-indigo-600">${chosenAssignment.title}</div>
+                                        <div class="font-bold">${block.title}</div>
+                                        <div class="text-xs text-slate-600">${block.description}</div>
                                     `;
                                 } else {
-                                    // Schaltfläche zur Auswahl anzeigen
-                                    cellClass += ` ${subject.lightColor} text-slate-800 font-medium cursor-pointer`;
-                                    cellContent = 'SOL wählen';
+                                    // Nicht geblockte SOL-Lektion - Hier kommt die neue Funktionalität ins Spiel
+                                    const studentChoice = studentChoices[day] ? studentChoices[day][slot.time] : null;
+                                    if (studentChoice) {
+                                        // Anzeige der gespeicherten Auswahl
+                                        const chosenSubject = studentChoice.subject;
+                                        const chosenAssignment = studentChoice.assignment;
+                                        cellClass = `timetable-cell bg-indigo-200 text-indigo-800 font-bold cursor-pointer`;
+                                        cellContent = `
+                                            <div class="font-bold">${chosenSubject}</div>
+                                            <div class="text-xs text-indigo-600">${chosenAssignment.title}</div>
+                                        `;
+                                    } else {
+                                        // Schaltfläche zur Auswahl anzeigen
+                                        cellClass = `timetable-cell ${subject.lightColor} text-slate-800 font-medium cursor-pointer`;
+                                        cellContent = 'SOL wählen';
+                                    }
+                                    
+                                    // Event-Listener an die Zelle anhängen
+                                    return `<div class="${cellClass}" data-day="${day}" data-time="${slot.time}">${cellContent}</div>`;
                                 }
-                                
-                                // Event-Listener an die Zelle anhängen
-                                return `<td class="${cellClass}" data-day="${day}" data-time="${slot.time}">${cellContent}</td>`;
+                            } else {
+                                // Reguläre Lektion
+                                cellClass += ` ${subject.textColor} font-medium`;
+                                cellContent = subject.name;
                             }
-                        } else {
-                            // Reguläre Lektion
-                            cellClass += ` ${subject.lightColor} ${subject.textColor} font-medium`;
-                            cellContent = subject.name;
-                        }
 
-                        return `<td class="${cellClass}">${cellContent}</td>`;
-                    }).join('')}
-                </tr>`;
+                            return `<div class="${cellClass}">${cellContent}</div>`;
+                        }).join('')}
+                    </div>
+                `;
             });
 
-            tableHTML += `</tbody></table>`;
+            tableHTML += `</div>`;
             weeklyTimetableContainer.innerHTML = tableHTML;
 
             // Event-Listener für die neuen Zellen hinzufügen
-            document.querySelectorAll('.timetable-grid-cell[data-day]').forEach(cell => {
+            document.querySelectorAll('.timetable-cell[data-day]').forEach(cell => {
                 cell.addEventListener('click', (e) => {
                     const day = e.currentTarget.dataset.day;
                     const time = e.currentTarget.dataset.time;
